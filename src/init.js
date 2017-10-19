@@ -1,5 +1,5 @@
 // TODO: Change this to enable / disable debug mode
-export const DEBUG = true;
+export const DEBUG = true && process.env.NODE_ENV === 'development';
 
 import DAT from 'dat-gui';
 import WebGLDebug from 'webgl-debug';
@@ -30,7 +30,6 @@ const requiredExtensions = [
   'OES_texture_float',
   'OES_texture_float_linear',
   'OES_element_index_uint',
-  'EXT_frag_depth',
   'WEBGL_depth_texture',
   'WEBGL_draw_buffers',
 ];
@@ -46,7 +45,6 @@ for (let i = 0; i < requiredExtensions.length; ++i) {
 gl.getExtension('OES_texture_float');
 gl.getExtension('OES_texture_float_linear');
 gl.getExtension('OES_element_index_uint');
-gl.getExtension('EXT_frag_depth');
 gl.getExtension('WEBGL_depth_texture');
 export const WEBGL_draw_buffers = gl.getExtension('WEBGL_draw_buffers');
 export const MAX_DRAW_BUFFERS_WEBGL = gl.getParameter(WEBGL_draw_buffers.MAX_DRAW_BUFFERS_WEBGL);
