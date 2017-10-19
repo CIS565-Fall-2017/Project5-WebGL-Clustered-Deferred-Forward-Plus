@@ -1,6 +1,8 @@
 WebGL Clustered Deferred and Forward+ Shading - Instructions
 ==========================================================
 
+**This is due Thursday 10/26**
+
 ## Running the code
 
 - Clone this repository
