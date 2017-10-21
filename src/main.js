@@ -21,9 +21,11 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
+    //the number of x, y, and z slices to split the frustum into
       params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
       break;
     case CLUSTERED_DEFFERED:
+    //the number of x, y, and z slices to split the frustum into
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
   }
