@@ -6,6 +6,8 @@ import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
+import extHDRSource from '../shaders/extractHDR.frag.glsl';
+import lensFlareSource from '../shaders/lensflare.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
@@ -13,7 +15,7 @@ import { SPECIAL_NEARPLANE } from './clustered';
 
 export const NUM_GBUFFERS = 2;
 
-export default class ClusteredDeferredRenderer extends ClusteredRenderer {
+export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
     
@@ -37,6 +39,16 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       num_maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_invProjectionMatrix', 'u_invViewProjectionMatrix', 'u_depthBuffer', 'u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_clusterbuffer', 'u_screenInfobuffer'],
+      attribs: ['a_uv'],
+    });
+
+    this._HDR = loadShaderProgram(QuadVertSource, extHDRSource, {
+      uniforms: ['u_viewProjectionMatrix', 'u_sceneTexture'],
+      attribs: ['a_uv'],
+    });
+
+    this._effectShade = loadShaderProgram(QuadVertSource, lensFlareSource({}), {
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_dirtTexture', 'u_starburstTexture', 'u_sceneTexture', 'u_screenInfobuffer', 'u_HDR'],
       attribs: ['a_uv'],
     });
 
@@ -64,7 +76,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this._depthTex, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this._depthTex, 0);    
 
     // Create, bind, and store "color" target textures for the FBO
     this._gbuffers = new Array(NUM_GBUFFERS);
@@ -90,6 +102,37 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Tell the WEBGL_draw_buffers extension which FBO attachments are
     // being used. (This extension allows for multiple render targets.)
     WEBGL_draw_buffers.drawBuffersWEBGL(attachments);
+
+
+    this._fbo2 = gl.createFramebuffer();
+    this._Lighting = gl.createTexture();   
+    gl.bindTexture(gl.TEXTURE_2D, this._Lighting);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null); 
+
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo2);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._Lighting, 0);
+
+
+    this._fbo3 = gl.createFramebuffer();
+    this._HDRteX = gl.createTexture();   
+    gl.bindTexture(gl.TEXTURE_2D, this._HDRteX);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null); 
+
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo3);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._HDRteX, 0);
+
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
@@ -157,7 +200,12 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this.updateClusters(camera, this._viewMatrix, scene);
 
     // Bind the default null framebuffer which is the screen
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo2);
+    //gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this._depthTex, 0);
+
+    //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     // Clear the frame
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -199,5 +247,49 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     //renderFullscreenQuad(this._progShade);
     renderHalfscreenTriangle(this._progShade);
+
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo3);
+
+    gl.useProgram(this._HDR.glShaderProgram);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._Lighting);
+    gl.uniform1i(this._HDR.u_sceneTexture, 0);
+
+    // Upload the camera matrix
+    gl.uniformMatrix4fv(this._HDR.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+
+    renderHalfscreenTriangle(this._HDR);
+
+
+
+    // Bind the default null framebuffer which is the screen
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Use this shader program
+    gl.useProgram(this._effectShade.glShaderProgram);
+    
+    scene.drawEffect(this._effectShade);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._Lighting);
+    gl.uniform1i(this._effectShade.u_sceneTexture, 2);
+
+
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._HDRteX);
+    gl.uniform1i(this._effectShade.u_HDR, 3);
+
+    
+
+    // Upload the camera matrix
+    gl.uniformMatrix4fv(this._effectShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._effectShade.u_viewMatrix, false, this._viewMatrix);
+    
+    gl.uniform4f(this._effectShade.u_screenInfobuffer, 1.0 / canvas.width, 1.0 / canvas.height, camera.near, camera.far);
+
+    renderHalfscreenTriangle(this._effectShade);
+
   }
 };
