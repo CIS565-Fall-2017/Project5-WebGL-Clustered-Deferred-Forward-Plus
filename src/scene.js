@@ -28,9 +28,9 @@ class Scene {
           Math.random() * (LIGHT_MAX[2] - LIGHT_MIN[2]) + LIGHT_MIN[2],
         ]),
         color: new Float32Array([
-          1.0,//0.5 + 0.5 * Math.random(),
-          1.0,//0.5 + 0.5 * Math.random(),
-          1.0//0.5 + Math.random(),
+         0.5 + 0.5 * Math.random(),
+         0.5 + 0.5 * Math.random(),
+         0.5 + Math.random(),
         ]),
         radius: LIGHT_RADIUS,
       });

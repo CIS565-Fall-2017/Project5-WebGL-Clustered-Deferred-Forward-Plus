@@ -16,7 +16,8 @@ void main() {
     float BrightCap = 1.3;
     if(SceneColor.r > BrightCap || SceneColor.g > BrightCap || SceneColor.b > BrightCap)
     {
-      gl_FragColor = clamp((SceneColor - vec4(BrightCap))*2.0 , vec4(0), vec4(1));
+      vec4 amp = clamp((SceneColor - vec4(BrightCap))*2.0 , vec4(0), vec4(1));
+      gl_FragColor = pow(amp, vec4(2.0));
     }
     else
     {

@@ -11,7 +11,7 @@ const CLUSTERED_DEFFERED = 'Clustered Deferred';
 const CLUSTERED_DEFFERED_EFFECT = 'Clustered Deferred Effect';
 
 const params = {
-  renderer: CLUSTERED_DEFFERED_EFFECT,
+  renderer: CLUSTERED_FORWARD_PLUS,
   _renderer: null,
 };
 

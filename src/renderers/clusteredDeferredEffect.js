@@ -6,6 +6,10 @@ import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
 import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
+
+import horizontalSource from '../shaders/horizontalBlur.frag.glsl';
+import verticalfsSource from '../shaders/verticalBlur.frag.glsl';
+
 import extHDRSource from '../shaders/extractHDR.frag.glsl';
 import lensFlareSource from '../shaders/lensflare.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
@@ -20,6 +24,15 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     super(xSlices, ySlices, zSlices);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
+
+    this._weight = [];
+    this._weight[0] = 0.2270270270; this._weight[1] = 0.1945945946; this._weight[2] = 0.1216216216; this._weight[3] = 0.0540540541; this._weight[4] = 0.0162162162;
+
+    this._gapH = [];
+    this._gapH[0] = 0.0; this._gapH[1] = 1.4117647 / this._width; this._gapH[2] = 3.2941176 / this._width; this._gapH[3] = 5.1764706 / this._width; this._gapH[4] = 7.0588235 / this._width;
+
+    this._gapV = [];
+    this._gapV[0] = 0.0; this._gapV[1] = 1.4117647 / this._height; this._gapV[2] = 3.2941176 /this._height; this._gapV[3] = 5.1764706 / this._height; this._gapV[4] = 7.0588235 / this._height;
     
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
@@ -47,6 +60,16 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
       attribs: ['a_uv'],
     });
 
+    this._HorizonBlur = loadShaderProgram(QuadVertSource, horizontalSource, {
+      uniforms: ['u_viewProjectionMatrix', 'u_sceneTexture', 'u_wieght', 'u_gap'],
+      attribs: ['a_uv'],
+    });
+
+    this._VerticalBlur = loadShaderProgram(QuadVertSource, verticalfsSource, {
+      uniforms: ['u_viewProjectionMatrix', 'u_sceneTexture', 'u_wieght', 'u_gap'],
+      attribs: ['a_uv'],
+    });
+
     this._effectShade = loadShaderProgram(QuadVertSource, lensFlareSource({}), {
       uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_dirtTexture', 'u_starburstTexture', 'u_sceneTexture', 'u_screenInfobuffer', 'u_HDR'],
       attribs: ['a_uv'],
@@ -57,6 +80,8 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     this._viewProjectionMatrix = mat4.create();
     this._invProjectionMatrix = mat4.create();
     this._invViewProjectionMatrix = mat4.create();
+
+
   }
 
   setupDrawBuffers(width, height) {
@@ -122,8 +147,8 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     this._fbo3 = gl.createFramebuffer();
     this._HDRteX = gl.createTexture();   
     gl.bindTexture(gl.TEXTURE_2D, this._HDRteX);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
@@ -132,6 +157,41 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo3);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._HDRteX, 0);
+
+
+
+    this._fbo4 = gl.createFramebuffer();
+    this._horizontalText = gl.createTexture();   
+    gl.bindTexture(gl.TEXTURE_2D, this._horizontalText);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null); 
+
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo4);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._horizontalText, 0);
+
+
+
+    this._fbo5 = gl.createFramebuffer();
+    this._verticalText = gl.createTexture();   
+    gl.bindTexture(gl.TEXTURE_2D, this._verticalText);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null); 
+
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo5);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._verticalText, 0);
+
+
+
 
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -248,7 +308,8 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     //renderFullscreenQuad(this._progShade);
     renderHalfscreenTriangle(this._progShade);
 
-
+  
+    //Extract HDR part
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo3);
 
     gl.useProgram(this._HDR.glShaderProgram);
@@ -263,7 +324,40 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     renderHalfscreenTriangle(this._HDR);
 
 
+    //Horizontal Blur
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo4);
 
+    gl.useProgram(this._HorizonBlur.glShaderProgram);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._HDRteX);
+    gl.uniform1i(this._HorizonBlur.u_sceneTexture, 0);
+
+    // Upload the camera matrix
+    gl.uniformMatrix4fv(this._HorizonBlur.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniform1fv(this._HorizonBlur.u_wieght, this._weight);
+    gl.uniform1fv(this._HorizonBlur.u_gap, this._gapH);
+    renderHalfscreenTriangle(this._HorizonBlur);
+
+
+
+    //Vertical Blur
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo5);
+
+    gl.useProgram(this._VerticalBlur.glShaderProgram);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._horizontalText);
+    gl.uniform1i(this._VerticalBlur.u_sceneTexture, 0);
+
+    // Upload the camera matrix
+    gl.uniformMatrix4fv(this._VerticalBlur.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniform1fv(this._VerticalBlur.u_wieght, this._weight);
+    gl.uniform1fv(this._VerticalBlur.u_gap, this._gapV);
+
+    renderHalfscreenTriangle(this._VerticalBlur);
+
+    
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -278,7 +372,7 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
 
 
     gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, this._HDRteX);
+    gl.bindTexture(gl.TEXTURE_2D, this._verticalText);
     gl.uniform1i(this._effectShade.u_HDR, 3);
 
     
@@ -290,6 +384,7 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     gl.uniform4f(this._effectShade.u_screenInfobuffer, 1.0 / canvas.width, 1.0 / canvas.height, camera.near, camera.far);
 
     renderHalfscreenTriangle(this._effectShade);
+   
 
   }
 };

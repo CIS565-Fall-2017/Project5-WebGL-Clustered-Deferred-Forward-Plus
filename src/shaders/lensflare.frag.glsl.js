@@ -80,7 +80,7 @@ void main()
   result = textureDistorted(u_sceneTexture, texcoord + haloVec, direction.xy, distortion) * textureDistorted(u_HDR, texcoord + haloVec, direction.xy, distortion) *weight;
   result *= 5.0;
 
-  //result += ghost;
+  result += ghost;
 
   //Rotating starburst texture's coordinate
   mat3 viewMat;

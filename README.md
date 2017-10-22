@@ -3,17 +3,28 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Byumjin Kim
+* Tested on: **Firefox 47.0.2**
+  Windows 10, i7-6700HQ @ 2.60GHz 15.89GB GTX 1060 (mobile)
 
 ### Live Online
 
 [![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
-### Demo Video/GIF
+### Demo Video
 
-[![](img/video.png)](TODO)
+#### Clustered Forward + Rendering & Clustered deferred Rendering
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Wck9Nlaz0s4/0.jpg)](https://www.youtube.com/watch?v=Wck9Nlaz0s4)
+
+
+
+#### Lensflare Effect
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/mQs093y-Xtc/0.jpg)](https://www.youtube.com/watch?v=mQs093y-Xtc)
+
+
+
 
 ### (TODO: Your README)
 
