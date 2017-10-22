@@ -321,6 +321,7 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._HDR.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
+    //renderFullscreenQuad(this._HDR);
     renderHalfscreenTriangle(this._HDR);
 
 
@@ -337,6 +338,8 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     gl.uniformMatrix4fv(this._HorizonBlur.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
     gl.uniform1fv(this._HorizonBlur.u_wieght, this._weight);
     gl.uniform1fv(this._HorizonBlur.u_gap, this._gapH);
+
+    //renderFullscreenQuad(this._HorizonBlur);
     renderHalfscreenTriangle(this._HorizonBlur);
 
 
@@ -355,6 +358,7 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     gl.uniform1fv(this._VerticalBlur.u_wieght, this._weight);
     gl.uniform1fv(this._VerticalBlur.u_gap, this._gapV);
 
+    //renderFullscreenQuad(this._VerticalBlur);
     renderHalfscreenTriangle(this._VerticalBlur);
 
     
@@ -383,6 +387,7 @@ export default class ClusteredDeferredEffectRenderer extends ClusteredRenderer {
     
     gl.uniform4f(this._effectShade.u_screenInfobuffer, 1.0 / canvas.width, 1.0 / canvas.height, camera.near, camera.far);
 
+    //renderFullscreenQuad(this._effectShade);
     renderHalfscreenTriangle(this._effectShade);
    
 

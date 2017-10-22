@@ -35,7 +35,7 @@ In this project, I have used WebGL to implement Clustered Forward+ and Clustered
 	- Optimizations using two G- buffers (use total 6 channels)
 		- Use 2-component normals
 		- Reconstructing world space position
-		- Use a screen-filling triangle instead of using quadrilateral
+		- Use a screen-filling triangular instead of using quadrilateral
 
 - Additional Features
 	- Lensflare with Bloom using post-process Gaussian blur
@@ -68,7 +68,7 @@ And, also it can save two channels.
 | ----------- | ----------- | ----------- | ----------- |
 | ![](img/albedo-buffers.png) | ![](img/normal-buffers.png) | ![](img/position-buffers.png) | ![](img/depth-buffers.png) |
 
-And, using a screen-filling triangle instead of using quadrilateral reduces overload of rendering.
+And, using a screen-filling triangular instead of using quadrilateral reduces overload of rendering.
 I used this only for one post-processing (Lensflare). But, the more post processes be used, the better rendering performance can be gotten.
 
 ![](img/filling.png) 
@@ -89,12 +89,58 @@ In order to create this effect, I referred to John chapman’s Lens flare which 
 
 ### Performance Analysis
 
+#### Forward vs Clustered Forward+ vs Clustered Deferred
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+Resolution		  : 960 x 540
+Number of Lights  : 2500
+Light's radius	  : 3.0
+Cluster Dimension : 16 x 16 x 16  
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+![](img/second.png) 
+
+|   | Forward | Clustered Forward+ | Clustered Deferred | 
+| ----------- | ----------- | ----------- | ----------- |
+| ms | 125ms | 34ms | 33ms |
+
+
+Resolution		  : 1920 x 1080
+Number of Lights  : 2500
+Light's radius	  : 3.0
+Cluster Dimension : 16 x 16 x 16  
+
+![](img/first.png) 
+
+|   | Forward | Clustered Forward+ | Clustered Deferred | 
+| ----------- | ----------- | ----------- | ----------- |
+| ms | 333ms | 66ms | 32ms |
+
+The efficient of deferred rendering increases when the scene is drawn on larger screen space.
+
+
+#### 2 Compacted G-buffer vs 4 G-buffer
+
+Resolution		  : 1920 x 1080
+Number of Lights  : 2500
+Light's radius	  : 3.0
+Cluster Dimension : 16 x 16 x 16  
+
+![](img/third.png) 
+
+As we can see, the difference of performance between former and later is really tiny.
+I think the time of fetching texels from g-buffers is similar to the time consumed by additional shader codes such as Reconstructing world space position and normal.
+But, obviously, in terms of memory, using 2 Compacted G-buffer can save the memory equivalent to 2 G-buffer textures.
+
+
+#### Quadrilateral vs Triangular Screen filling
+
+Resolution		  : 1920 x 1080
+Number of Lights  : 2500
+Light's radius	  : 3.0
+Cluster Dimension : 16 x 16 x 16 
+RenderMode		  : Clustered Deferred Effect
+
+![](img/fourth.png) 
+
 
 
 ### Credits
