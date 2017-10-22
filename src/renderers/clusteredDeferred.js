@@ -22,15 +22,15 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
-      attribs: ['a_position', 'a_normal', 'a_uv'],
+      attribs: ['a_position', 'a_normal', 'a_uv']
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
-      numGBuffers: NUM_GBUFFERS,
+      numGBuffers: NUM_GBUFFERS
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
-      attribs: ['a_uv'],
+      attribs: ['a_uv']
     });
 
     this._projectionMatrix = mat4.create();

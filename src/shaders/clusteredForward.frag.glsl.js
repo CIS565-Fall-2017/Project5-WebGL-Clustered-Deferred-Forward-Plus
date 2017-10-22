@@ -1,13 +1,15 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
   #version 100
   precision highp float;
 
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  
+  uniform vec3 sizeMin; // 0,0,0 ???
+  uniform vec3 sizeMax; // w,h,1000 ???
+  uniform vec3 slices;  // 15,15,15
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -81,8 +83,31 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // Determine the cluster for a fragment
+    // Read in the lights in that cluster from the populated data
+    // Do shading for just those lights
+
+    vec4 clusterPos = vec4(gl_FragCoord.xyz / slices, 1.0); // (v_position - sizeMin) / (sizeMax - sizeMin) * slices;
+    clusterPos = vec4(floor(clusterPos.x), floor(clusterPos.y), floor(clusterPos.z), 1.0);
+
+    // optimize z using non linear scale once linear works..
+    // show perf. comparison..
+
+    int clusterIdx = int(clusterPos.x + clusterPos.y * slices.x + clusterPos.y * slices.x * slices.y);
+    int slicesSize = int(slices.x * slices.y * slices.z);
+    int clusterTexCoord = (clusterIdx + 1) / (slicesSize + 1); // like u in UnpackLight()..
+
+    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterTexCoord, 0.0)).x); // clamp to max lights in scene if this misbehaves..
+
+    for (int i = 0; i < ${params.numLights}; i++) {
+      if(i >= numLights) {
+        break;
+      }
+      int clusterTex = i / 4; // acts like floor..
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, slicesSize, ${params.maxLights},clusterIdx, i));
+
+      // shading
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -91,6 +116,17 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
+
+    // for (int i = 0; i < ${params.numLights}; ++i) {
+    //   Light light = UnpackLight(i);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
