@@ -45,7 +45,7 @@ In this project, I have used WebGL to implement Clustered Forward+ and Clustered
 #### Clustered Forward+
 
 Build a data structure to keep track of how many lights are in each cluster and what their indices are.
-Then, render the scene using only the lights that overlap a given cluster
+Then, render the scene using only the lights that overlap a given cluster.
 
 I refered the Avalanche slides' solution for slicing frustum (Speacial Near).
 
@@ -100,7 +100,7 @@ Cluster Dimension : 16 x 16 x 16
 
 |   | Forward | Clustered Forward+ | Clustered Deferred | 
 | ----------- | ----------- | ----------- | ----------- |
-| ms | 125ms | 34ms | 33ms |
+| ms | 125 | 34 | 33 |
 
 
 Resolution		  : 1920 x 1080
@@ -112,7 +112,7 @@ Cluster Dimension : 16 x 16 x 16
 
 |   | Forward | Clustered Forward+ | Clustered Deferred | 
 | ----------- | ----------- | ----------- | ----------- |
-| ms | 333ms | 66ms | 32ms |
+| ms | 333 | 66 | 32 |
 
 The efficient of deferred rendering increases when the scene is drawn on larger screen space.
 
@@ -125,6 +125,10 @@ Light's radius	  : 3.0
 Cluster Dimension : 16 x 16 x 16  
 
 ![](img/third.png) 
+
+|   | 2 | 4 |
+| -- | -- | -- |
+| ms | 34 | 34 |
 
 As we can see, the difference of performance between former and later is really tiny.
 I think the time of fetching texels from g-buffers is similar to the time consumed by additional shader codes such as Reconstructing world space position and normal.
@@ -141,6 +145,9 @@ RenderMode		  : Clustered Deferred Effect
 
 ![](img/fourth.png) 
 
+|   | Quadrilateral | Triangular |
+| -- | -- | -- |
+| ms | 32 | 32 |
 
 
 ### Credits
