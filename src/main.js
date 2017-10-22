@@ -9,7 +9,7 @@ const CLUSTERED_FORWARD_PLUS = 'Clustered Forward+';
 const CLUSTERED_DEFFERED = 'Clustered Deferred';
 
 const params = {
-  renderer: CLUSTERED_FORWARD_PLUS,
+  renderer: CLUSTERED_DEFFERED,
   _renderer: null,
 };
 
@@ -21,10 +21,10 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(16, 16, 16);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(16, 16, 16);
       break;
   }
 }

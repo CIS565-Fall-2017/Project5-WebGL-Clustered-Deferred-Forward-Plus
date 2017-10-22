@@ -98,3 +98,38 @@ export function renderFullscreenQuad(program) {
   // Unbind the array buffer.
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
+
+const trianglePositions = new Float32Array([
+  -1.0, -1.0, 0.0,
+   3.0, -1.0, 0.0,
+  -1.0,  3.0, 0.0
+]);
+
+const triangleBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, trianglePositions, gl.STATIC_DRAW);
+
+export function renderHalfscreenTriangle(program) {
+  // Bind the program to use to draw the quad
+  gl.useProgram(program.glShaderProgram);
+
+  // Bind the VBO as the gl.ARRAY_BUFFER
+  gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffer);
+
+  // Enable the bound buffer as the vertex attrib array for
+  // program.a_position, using gl.enableVertexAttribArray
+  gl.enableVertexAttribArray(program.a_position);
+  
+  // Use gl.vertexAttribPointer to tell WebGL the type/layout for
+  // program.a_position's access pattern.
+  gl.vertexAttribPointer(program.a_position, 3, gl.FLOAT, gl.FALSE, 0, 0);
+
+  // Use gl.drawArrays to draw the quad
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
+
+  // Disable the enabled vertex attrib array
+  gl.disableVertexAttribArray(program.a_position);
+
+  // Unbind the array buffer.
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}

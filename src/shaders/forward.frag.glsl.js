@@ -40,6 +40,8 @@ export default function(params) {
     } else if (pixelComponent == 3) {
       return texel[3];
     }
+    else
+      return texel[0];
   }
 
   Light UnpackLight(int index) {

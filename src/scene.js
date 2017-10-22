@@ -4,7 +4,7 @@ import { gl } from './init';
 // TODO: Edit if you want to change the light initial positions 
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
-export const LIGHT_RADIUS = 5.0;
+export const LIGHT_RADIUS = 2.0;
 export const LIGHT_DT = -0.03;
 
 // TODO: This controls the number of lights
