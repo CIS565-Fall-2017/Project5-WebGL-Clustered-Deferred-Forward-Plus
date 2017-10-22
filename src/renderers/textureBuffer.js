@@ -6,7 +6,8 @@ export default class TextureBuffer {
    * @param {Number} elementCount The number of items in the buffer
    * @param {Number} elementSize The number of values in each item of the buffer
    */
-  constructor(elementCount, elementSize) {
+  constructor(elementCount, elementSize) 
+  {
     // Initialize the texture. We use gl.NEAREST for texture filtering because we don't want to blend between values in the buffer. We want the exact value
     this._glTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._glTexture);
@@ -25,11 +26,13 @@ export default class TextureBuffer {
     this._buffer = new Float32Array(elementCount * 4 * this._pixelsPerElement);
   }
 
-  get glTexture() {
+  get glTexture() 
+  {
     return this._glTexture;
   }
 
-  get buffer() {
+  get buffer() 
+  {
     return this._buffer;
   }
 
@@ -38,14 +41,16 @@ export default class TextureBuffer {
    * @param {*} index The index of the item
    * @param {*} component The ith float of an element is located in the (i/4)th pixel
    */
-  bufferIndex(index, component) {
+  bufferIndex(index, component) 
+  {
     return 4 * index + 4 * component * this._elementCount;
   }
 
   /**
    * Update the texture with the data in the buffer
    */
-  update() {
+  update() 
+  {
     gl.bindTexture(gl.TEXTURE_2D, this._glTexture);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this._elementCount, this._pixelsPerElement, gl.RGBA, gl.FLOAT, this._buffer);
     gl.bindTexture(gl.TEXTURE_2D, null);

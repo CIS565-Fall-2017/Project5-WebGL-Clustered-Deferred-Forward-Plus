@@ -5,7 +5,7 @@
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
-import AABB from './AABB'
+import AABB from '../AABB'
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
@@ -113,7 +113,7 @@ export default class ClusteredRenderer {
 
   updateClusters(camera, viewMatrix, scene, numLights) 
   {
-    // Update the cluster texture with the count and indices of the lights in each cluster
+    //This function updates the cluster texture with the count and indices of the lights in each cluster
 
     //Reset things for clusters
     for (let z = 0; z < this._zSlices; ++z) 
@@ -130,7 +130,9 @@ export default class ClusteredRenderer {
     }
 
     var xStride = (2/this._xSlices);
-    var ActualHalfwayPoint = this._xSlices/2;
+    var yStride = (2/this._ySlices);
+    var zStride = (2/this._zSlices);
+    var ActualHalfwayPoint_x = this._xSlices/2;
 
     var upVec = vec3.create();
     upVec.x = 0;
@@ -140,36 +142,40 @@ export default class ClusteredRenderer {
     farPos.y = 0;
     farPos.z = -1;
 
-    var low, high, keepSearching;
+    var lightPos, lightAABB;
+    var clusterLightCount;
+    var minZ_Index, maxZ_Index, minY_Index, maxY_Index;
+    var lightClusterMinBoundIndex_x, lightClusterMaxBoundIndex_x;
+    var low, high, flag_keepSearching;
 
     for (let i=0; i<numLights; i++)
     {
-      var lightPos = vec3.create();
+      lightPos = vec3.create();
       lightpos[0] = scene.lights[i].position[0];
       lightpos[1] = scene.lights[i].position[1];
       lightpos[2] = scene.lights[i].position[2];
 
-      var lightAABB = new AABB();
+      lightAABB = new AABB();
       lightAABB.calcAABB_PointLight(lightPos, scene.lights[i].radius);
 
       // now using the min and max of the AABB determine which clusters the light lies in
       // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
       // z under goes perspective correction and so the ZY planes are angled
       
-      var lightClusterMinBoundIndex_x, lightClusterMaxBoundIndex_x;
+      //-----------------------------------------------
       //binary search for lightClusterMinBound location
+      //-----------------------------------------------
       
-      keepSearching = true;
       farPos.x = 0;
       low = 0;
       high = this._xSlices;
       //searching for minClusterBounds
-      while(keepSearching)
-      {        
+      while(true)
+      {
         if(high>=low)
         {
           var mid = low + (high - 1)/2;
-          farPos.x = (mid-actualHalfwayPoint)*xStride;
+          farPos.x = (mid-actualHalfwayPoint_x)*xStride;
 
           var cam_MinusYZ_planeNor = calcPlaneNormal(farPos, upVec);
           var cam_MinusYZ_plane = createPlane(cam_MinusYZ_planeNor, farPos);
@@ -181,7 +187,7 @@ export default class ClusteredRenderer {
           if(scaledSD == 0)
           {
             lightClusterMinBoundIndex_x = Math.floor((farPos.x+1)/xStride);
-            keepSearching = false;
+            break;
           }
           else if(scaledSD>0)
           {
@@ -194,8 +200,9 @@ export default class ClusteredRenderer {
         }
         else
         {
-          lightClusterMinBoundIndex_x = Math.floor((farPos.x+1)/xStride);
-          keepSearching = false;
+          //incase the above checks miss everything
+          lightClusterMinBoundIndex_x = low;
+          break;
         }        
       }
 
@@ -204,12 +211,12 @@ export default class ClusteredRenderer {
       low = lightClusterMinBoundIndex;
       high = this._xSlices;
       //searching for maxClusterBounds
-      while(keepSearching)
-      {        
+      while(true)
+      {
         if(high>=low)
         {
           var mid = low + (high - 1)/2;
-          farPos.x = (mid-actualHalfwayPoint)*xStride;
+          farPos.x = (mid-actualHalfwayPoint_x)*xStride;
 
           var cam_MinusYZ_planeNor = calcPlaneNormal(farPos, upVec);
           var cam_MinusYZ_plane = createPlane(cam_MinusYZ_planeNor, farPos);
@@ -221,7 +228,7 @@ export default class ClusteredRenderer {
           if(scaledSD == 0)
           {
             lightClusterMaxBoundIndex_x = Math.floor((farPos.x+1)/xStride);
-            keepSearching = false;
+            break;
           }
           else if(scaledSD>0)
           {
@@ -234,23 +241,34 @@ export default class ClusteredRenderer {
         }
         else
         {
-          lightClusterMaxBoundIndex_x = Math.floor((farPos.x+1)/xStride);
-          keepSearching = false;
+          lightClusterMaxBoundIndex_x = high;
+          break;
         }        
       }
 
-      //now find the other two bounds rather easily using the AABB and then fill those clusters with lights
-      for (let z = 0; z < this._xSlices; ++z) //CHANGE TO USE AABB
+      //now find the other two bounds rather easily using the AABB and then fill those clusters with the current light
+      //Assumption: z is in a 0 to 1 range, the camera is at z=0 and 1 is the far_clip_plane
+      minZ_Index = Math.floor(lightAABB.min.z / zStride);
+      maxZ_Index = Math.ceil(lightAABB.max.z / zStride);
+
+      minY_Index = Math.floor(lightAABB.min.y / yStride);
+      maxY_Index = Math.ceil(lightAABB.max.y / yStride);
+
+      for (let z = minZ_Index; z <= maxZ_Index; ++z)
       {
-        for (let y = 0; y < this._ySlices; ++y) //CHANGE TO USE AABB
+        for (let y = minY_Index; y <= maxY_Index; ++y)
         {
           for (let x = lightClusterMinBoundIndex_x; x <= lightClusterMinBoundIndex_x; ++x) 
           {
-
+            let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+            // Update the light count for every cluster
+            clusterLightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)];
+            clusterLightCount++;
+            // Update the light index for the particular cluster in the light buffer
+            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, clusterLightCount)] = i;
           }
         }
       }
-
     }
 
     this._clusterTexture.update();
