@@ -1,4 +1,4 @@
-// TODO: Change this to enable / disable debug mode
+// Change this to enable / disable debug mode
 export const DEBUG = true && process.env.NODE_ENV === 'development';
 
 import DAT from 'dat-gui';
