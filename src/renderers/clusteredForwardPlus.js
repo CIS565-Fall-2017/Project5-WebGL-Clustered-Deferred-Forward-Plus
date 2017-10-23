@@ -76,6 +76,18 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    gl.uniform1i(this._shaderProgram.u_xSlice,this._xSlices);
+    gl.uniform1i(this._shaderProgram.u_ySlice,this._ySlices);
+    gl.uniform1i(this._shaderProgram.u_zSlice,this._zSlices);
+
+    gl.uniform1f(this._shaderProgram.u_xSliceF,this._xSlices);
+    gl.uniform1f(this._shaderProgram.u_ySliceF,this._ySlices);
+    gl.uniform1f(this._shaderProgram.u_zSliceF,this._zSlices);
+
+    gl.uniform1f(this._shaderProgram.u_far,camera.far);
+    gl.uniform1f(this._shaderProgram.u_near,camera.near);
+    gl.uniform1f(this._shaderProgram.u_fov,camera.fov);
+    gl.uniform1f(this._shaderProgram.u_aspect,camera.aspect);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

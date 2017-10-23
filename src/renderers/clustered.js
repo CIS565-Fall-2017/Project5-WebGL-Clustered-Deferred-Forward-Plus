@@ -127,10 +127,12 @@ export default class ClusteredRenderer {
 
             //judgeInOut has to be true to make the light inside the special 
             //cluster 
-
+            // console.log(lightCount);
             if(judgeInOut)
             {
               lightCount = lightCount+1;
+
+              
               let lightRowNumer = Math.floor((lightCount+1)/4);
               let lightColumnNumber = lightCount+1 - lightRowNumer*4;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, lightRowNumer)+lightColumnNumber] = iTemp;
@@ -149,15 +151,15 @@ export default class ClusteredRenderer {
   //used only for tiles not clusters
   updateClustersTile(camera,viewMatrix,projectionMatrix,scene)
   {
-    let xFarWidth = 2*(camera.far*Math.tan((camera.fov/2)*Math.PI/180));
-    let yFarWidth = xFarWidth/camera.aspect;
-    let farClip = camera.far;
+    var xFarWidth = 2*(camera.far*Math.tan((camera.fov/2)*Math.PI/180));
+    var yFarWidth = xFarWidth/camera.aspect;
+    var farClip = camera.far;
 
-    let xSliceLength = xFarWidth/_xSlices;
-    let ySliceLength = yFarWidth/_ySlices;
+    var xSliceLength = xFarWidth/_xSlices;
+    var ySliceLength = yFarWidth/_ySlices;
 
-    let xInitial = xFarWidth/2;
-    let yInitial = yFarWidth/2;
+    var xInitial = xFarWidth/2;
+    var yInitial = yFarWidth/2;
     for (let y = 0; y < this._ySlices; ++y) {
       for (let x = 0; x < this._xSlices; ++x) {
 

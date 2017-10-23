@@ -4,6 +4,7 @@ export default function(params) {
 
   #version 100
   precision highp float;
+  precision highp int;
 
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
@@ -11,10 +12,23 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform int u_xSlice;
+  uniform int u_ySlice;
+  uniform int u_zSlice;
+
+  uniform float u_xSliceF;
+  uniform float u_ySliceF;
+  uniform float u_zSliceF;
+
+  uniform float u_far;
+  uniform float u_near;
+  uniform float u_fov;
+  uniform float u_aspect;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -79,7 +93,62 @@ export default function(params) {
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
-    vec3 fragColor = vec3(0.0);
+    vec3 fragColor = vec3(0.0);  
+
+    float farWidth = 2.0 * ( u_far * tan(u_fov*0.5));
+    float farHeight = farWidth/u_aspect;
+
+    float xSliceLength = farWidth/u_xSliceF;
+    float ySliceLength = farHeight/u_ySliceF;
+    float zSliceLength = (u_far-u_near)/u_zSliceF;
+
+    float xInitial = farWidth/2.0;
+    float yInitial = farHeight/2.0;
+
+    int zSliceCoord = int((v_position[2]-u_near)/u_zSliceF);
+    int xSliceCoord = int((xInitial-v_position[0])/u_xSliceF);
+    int ySliceCoord = int((yInitial-v_position[1])/u_ySliceF);
+
+    int index = xSliceCoord + ySliceCoord * u_xSlice + zSliceCoord * u_xSlice * u_ySlice;
+  
+    float uRatio = float(index)/float(u_xSlice*u_ySlice*u_zSlice);
+    int lightCount = int(texture2D(u_clusterbuffer,vec2(uRatio,0))[0]);
+
+    // for(int i = 0 ;i < ${params.numLights};++i)
+    // {
+    //   if(i>=lightCount)
+    //   {
+    //     break;
+    //   }
+    //   int rowIndex = int((i+1)/4);
+    //   int colIndex = int(i - rowIndex*4);
+    //   float tempRowRatio = float(rowIndex)/(u_xSliceF*u_ySliceF*u_zSliceF);
+    //   int tempLightIndex; 
+    //   if(colIndex == 0)
+    //   {
+    //     tempLightIndex = int(texture2D(u_clusterbuffer,vec2(uRatio,tempRowRatio))[0]);
+    //   }
+    //   if(colIndex == 1)
+    //   {
+    //     tempLightIndex = int(texture2D(u_clusterbuffer,vec2(uRatio,tempRowRatio))[1]);
+    //   }
+    //   if(colIndex == 2)
+    //   {
+    //     tempLightIndex = int(texture2D(u_clusterbuffer,vec2(uRatio,tempRowRatio))[2]);
+    //   }
+    //   if(colIndex == 3)
+    //   {
+    //     tempLightIndex = int(texture2D(u_clusterbuffer,vec2(uRatio,tempRowRatio))[3]);
+    //   }
+    //   Light light = UnpackLight(tempLightIndex);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
 
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
