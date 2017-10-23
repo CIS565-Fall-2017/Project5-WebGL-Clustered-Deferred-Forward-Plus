@@ -39,6 +39,22 @@ export default class ClusteredRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+
+    /*
+    Layout of _clusterTexture
+
+    ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+    component0 |count|lid0|lid1|lid2 || count|lid0|lid1|lid2 || count|lid0|lid1|lid2
+    component1 |lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6
+    component2 |lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10
+    (v)
+
+    To get the fourth light in the first cluster, you need the lid3 in the cluster0. 
+
+    The texture is laid out as ceil((maxNumLights+1)/4.0f) by numClusters, 
+    num Rows = ceil((maxNumLights+1)/4.0f); 
+    num Columns = numClusters
+    */
   }
 
   createPlane(planeNormal, pointOnPlane)
@@ -133,19 +149,25 @@ export default class ClusteredRenderer {
     var yStride = (2/this._ySlices);
     var zStride = (2/this._zSlices);
     var ActualHalfwayPoint_x = this._xSlices/2;
+    var ActualHalfwayPoint_y = this._ySlices/2;
+    var ActualHalfwayPoint_z = this._zSlices/2;
 
     var upVec = vec3.create();
     upVec.x = 0;
     upVec.y = 1;
     upVec.z = 0;
+    var rightVec = vec3.create();
+    rightVec.x = 1;
+    rightVec.y = 0;
+    rightVec.z = 0;
     var farPos = vec3.create();
+    farPos.x = 0;
     farPos.y = 0;
     farPos.z = -1;
 
     var lightPos, lightAABB;
     var clusterLightCount;
-    var minZ_Index, maxZ_Index, minY_Index, maxY_Index;
-    var lightClusterMinBoundIndex_x, lightClusterMaxBoundIndex_x;
+    var minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index;
     var low, high, flag_keepSearching;
 
     for (let i=0; i<numLights; i++)
@@ -163,96 +185,183 @@ export default class ClusteredRenderer {
       // z under goes perspective correction and so the ZY planes are angled
       
       //-----------------------------------------------
-      //binary search for lightClusterMinBound location
+      //------- Find lightCluster Index Bounds --------
       //-----------------------------------------------
-      
-      farPos.x = 0;
-      low = 0;
-      high = this._xSlices;
-      //searching for minClusterBounds
-      while(true)
       {
-        if(high>=low)
+        //Binary search for cluster minXIndex
+        farPos.x = 0;
+        low = 0;
+        high = this._xSlices;
+        //searching for minClusterBounds
+        while(true)
         {
-          var mid = low + (high - 1)/2;
-          farPos.x = (mid-actualHalfwayPoint_x)*xStride;
-
-          var cam_MinusYZ_planeNor = calcPlaneNormal(farPos, upVec);
-          var cam_MinusYZ_plane = createPlane(cam_MinusYZ_planeNor, farPos);
-          //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
-
-          var minSD = DistanceToPoint(cam_MinusYZ_plane, lightAABB.min); //min signed Distance
-          var scaledSD = Math.floor(Math.abs(minSD)/xStride) * ClassifyPointwithSD(d);
-
-          if(scaledSD == 0)
+          if(high>=low)
           {
-            lightClusterMinBoundIndex_x = Math.floor((farPos.x+1)/xStride);
+            var mid = low + (high - 1)/2;
+            farPos.x = (mid-actualHalfwayPoint_x)*xStride;
+
+            var YZ_planeNor = calcPlaneNormal(farPos, upVec);
+            var YZ_plane = createPlane(YZ_planeNor, farPos);
+            //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
+
+            normalizePlane(YZ_plane);
+            var minSD = DistanceToPoint(YZ_plane, lightAABB.min); //min signed Distance
+            var scaledSD = Math.floor(Math.abs(minSD)/xStride) * ClassifyPointwithSD(minSD);
+
+            if(scaledSD == 0)
+            {
+              minX_Index = Math.floor((farPos.x+1)/xStride);
+              break;
+            }
+            else if(scaledSD>0)
+            {
+              low = mid+1;
+            }
+            else if(scaledSD<0)
+            {
+              high = mid-1;
+            }
+          }
+          else
+          {
+            //incase the above checks miss everything
+            minX_Index = low;
             break;
-          }
-          else if(scaledSD>0)
-          {
-            low = mid+1;
-          }
-          else if(scaledSD<0)
-          {
-            high = mid-1;
-          }
+          }        
         }
-        else
+
+        //Binary search for cluster maxXIndex
+        keepSearching = true;
+        farPos.x = 0;
+        low = lightClusterMinBoundIndex;
+        high = this._xSlices;
+        //searching for maxClusterBounds
+        while(true)
         {
-          //incase the above checks miss everything
-          lightClusterMinBoundIndex_x = low;
-          break;
-        }        
-      }
-
-      keepSearching = true;
-      farPos.x = 0;
-      low = lightClusterMinBoundIndex;
-      high = this._xSlices;
-      //searching for maxClusterBounds
-      while(true)
-      {
-        if(high>=low)
-        {
-          var mid = low + (high - 1)/2;
-          farPos.x = (mid-actualHalfwayPoint_x)*xStride;
-
-          var cam_MinusYZ_planeNor = calcPlaneNormal(farPos, upVec);
-          var cam_MinusYZ_plane = createPlane(cam_MinusYZ_planeNor, farPos);
-          //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
-
-          var minSD = DistanceToPoint(cam_MinusYZ_plane, lightAABB.min); //min signed Distance
-          var scaledSD = Math.floor(Math.abs(minSD)/xStride) * ClassifyPointwithSD(d);
-
-          if(scaledSD == 0)
+          if(high>=low)
           {
-            lightClusterMaxBoundIndex_x = Math.floor((farPos.x+1)/xStride);
+            var mid = low + (high - 1)/2;
+            farPos.x = (mid-actualHalfwayPoint_x)*xStride;
+
+            var YZ_planeNor = calcPlaneNormal(farPos, upVec);
+            var YZ_plane = createPlane(YZ_planeNor, farPos);
+            //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
+
+            normalizePlane(YZ_plane);
+            var minSD = DistanceToPoint(YZ_plane, lightAABB.min); //min signed Distance
+            var scaledSD = Math.floor(Math.abs(minSD)/xStride) * ClassifyPointwithSD(minSD);
+
+            if(scaledSD == 0)
+            {
+              maxX_Index = Math.floor((farPos.x+1)/xStride);
+              break;
+            }
+            else if(scaledSD>0)
+            {
+              low = mid+1;
+            }
+            else if(scaledSD<0)
+            {
+              high = mid-1;
+            }
+          }
+          else
+          {
+            maxX_Index = high;
             break;
-          }
-          else if(scaledSD>0)
-          {
-            low = mid+1;
-          }
-          else if(scaledSD<0)
-          {
-            high = mid-1;
-          }
+          }        
         }
-        else
+
+        //Binary search for cluster minYIndex
+        farPos.x = 0;
+        farPos.y = 0;
+        low = 0;
+        high = this._ySlices;
+        //searching for minClusterBounds
+        while(true)
         {
-          lightClusterMaxBoundIndex_x = high;
-          break;
-        }        
+          if(high>=low)
+          {
+            var mid = low + (high - 1)/2;
+            farPos.y = (mid-actualHalfwayPoint_y)*yStride;
+
+            var XZ_planeNor = calcPlaneNormal(farPos, rightVec);
+            var XZ_plane = createPlane(XZ_planeNor, farPos);
+            //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
+
+            normalizePlane(XZ_plane);
+            var minSD = DistanceToPoint(XZ_plane, lightAABB.min); //min signed Distance
+            var scaledSD = Math.floor(Math.abs(minSD)/yStride) * ClassifyPointwithSD(minSD);
+
+            if(scaledSD == 0)
+            {
+              minY_Index = Math.floor((farPos.y+1)/yStride);
+              break;
+            }
+            else if(scaledSD>0)
+            {
+              low = mid+1;
+            }
+            else if(scaledSD<0)
+            {
+              high = mid-1;
+            }
+          }
+          else
+          {
+            //incase the above checks miss everything
+            minY_Index = low;
+            break;
+          }        
+        }
+
+        //Binary search for cluster maxYIndex
+        keepSearching = true;
+        farPos.y = 0;
+        low = lightClusterMinBoundIndex;
+        high = this._ySlices;
+        //searching for maxClusterBounds
+        while(true)
+        {
+          if(high>=low)
+          {
+            var mid = low + (high - 1)/2;
+            farPos.y = (mid-actualHalfwayPoint_y)*yStride;
+
+            var XZ_planeNor = calcPlaneNormal(farPos, rightVec);
+            var XZ_plane = createPlane(XZ_planeNor, farPos);
+            //now that we have the furthest most plane, jump to the closest planes that surround the AABB of the light
+
+            normalizePlane(XZ_plane);
+            var minSD = DistanceToPoint(XZ_plane, lightAABB.min); //min signed Distance
+            var scaledSD = Math.floor(Math.abs(minSD)/yStride) * ClassifyPointwithSD(minSD);
+
+            if(scaledSD == 0)
+            {
+              maxY_Index = Math.floor((farPos.y+1)/yStride);
+              break;
+            }
+            else if(scaledSD>0)
+            {
+              low = mid+1;
+            }
+            else if(scaledSD<0)
+            {
+              high = mid-1;
+            }
+          }
+          else
+          {
+            maxY_Index = high;
+            break;
+          }        
+        }
+
+        //now find the other z bounds rather easily using the AABB and then fill those clusters with the current light
+        //Assumption: z is in a 0 to 1 range, the camera is at z=0 and 1 is the far_clip_plane
+        minZ_Index = Math.floor(lightAABB.min.z / zStride);
+        maxZ_Index = Math.ceil(lightAABB.max.z / zStride);
       }
-
-      //now find the other two bounds rather easily using the AABB and then fill those clusters with the current light
-      //Assumption: z is in a 0 to 1 range, the camera is at z=0 and 1 is the far_clip_plane
-      minZ_Index = Math.floor(lightAABB.min.z / zStride);
-      maxZ_Index = Math.ceil(lightAABB.max.z / zStride);
-
-      minY_Index = Math.floor(lightAABB.min.y / yStride);
-      maxY_Index = Math.ceil(lightAABB.max.y / yStride);
 
       for (let z = minZ_Index; z <= maxZ_Index; ++z)
       {
@@ -262,10 +371,14 @@ export default class ClusteredRenderer {
           {
             let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster
-            clusterLightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)];
+            clusterLightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0) + 0];
             clusterLightCount++;
+
+            var clusterLightIndex = Math.floor(clusterLightCount/4);
+            var clusterLightSubIndex = clusterLightCount%4;
+
             // Update the light index for the particular cluster in the light buffer
-            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, clusterLightCount)] = i;
+            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, clusterLightIndex) + clusterLightSubIndex] = i;
           }
         }
       }
