@@ -1,3 +1,5 @@
+//Adding more variables to params should happens in clusterForwardPlus.js
+//begin with line 17
 export default function(params) {
   return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
@@ -8,7 +10,7 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-
+  uniform mat4 u_viewMatrix;
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
@@ -80,7 +82,23 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+//Determine the cluster for a fragment
+//hard code near and far
+    float near = 0.1;
+    float far  = 2000.0;
+    float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
+    float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
+    float zSliceWidth = (far - near) / float(${params.zSliceCount});
+    vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
+    int xid = int(gl_FragCoord.x / xSliceWidth);
+    int yid = int(gl_FragCoord.y / ySliceWidth);
+    int zid = int(CameraCoordinate.z / zSliceWidth);
+    int clusterId = xid+ yid * (${params.xSliceCount}) + zid * (${params.xSliceCount})* (${params.ySliceCount});
+    int TotalClusters = (${params.xSliceCount})* (${params.ySliceCount})* (${params.zSliceCount});
+//Read in the lights in that cluster from the populated data
+//Do shading for just those lights
 
+//Original code for all lights
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, v_position);
@@ -96,6 +114,9 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragCoord
+    //Test code.
+    //gl_FragColor = vec4(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0, 0, 1);
   }
   `;
 }
