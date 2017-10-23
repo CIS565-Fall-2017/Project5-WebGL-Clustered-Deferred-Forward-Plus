@@ -1,8 +1,6 @@
 import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
-//import {scene} from '../scene';
-import {canvas} from '../init';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
@@ -18,106 +16,173 @@ export default class ClusteredRenderer {
   updateClusters(camera, viewMatrix, scene) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
-    var zinterval = (camera.far - camera.near)/this._zSlices;
-    var nearPlaneZ = camera.near;
-    
 
+    //Clear the clusterTextureBuffer
     for (let z = 0; z < this._zSlices; ++z) {
-      var zStart = z*zinterval + nearPlaneZ;
-      var xLength = zStart* Math.tan((camera.fov/2)*Math.PI/180)*2;
-      var yLength = xLength/camera.aspect;
-      var xInterval = xLength/this._xSlices;
-      var yInterval = yLength/this._ySlices;
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-
-          var rowShift = 0;
-          var pixelShift = 0;
-
-          // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = 0;
-          pixelShift++;
-
-          let xStart = x*xInterval;
-          let xEnd = (x+1)*xInterval;
-         
-          let yStart = y*yInterval;
-          let yEnd = (y+1)*yInterval;
-          
-          let bottomLeft = vec3.create(xStart, yStart, zStart);
-          let bottomRight = vec3.create(xEnd, yEnd, zStart);
-          let topLeft = vec3.create(xStart, yEnd, zStart);
-          let topRight = vec3.create(xEnd, yEnd, zStart);
-
-
-          //form the box of the cluster
-          //normal vector of the left face of box
-          let leftFaceNormal = vec3.create();
-          vec3.cross(leftFaceNormal,topLeft,bottomLeft);//change later
-          vec3.normalize(leftFaceNormal,leftFaceNormal);
-
-          //normal vector of right face of box
-          let rightFaceNormal = vec3.create();
-          vec3.cross(rightFaceNormal,bottomRight, topRight);//change later
-          vec3.normalize(rightFaceNormal,rightFaceNormal);
-
-          //normal vector of upper face of box
-          let upperFaceNormal = vec3.create();
-          vec3.cross(upperFaceNormal,topRight, topLeft);//change later
-          vec3.normalize(upperFaceNormal,topLeft);
-
-          //normal vector of lower face of box
-          let lowerFaceNormal = vec3.create();
-          vec3.cross(lowerFaceNormal, bottomLeft, bottomRight);//change later
-          vec3.normalize(lowerFaceNormal,lowerFaceNormal);
-
-          //normal vector of front face of box
-          let frontFaceNormal = vec3.create(0,0,-1);
-          //normal vector of back face of box
-          let backFaceNormal = vec3.create(0,0,1);
-          
-          var lightCount = 0;
-          for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
-            //get the vector from camera origin to light center
-            let lightPosVec4 = vec4.create(scene.lights[lightIndex].position,1);
-            let lightPosCamera = viewMatrix * lightPosVec4;
-            let lightPos = vec3.create(lightPosCamera.x, lightPosCamera.y, lightPosCamera.z);
-            let lightRadius = scene.lights[lightIndex].radius;
-             
-            let insideLeftFace = isLightInsideFace(lightPos,lightRadius,leftFaceNormal);
-            let insideRightFace = isLightInsideFace(lightPos,lightRadius,rightFaceNormal);
-            let insideUpperFace = isLightInsideFace(lightPos, lightRadius, upperFaceNormal);
-            let insideLowerFace = isLightInsideFace(lightPos, lightRadius, lowerFaceNormal);
-            let insideFrontFace = isLightInsideFace(lightPos, lightRadius, frontFaceNormal);
-            let insideBackFace = isLightInsideFace(lightPos, lightRadius, backFaceNormal);
-            //if light position is within all side of the cluster box, store the light index in _clusterTexture
-            
-            if(insideLeftFace && insideRightFace && insideUpperFace && insideLowerFace && insideFrontFace && insideBackFace){
-              //this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] += 1;          
-              lightCount++;     
-              rowShift = Math.floor(lightCount/4); 
-              pixelShift = lightCount-rowShift*4;
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, rowShift) + pixelShift] = lightIndex;
-            }
-          }
-          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
         }
       }
     }
-    this._clusterTexture.update();
-  }
-}
 
-function isLightInsideFace(lightPos, lightRadius, faceNormal){
-  var distance = vec3.dot(lightPos, faceNormal);
-  if(distance < 0){
-    return true;
-  }else{
-    if(distance < lightRadius){
-      return true;
-    }else{
-      return false;
+    // console.log(this._zSlices, this._ySlices, this._xSlices)
+
+    var zinterval = (camera.far - camera.near)/this._zSlices;
+    var nearPlaneZ = camera.near;
+    var farPlaneZ = camera.far;
+    var frustrumMaxX = farPlaneZ* Math.tan((camera.fov/2)*Math.PI/180)*2;
+    var xIntervalMax = frustrumMaxX/this._xSlices;
+    var frustrumMaxY = frustrumMaxX/camera.aspect;
+    var yIntervalMax = frustrumMaxY/this._ySlices;
+    //debugger;
+    for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
+      
+      var minX=0, maxX=14, minY=0, maxY=14, minZ=0, maxZ=14;
+      //get the vector from camera origin to light center
+      let lightPosVec4 = vec4.create();
+      lightPosVec4[0]=scene.lights[lightIndex].position[0];
+      lightPosVec4[1]=scene.lights[lightIndex].position[1];
+      lightPosVec4[2]=scene.lights[lightIndex].position[2];
+      lightPosVec4[3]=1;
+
+      let lightPosCamera = vec4.create();
+      vec4.transformMat4(lightPosCamera,lightPosVec4,viewMatrix);
+
+      let lightPos = vec3.create();
+      lightPos[0]=lightPosCamera[0];
+      lightPos[1]=lightPosCamera[1];
+      lightPos[2]=-lightPosCamera[2];
+
+      let lightRadius = scene.lights[lightIndex].radius;
+
+      let minXFound = false;
+      let maxXFound = false;
+      let minYFound = false;
+      let maxYFound = false;
+      let minZFound = false;
+      let maxZFound = false;
+      //Test against xPlanes
+      for(let xPlaneIdx=0;xPlaneIdx<this._xSlices;xPlaneIdx++){
+        if(!minXFound || !maxXFound){
+          let faceNormal = vec3.create();
+          //debugger;
+          let xFaceVec1 = vec3.create();
+          xFaceVec1[0]=-frustrumMaxX/2 + xPlaneIdx*xIntervalMax;
+          xFaceVec1[1]=-frustrumMaxY/2;
+          xFaceVec1[2]=farPlaneZ;
+          let xFaceVec2 = vec3.create();
+          xFaceVec2[0]=-frustrumMaxX/2 + xPlaneIdx*xIntervalMax;
+          xFaceVec2[1]=frustrumMaxY/2;
+          xFaceVec2[2]=farPlaneZ;
+          vec3.cross(faceNormal, xFaceVec2,xFaceVec1);
+          vec3.normalize(faceNormal,faceNormal);
+          let lightDistanceToPlane=vec3.dot(lightPos,faceNormal);
+          //debugger;
+          if(lightDistanceToPlane>0){
+            if(lightDistanceToPlane < lightRadius && !minXFound){
+              minX = xPlaneIdx-1;
+              minXFound = true;
+            }
+          }else{
+            if(!minXFound){
+              minX = xPlaneIdx-1;
+              minXFound = true;
+            }
+            if(-lightDistanceToPlane > lightRadius && !maxXFound){
+              maxX = xPlaneIdx;
+              maxXFound = true;
+            }
+          }
+        }else{
+          //Both minX and maxX planes have been found, ternimate the loop
+          break;
+        }
+      }
+      //debugger;
+      //Test against YPlanes
+      for(let yPlaneIdx=0; yPlaneIdx<this._ySlices; yPlaneIdx++){
+        if(!minYFound || !maxYFound){
+          let faceNormal = vec3.create();
+          let xFaceVec1 = vec3.create();
+          xFaceVec1[0]=frustrumMaxX/2;
+          xFaceVec1[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
+          xFaceVec1[2]=farPlaneZ;
+          let xFaceVec2 = vec3.create();
+          xFaceVec2[0]=-frustrumMaxX/2;
+          xFaceVec2[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
+          xFaceVec2[2]=yPlaneIdx*yIntervalMax,farPlaneZ;
+          vec3.cross(faceNormal, xFaceVec2,xFaceVec1);
+          vec3.normalize(faceNormal,faceNormal);
+          let lightDistanceToPlane=vec3.dot(lightPos,faceNormal);
+          if(lightDistanceToPlane>0){
+            if(lightDistanceToPlane < lightRadius && !minYFound){
+              minY = yPlaneIdx;
+              minYFound = true;
+            }
+          }else{
+            if(!minYFound){
+              minY = yPlaneIdx-1;
+              minYFound = true;
+            }
+            if(-lightDistanceToPlane > lightRadius && !maxYFound){
+              maxX = yPlaneIdx;
+              maxYFound = true;
+            }
+          }
+        }else{
+          //Both minY and maxY planes have been found, ternimate the loop
+          break;
+        }
+      }
+    
+
+     //Test against ZPlanes
+     for(let zPlaneIdx=0; zPlaneIdx<this._zSlices; zPlaneIdx++){
+      if(!minZFound || !maxZFound){
+        let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + zPlaneIdx*zinterval);
+        if(lightDistanceToPlane>0){
+          if(lightDistanceToPlane < lightRadius && !minZFound){
+            minZ = zPlaneIdx;
+            minZFound = true;
+          }
+        }else{
+          if(!minZFound){
+            minZ = zPlaneIdx-1;
+            minZFound = true;
+          }
+          if(-lightDistanceToPlane > lightRadius && !maxZFound){
+            maxZ = zPlaneIdx;
+            maxZFound = true;
+          }
+        }
+      }else{
+        //Both minZ and maxZ planes have been found, ternimate the loop
+        break;
+      }
     }
+    //debugger;
+    var rowShift = 0;
+    var pixelShift = 0;
+    var lightCount = 0;
+    //debugger;
+    for (let zBufferIdx = minZ; zBufferIdx < maxZ; ++zBufferIdx) {
+      for (let yBufferIdx = minY; yBufferIdx < maxY; ++yBufferIdx) {
+        for (let xBufferIdx = minX; xBufferIdx < maxX; ++xBufferIdx) {
+          let i = xBufferIdx + yBufferIdx * this._xSlices + zBufferIdx * this._xSlices * this._ySlices;         
+          lightCount =   this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0];
+          lightCount++;     
+          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0] = lightCount;
+          rowShift = Math.floor(lightCount/4); 
+          pixelShift = lightCount-rowShift*4;
+          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, rowShift) + pixelShift] = lightIndex;
+        }
+      }
+    }
+    //console.log(minX, maxX)
+   // debugger;
   }
+  this._clusterTexture.update();
+}
 }
