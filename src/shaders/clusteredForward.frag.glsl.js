@@ -11,6 +11,7 @@ export default function(params) {
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
   uniform mat4 u_viewMatrix;
+  uniform mat4 u_invViewMatrix;
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
@@ -84,31 +85,82 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 //Determine the cluster for a fragment
 //hard code near and far
-    float near = 0.1;
-    float far  = 2000.0;
+    const int num_xSlices = ${params.xSliceCount};
+    const int num_ySlices = ${params.ySliceCount};
+    const int num_zSlices = ${params.zSliceCount};
+    vec4 viewCoords = vec4(v_position.xyz,1);
+    viewCoords = viewCoords * u_viewMatrix;
+    const int numClusters = num_xSlices * num_ySlices * num_zSlices;
+    float nearPlane = 0.1;
+    float farPlane  = 2000.0;
+    float specialNearPlane = 3.0;
     float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
     float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
-    float zSliceWidth = (far - near) / float(${params.zSliceCount});
     vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
     int xid = int(gl_FragCoord.x / xSliceWidth);
     int yid = int(gl_FragCoord.y / ySliceWidth);
-    int zid = int(CameraCoordinate.z / zSliceWidth);
-    int clusterId = xid+ yid * (${params.xSliceCount}) + zid * (${params.xSliceCount})* (${params.ySliceCount});
-    int TotalClusters = (${params.xSliceCount})* (${params.ySliceCount})* (${params.zSliceCount});
+    float viewZ = -viewCoords.z;
+    int zid = 0;    
+    //special near depth slice    
+    if(viewZ >= specialNearPlane)
+    {
+      //0....1
+      float normalizedZ = log(viewZ - specialNearPlane + 1.0) / log(farPlane - specialNearPlane + 1.0);
+      zid =  int(normalizedZ * float(num_zSlices - 1))  + 1;
+    } 
+    int clusterIndex = xid + yid * num_xSlices + zid * num_xSlices * num_ySlices;
+    float clusterUcoord = float(clusterIndex + 1) / float(numClusters + 1);
+
 //Read in the lights in that cluster from the populated data
+    int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterUcoord, 0.0))[0]);   
+    const int maxNumLights = int(min(float(${params.numLights}), float(${params.num_maxLightsPerCluster})));
+
 //Do shading for just those lights
-
-//Original code for all lights
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
-
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    for (int i = 1; i <= maxNumLights; i++)
+    {
+      if (lightCount < i)
+      {
+        break;
+      }
+      int clusterTexelIndex = i / 4;          
+      float clustersLightVcoord = float(clusterTexelIndex + 1) / ceil(float(${params.num_maxLightsPerCluster} + 1) * 0.25  + 1.0);    
+     
+      vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(clusterUcoord, clustersLightVcoord));
+      int lightIndex;
+      int reminder = i - 4 * clusterTexelIndex;
+      //fetch
+      if (reminder == 0)      
+        lightIndex = int(clusterTexel[0]);      
+      else if (reminder == 1)     
+        lightIndex = int(clusterTexel[1]);      
+      else if (reminder == 2)      
+        lightIndex = int(clusterTexel[2]);
+      else if (reminder == 3)
+        lightIndex = int(clusterTexel[3]);
+      else     
+        continue;     
+      
+      
+      //from forward.frag.glsl.js
+      //assume that only point light will be used
+    
+      Light thisLight = UnpackLight(lightIndex);
+      float lightDistance = distance(thisLight.position, v_position);
+      vec3 L = (thisLight.position - v_position) / lightDistance;
+      
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / thisLight.radius);
+      float NoL = max(dot(L, normal), 0.0);
+      //Blinn-phong
+      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);
+      
+      vec3 viewVec = normalize(cameraWorldPos.xyz - v_position);
+      vec3 halfVec = normalize(L + viewVec);
+      float NoH = max(dot(halfVec, normal), 0.0);
+      vec3 diffuseTerm = albedo;
+      float speculatTerm = pow(NoH, 100.0);      
+      fragColor += (diffuseTerm + vec3(speculatTerm)) * NoL * lightIntensity * thisLight.color;
     }
+//Original code for all lights
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;

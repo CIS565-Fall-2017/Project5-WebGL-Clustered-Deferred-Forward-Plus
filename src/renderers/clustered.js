@@ -27,10 +27,6 @@ export default class ClusteredRenderer {
       }
     }
 //Edit: Do not go through every cluster to find lights. Go through every lights to find clusters.
-    const Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0);
-    const width_SliceY = Width_Y / parseFloat(this._ySlices);
-    const Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
-    const width_SliceX = Width_X / parseFloat(this._xSlices);
 
 
     function getViewZ(z, zSlices)
@@ -58,6 +54,7 @@ export default class ClusteredRenderer {
 
     for(let i = 0; i< NUM_LIGHTS; i++)
     {
+
          let LightWorldSpce = vec4.create();
          vec4.set(LightWorldSpce, 
           scene.lights[i].position[0], 
@@ -65,12 +62,18 @@ export default class ClusteredRenderer {
           scene.lights[i].position[2], 
           1.0
           );
-
          //World to View
          let LightCameraSpace = vec4.create();
          vec4.transformMat4(LightCameraSpace, LightWorldSpce, viewMatrix);
 
          //Negative z to Positive z
+
+         const Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0) * Math.abs(LightCameraSpace[2]);
+         const width_SliceY = Width_Y / parseFloat(this._ySlices);
+         const Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
+         const width_SliceX = Width_X / parseFloat(this._xSlices);
+
+
          LightCameraSpace[2] *= -1.0;
 
          let lightRadius = scene.lights[i].radius;
@@ -81,22 +84,22 @@ export default class ClusteredRenderer {
 
 // for x and y can do it simple. But not for z.
          let begin_X = parseInt((((LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)) > 0)?
-         (LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)):0) / parseFloat(width_SliceX));
+         (LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)):0) / parseFloat(width_SliceX)) - 1;
          let end_X = parseInt(
           (((LightCameraSpace[0] + lightRadius - (1.0 * Width_X / 2.0)) < 0)?
          (LightCameraSpace[0] + lightRadius - (-1.0 * Width_X / 2.0)):
          (1.0 * Width_X / 2.0))
          / parseFloat(width_SliceX)
-         );
+         ) + 10;
 
          let begin_Y = parseInt((((LightCameraSpace[1] - lightRadius - (-1.0 * Width_Y / 2.0)) > 0)?
-         (LightCameraSpace[1] - lightRadius - (-1.0 * Width_Y / 2.0)):0) / parseFloat(width_SliceY));
+         (LightCameraSpace[1] - lightRadius - (-1.0 * Width_Y / 2.0)):0) / parseFloat(width_SliceY)) - 1;
          let end_Y = parseInt(
           (((LightCameraSpace[1] + lightRadius) < (1.0 * Width_Y / 2.0))?
          (LightCameraSpace[1] + lightRadius - (-1.0 * Width_Y / 2.0)):
          (1.0 * Width_Y / 2.0))
          / parseFloat(width_SliceY)
-         );
+         ) + 10;
 
          const minRadiusDistanceZ = LightCameraSpace[2] - lightRadius;
          for(begin_Z = 0; begin_Z <= this._zSlices; begin_Z++){
@@ -104,10 +107,7 @@ export default class ClusteredRenderer {
               break;
             }
          }
-
          const maxRadiusDistanceZ = LightCameraSpace[2] + lightRadius;
-
-
          for(end_Z = this._zSlices; end_Z >= begin_Z; end_Z--){
             if((getViewZ(end_Z-1, this._zSlices) <= maxRadiusDistanceZ)){
               end_Z += 2;

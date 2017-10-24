@@ -21,9 +21,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       xSliceCount : xSlices,
       ySliceCount : ySlices,
       zSliceCount : zSlices,
+      num_maxLightsPerCluster : 100,
     }), {
       //Modified here. Added u_viewMatrix
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_cameraWorld'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -83,6 +84,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    let invprojection = mat4.create();
+    mat4.invert(invprojection, this._projectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_invViewMatrix, false, invprojection);
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }
