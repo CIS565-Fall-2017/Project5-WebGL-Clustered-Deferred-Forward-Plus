@@ -102,7 +102,7 @@ export default function(params) {
     float count = 0.0;
     for (int i = 0; i < ${params.numLights}; ++i) {
       
-      if (i > int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0])) {
+      if (i >= int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0])) {
         break;
       }
       int j = int(texture2D(u_clusterbuffer, vec2(u, float((i + 1)/4)))[mod(i + 1, 4.0)]);
