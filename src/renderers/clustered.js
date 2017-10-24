@@ -7,17 +7,26 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 import AABB from '../AABB'
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
-
 export default class ClusteredRenderer 
 {
-  constructor(xSlices, ySlices, zSlices) 
+  constructor(xSlices, ySlices, zSlices, camera, MaxLightsPerCluster) 
   {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
-    this._clusterTexture = new TextureBuffer(xSlices * ySlices * zSlices, MAX_LIGHTS_PER_CLUSTER + 1);
+    this._clusterTexture = new TextureBuffer(xSlices * ySlices * zSlices, MaxLightsPerCluster + 1);
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+    this._MaxLightsPerCluster = MaxLightsPerCluster;
+
+    //find bounding x and y values of the camera frustum
+    this.vertical_FoV = camera.fov;
+    var tan_Vertical_FoV = Math.tan(this.vertical_FoV);
+    var tan_Horizontal_FoV = camera.aspect * tan_Vertical_FoV;    
+    this.horizontal_FoV = Math.atan(tan_Horizontal_FoV);
+
+    this.xStride = ((this.horizontal_FoV)/this._xSlices);
+    this.yStride = ((this.vertical_FoV)/this._ySlices);
+    this.zStride = (camera.far/this._zSlices);
 
     /*
     Layout of _clusterTexture
@@ -40,8 +49,7 @@ export default class ClusteredRenderer
     */
   }
 
-  findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index,
-                                           viewMatrix, vertical_FoV, horizontal_FoV, xStride, yStride, zStride, lightAABB)
+  findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index, viewMatrix, camRight, camDown, lightAABB)
   {
     // This function finds the lightCluster Index Bounds
 
@@ -56,12 +64,6 @@ export default class ClusteredRenderer
     vec3.set(lightMaxYPos, 0, lightAABB.max[1], lightAABB.max[2]);
 
     var temp1 = vec3.create();
-    var camRight = vec3.create();
-    var camDown = vec3.create();
-
-    vec3.set(camRight, viewMatrix[0], viewMatrix[1], viewMatrix[2]);
-    vec3.set(camDown, -viewMatrix[4], -viewMatrix[5], -viewMatrix[6]);
-
     vec3.normalize(camRight, camRight);
     vec3.normalize(camDown, camDown);
     var halfspace = 1;
@@ -69,36 +71,36 @@ export default class ClusteredRenderer
     vec3.normalize(temp1, lightMinXPos);
     var dot = vec3.dot(temp1, camRight);
     if(dot<0) { halfspace = -1; }
-    var lightMinXangle = Math.atan((horizontal_FoV*0.5 + halfspace*lightMinXPos[0]) / (vec3.length(lightMinXPos)));
+    var lightMinXangle = Math.atan((this.horizontal_FoV*0.5 + halfspace*lightMinXPos[0]) / (vec3.length(lightMinXPos)));
 
     vec3.normalize(temp1, lightMaxXPos);
     var dot = vec3.dot(temp1, camRight);
     if(dot<0) { halfspace = -1; }
-    var lightMaxXangle = Math.atan((horizontal_FoV*0.5 + halfspace*lightMaxXPos[0]) / (vec3.length(lightMaxXPos)));
+    var lightMaxXangle = Math.atan((this.horizontal_FoV*0.5 + halfspace*lightMaxXPos[0]) / (vec3.length(lightMaxXPos)));
 
     vec3.normalize(temp1, lightMinYPos);
     var dot = vec3.dot(temp1, camDown);
     if(dot<0) { halfspace = -1; }
-    var lightMinYangle = Math.atan((vertical_FoV*0.5 + halfspace*lightMinYPos[1]) / (vec3.length(lightMinYPos)));
+    var lightMinYangle = Math.atan((this.vertical_FoV*0.5 + halfspace*lightMinYPos[1]) / (vec3.length(lightMinYPos)));
 
     vec3.normalize(temp1, lightMaxYPos);
     var dot = vec3.dot(temp1, camDown);
     if(dot<0) { halfspace = -1; }
-    var lightMaxYangle = Math.atan((vertical_FoV*0.5 + halfspace*lightMinYPos[1]) / (vec3.length(lightMinYPos)));
+    var lightMaxYangle = Math.atan((this.vertical_FoV*0.5 + halfspace*lightMinYPos[1]) / (vec3.length(lightMinYPos)));
 
-    minX_Index = Math.floor(lightMinXangle / xStride);
-    maxX_Index = Math.floor(lightMaxXangle / xStride);
+    minX_Index = Math.floor(lightMinXangle / this.xStride);
+    maxX_Index = Math.floor(lightMaxXangle / this.xStride);
 
-    minY_Index = Math.floor(lightMinYangle / yStride);
-    maxY_Index = Math.floor(lightMaxYangle / yStride);
+    minY_Index = Math.floor(lightMinYangle / this.yStride);
+    maxY_Index = Math.floor(lightMaxYangle / this.yStride);
 
     //now find the other z bounds rather easily using the AABB and then fill those clusters with the current light
     //Assumption: z is in a 0 to 1 range, the camera is at z=0 and 1 is the far_clip_plane
-    minZ_Index = Math.floor(lightAABB.min.z / zStride);
-    maxZ_Index = Math.floor(lightAABB.max.z / zStride);
+    minZ_Index = Math.floor(lightAABB.min.z / this.zStride);
+    maxZ_Index = Math.floor(lightAABB.max.z / this.zStride);
   }
 
-  updateClusters(camera, viewMatrix, scene, numLights) 
+  updateClusters(camera, viewMatrix, scene, camRight, camDown, numLights) 
   {
     //This function updates the cluster texture with the count and indices of the lights in each cluster
 
@@ -124,18 +126,6 @@ export default class ClusteredRenderer
     var clusterLightCount;
     var minZ_Index = 0, maxZ_Index = 0, minY_Index = 0, maxY_Index = 0, minX_Index = 0, maxX_Index = 0;
 
-    //find bounding x and y values of the camera frustum
-    var vertical_FoV = camera.fov;
-    var tan_Vertical_FoV = Math.tan(vertical_FoV);
-    var tan_Horizontal_FoV = camera.aspect * tan_Vertical_FoV;
-
-    var vertical_FoV = camera.fov;
-    var horizontal_FoV = Math.atan(tan_Horizontal_FoV);
-
-    var xStride = ((horizontal_FoV)/this._xSlices);
-    var yStride = ((vertical_FoV)/this._ySlices);
-    var zStride = (camera.far/this._zSlices);
-
     for (let i=0; i<numLights; i++)
     {
       vec4.set(_lightPos, scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2], 1.0);      
@@ -149,8 +139,8 @@ export default class ClusteredRenderer
       // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
       // z under goes perspective correction and so the ZY planes are angled
 
-      this.findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index,
-                                                    viewMatrix, vertical_FoV, horizontal_FoV, xStride, yStride, zStride, lightAABB);
+      this.findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index, 
+                                                    viewMatrix, camRight, camDown, lightAABB);
 
       for (let z = minZ_Index; z <= maxZ_Index; ++z)
       {
@@ -162,7 +152,7 @@ export default class ClusteredRenderer
             // Update the light count for every cluster
             clusterLightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0) + 0];
 
-            if(clusterLightCount < MAX_LIGHTS_PER_CLUSTER+1)
+            if(clusterLightCount < this._MaxLightsPerCluster+1)
             {
               clusterLightCount++;
 

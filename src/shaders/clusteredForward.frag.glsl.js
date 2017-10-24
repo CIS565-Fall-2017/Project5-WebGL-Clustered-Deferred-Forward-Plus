@@ -9,6 +9,15 @@ export default function(params) {
 
   // Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 u_viewMatrix;
+
+  uniform float u_vFoV;
+  uniform float u_hFoV;
+  uniform float u_xStride;
+  uniform float u_yStride;
+  uniform float u_zStride;
+  uniform vec3 u_camRight;
+  uniform vec3 u_camDown;
 
   varying vec3 f_position;
   varying vec3 f_normal;
@@ -36,6 +45,25 @@ export default function(params) {
     float v = float(pixel + 1) / float(textureHeight + 1);
     vec4 texel = texture2D(texture, vec2(u, v));
     int pixelComponent = component - pixel * 4;
+    if (pixelComponent == 0) {
+      return texel[0];
+    } else if (pixelComponent == 1) {
+      return texel[1];
+    } else if (pixelComponent == 2) {
+      return texel[2];
+    } else if (pixelComponent == 3) {
+      return texel[3];
+    }
+  }
+
+  float ExtractFloatFromClusterTexture(float u, int lightIndex) 
+  {
+    int pixel = (lightIndex+1) / 4;
+    float v = float(pixel + 1) / float(${params.maxLightsPerCluster} + 1);
+    vec4 texel = texture2D(u_clusterbuffer, vec2(u, v));
+
+    //int pixelComponent = (lightIndex+1) % 4;
+    int pixelComponent = pixel*4 - (lightIndex+1);
     if (pixelComponent == 0) {
       return texel[0];
     } else if (pixelComponent == 1) {
@@ -76,24 +104,51 @@ export default function(params) {
     }
   }
 
-  vec2 getClusterUV_for_Fragment(vec3 fpos) 
-  {
-    vec2 uv;
+  int numXSlices = ${params.numXSlices};
+  int numYSlices = ${params.numYSlices};
+  int numZSlices = ${params.numZSlices};
 
-    return uv;
-  }
-
-  void main() 
+  void main()
   {
     vec3 albedo = texture2D(u_colmap, f_uv).rgb;
     vec3 normap = texture2D(u_normap, f_uv).xyz;
     vec3 normal = applyNormalMap(f_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-    vec2 cluster_uv = getClusterUV_for_Fragment(f_position);
 
-    for (int i = 0; i < ${params.numLights}; ++i) 
+    vec3 fpos = vec3(u_viewMatrix*vec4(f_position, 1.0)); //f_position in viewspace
+    vec3 fpos_yz = fpos;
+    fpos_yz.y = 0.0;
+    vec3 fpos_xz = fpos;
+    fpos_xz.x = 0.0;
+
+    float halfspace = 1.0;
+
+    fpos_yz = normalize(fpos_yz);
+    if(dot(fpos_yz, u_camRight)<0.0) { halfspace = -1.0; }
+    float fragXangle = atan((u_hFoV*0.5 + halfspace*fpos_yz.x) / (length(fpos_yz)));
+
+    fpos_xz = normalize(fpos_xz); 
+    if(dot(fpos_xz, u_camDown)<0.0) { halfspace = -1.0; }
+    float fragYangle = atan((u_vFoV*0.5 + halfspace*fpos_xz.y) / (length(fpos_xz)));
+
+    int clusterX_index = int( floor(fragXangle/ u_xStride) );
+    int clusterY_index = int( floor(fragYangle/ u_yStride) );
+    int clusterZ_index = int( floor(fpos.z / u_zStride) );
+
+    float cluster_u = float( clusterX_index + clusterY_index * numXSlices + clusterZ_index * numXSlices * numYSlices );
+    vec2 cluster_uv = vec2(cluster_u, 0);
+    int clusterNumLights = int ( ExtractFloatFromClusterTexture(cluster_u, 0) );
+
+    for (int i = 0; i < ${params.maxLightsPerCluster}; ++i) 
     {
+      if(i >= clusterNumLights)
+      {
+        break;
+      }
+      int comp = i+1;
+      int lightIndex = int( ExtractFloatFromClusterTexture(cluster_u, comp) );
+
       Light light = UnpackLight(i);
       float lightDistance = distance(light.position, f_position);
       vec3 L = (light.position - f_position) / lightDistance;

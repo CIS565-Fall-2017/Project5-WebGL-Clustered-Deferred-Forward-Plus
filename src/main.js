@@ -8,6 +8,8 @@ const FORWARD = 'Forward';
 const CLUSTERED_FORWARD_PLUS = 'Clustered Forward+';
 const CLUSTERED_DEFFERED = 'Clustered Deferred';
 
+const MAX_LIGHTS_PER_CLUSTER = 100;
+
 const params = {
   renderer: CLUSTERED_FORWARD_PLUS,
   _renderer: null,
@@ -21,7 +23,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, camera, MAX_LIGHTS_PER_CLUSTER);
       break;
     case CLUSTERED_DEFFERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
