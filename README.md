@@ -65,8 +65,6 @@ The outter light loop overhead is 4 divides 38 mults and 26 adds. Looking at htt
 ![](img/albedo.png)
 **Normal**<br />
 ![](img/normal.png)
-**Normal**<br />
-![](img/normal.png)
 **Cluster X**<br />
 ![](img/clusterx.png)
 **Cluster Y**<br />

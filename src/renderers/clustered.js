@@ -105,9 +105,8 @@ export default class ClusteredRenderer {
         for(let iter = xStartIdx+1; iter<=this.xSlices; ++iter) {
             let norm2 = vec2.clone(getNormalComponents(xPlaneStrideStart+xPlaneStride*iter));
             let norm3 = vec3.fromValues(norm2[0], 0, norm2[1]);
-//            if(Math.abs(vec3.dot(lightPos, norm3)) > radius) {//could also try < -radius
             if(vec3.dot(lightPos, norm3) < -radius) {
-                xStopIdx = iter;
+                xStopIdx = Math.max(0, iter-1);
                 break;
             }
         }
@@ -127,9 +126,8 @@ export default class ClusteredRenderer {
         for(let iter = yStartIdx+1; iter<=this.ySlices; ++iter) {
             let norm2 = vec2.clone(getNormalComponents(yPlaneStrideStart+yPlaneStride*iter));
             let norm3 = vec3.fromValues(0, norm2[0], norm2[1]);
-//            if(Math.abs(vec3.dot(lightPos, norm3)) > radius) {
             if(vec3.dot(lightPos, norm3) < -radius) {
-                yStopIdx = iter;
+                yStopIdx = Math.max(0, iter-1);
                 break;
             }
         }
@@ -148,7 +146,7 @@ export default class ClusteredRenderer {
         let lightZStop = lightPos[2] + radius;
         for(let iter = zStartIdx+1; iter<=this.zSlices; ++iter) {
             if(camera.near + iter*zPlaneStride > lightZStop) {
-                zStopIdx = iter;
+                zStopIdx = Math.max(0,iter-1);
                 break;
             }
         }
