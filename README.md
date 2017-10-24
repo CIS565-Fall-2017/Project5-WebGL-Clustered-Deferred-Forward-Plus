@@ -42,9 +42,8 @@ The outter light loop overhead is 4 divides 38 mults and 26 adds. Looking at htt
 
 <br />
 <br />
-Looking at http://www.agner.org/optimize/instruction_tables.pdf as a proxy, we can see that for skylake processor floating operations an add is 3 cyles and mult is 5, a divide is 15 and a sqrt is 18. 60+110+42=212perlight+2perplane
 
-**Renderer**<br />
+**Renderer in Debug Mode**<br />
 ![](img/clusteredDeferred.png)
 
 **Data**<br />
