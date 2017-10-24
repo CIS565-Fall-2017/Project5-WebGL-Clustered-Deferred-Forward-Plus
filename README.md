@@ -56,6 +56,28 @@ The outter light loop overhead is 4 divides 38 mults and 26 adds. Looking at htt
 **Table of data used for graph**<br />
 ![](img/data.png)
 
+**Debug Views**<br />
+**Light Count**<br />
+![](img/lightcount.png)
+**Light Color at some index in the light cluster texture**<br />
+![](img/lightcolor.png)
+**Albedo**<br />
+![](img/albedo.png)
+**Normal**<br />
+![](img/normal.png)
+**Normal**<br />
+![](img/normal.png)
+**Cluster X**<br />
+![](img/clusterx.png)
+**Cluster Y**<br />
+![](img/clustery.png)
+**Cluster Z**<br />
+![](img/clusterz.png)
+**U value for reading into the light cluster texture**<br />
+![](img/U.png)
+
+
+
 **GPU Device Properties**<br />
 https://devblogs.nvidia.com/parallelforall/5-things-you-should-know-about-new-maxwell-gpu-architecture/<br />
 cuda cores 640<br />

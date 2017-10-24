@@ -104,34 +104,33 @@ export default function(params) {
       vec3 fragColor = vec3(0.0);
 
       //TEST VALS
-      //    fragColor = albedo;
-      //    fragColor = normal;
-      //    fragColor = v_position;
-      //    fragColor = vec3(float(clusterLightCount)/float(${params.numLights}));
+//          fragColor = albedo;
+//          fragColor = normal;
+//          fragColor = v_position;
+//          fragColor = vec3(float(clusterLightCount)/float(${params.numLights}));
       //    fragColor = vec3(-fragCamPos.z/float(u_far));
-      //    fragColor = vec3(float(clusterY)/15.0);
-      //    fragColor = vec3(U);
-      //    if(clusterLightCount > 0) {
-      //        int i = 5;
-      //        int texelIdx = (i+1) / 4;
-      //        float V = float(texelIdx+1) / float(numTexelsInColumn+1);
-      //        vec4 texel = texture2D(u_clusterbuffer, vec2(U,V));
-      //        
-      //        int lightIdx;
-      //        int texelComponent = (i+1) - (texelIdx * 4);
-      //        if (texelComponent == 0) {
-      //            lightIdx = int(texel[0]);
-      //        } else if (texelComponent == 1) {
-      //            lightIdx = int(texel[1]);
-      //        } else if (texelComponent == 2) {
-      //            lightIdx = int(texel[2]);
-      //        } else if (texelComponent == 3) {
-      //            lightIdx = int(texel[3]);
-      //        }
-      //      Light light = UnpackLight(lightIdx);
-      //      fragColor = light.color;
-      //    } 
-
+//          fragColor = vec3(float(clusterZ)/15.0);
+//          fragColor = vec3(U);
+//          if(clusterLightCount > 0) {
+//              int i = 5;
+//              int texelIdx = (i+1) / 4;
+//              float V = float(texelIdx+1) / float(numTexelsInColumn+1);
+//              vec4 texel = texture2D(u_clusterbuffer, vec2(U,V));
+//              
+//              int lightIdx;
+//              int texelComponent = (i+1) - (texelIdx * 4);
+//              if (texelComponent == 0) {
+//                  lightIdx = int(texel[0]);
+//              } else if (texelComponent == 1) {
+//                  lightIdx = int(texel[1]);
+//              } else if (texelComponent == 2) {
+//                  lightIdx = int(texel[2]);
+//              } else if (texelComponent == 3) {
+//                  lightIdx = int(texel[3]);
+//              }
+//            Light light = UnpackLight(lightIdx);
+//            fragColor = light.color;
+//          } 
       //    fragColor = vec3(gl_FragCoord.z);
       //    fragColor = vec3(gl_FragCoord.x / float(u_screenwidth));
       //    fragColor = vec3(gl_FragCoord.y / float(u_screenheight));
@@ -177,7 +176,6 @@ export default function(params) {
       }//lightloop
       const vec3 ambientLight = vec3(0.025);
       fragColor += albedo * ambientLight;
-
 
       gl_FragColor = vec4(fragColor, 1.0);
   }
