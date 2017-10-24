@@ -90,7 +90,7 @@ export default function(params) {
 
     // determine cluster for fragment
     float x = floor(gl_FragCoord.x * u_slices.x / u_res.x);
-    float y = u_slices.y - ceil(gl_FragCoord.y * u_slices.y / u_res.y); 
+    float y = floor(gl_FragCoord.y * u_slices.y / u_res.y); 
 
     vec4 fragViewSpace = u_viewMatrix * vec4(v_position, 1.0);
     float z = floor((-fragViewSpace.z - u_cameranear) * u_slices.z / (u_camerafar - u_cameranear));
@@ -99,10 +99,10 @@ export default function(params) {
 
     float cluster_idx = x + y * u_slices.x + z * u_slices.x * u_slices.y;
     float u = cluster_idx / u_numclusters;
-    float count = 0.0;
+    int count = int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0]);
     for (int i = 0; i < ${params.numLights}; ++i) {
       
-      if (i >= int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0])) {
+      if (i >= count) {
         break;
       }
       int j = int(texture2D(u_clusterbuffer, vec2(u, float((i + 1)/4)))[mod(i + 1, 4.0)]);
@@ -114,14 +114,13 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-      count ++;
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    // gl_FragColor = vec4(vec3(UnpackLight(int(texture2D(u_clusterbuffer, vec2(u, 0.0))[1])).color), 1.0);
     gl_FragColor = vec4(fragColor, 1.0);
-    
   }
   `;
 }

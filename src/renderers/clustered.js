@@ -52,7 +52,7 @@ export default class ClusteredRenderer {
     var lightPos = vec4.create();
     var lightDir = vec3.create();
 
-    for (let li = 0; li < NUM_LIGHTS; ++li) {
+    for (var li = 0; li < NUM_LIGHTS; ++li) {
       // light variables
       var lightRadius = scene.lights[li].radius;
       lightPos[0] = scene.lights[li].position[0];
@@ -62,7 +62,6 @@ export default class ClusteredRenderer {
 
       // transform from World space to eye space
       vec4.transformMat4(lightPos, lightPos, viewMatrix); 
-      var lightAngle = Math.atan2(lightPos[2], lightPos[1]);
 
       // determine which cluster contains light center
       // and if it lies within camera frustum
@@ -70,11 +69,11 @@ export default class ClusteredRenderer {
       vec3.normalize(lightDir, lightDir);
       var t = 1.0 / lightDir[2];
       var clusterX = Math.floor((t * lightDir[0] + strideX * (this._xSlices / 2.0)) / strideX);
-      if (clusterX < 0 || clusterX >= this._xSlices) break;
+      if (clusterX < 0 || clusterX >= this._xSlices) continue;
       var clusterY = Math.floor((t * lightDir[1] + strideY * (this._ySlices / 2.0)) / strideY);
-      if (clusterY < 0 || clusterY >= this._ySlices) break;
+      if (clusterY < 0 || clusterY >= this._ySlices) continue;
       var clusterZ = Math.floor((-lightPos[2] - camera.near) / strideZ);
-      if (clusterZ < 0 || clusterZ >= this._zSlices) break;
+      if (clusterZ < 0 || clusterZ >= this._zSlices) continue;
 
       var normal = vec4.create();
       normal[3] = 0;
@@ -86,7 +85,7 @@ export default class ClusteredRenderer {
       normal[1] = 0.0;
       var minX_cluster;
       d = (clusterX - this._xSlices / 2.0) * strideX;
-      for (minX_cluster = clusterX; minX_cluster >= 0; --minX_cluster, d -= strideX) {
+      for (minX_cluster = clusterX; minX_cluster > 0; --minX_cluster, d -= strideX) {
         normal[0] = cosatan(d);
         normal[2] = sinatan(d);
         distance = Math.abs(vec4.dot(normal, lightPos));
@@ -112,7 +111,7 @@ export default class ClusteredRenderer {
       normal[0] = 0.0;
       var minY_cluster;
       d = (clusterY - this._ySlices / 2.0) * strideY;
-      for (minY_cluster = clusterY; minY_cluster >= 0; --minY_cluster, d -= strideY) {
+      for (minY_cluster = clusterY; minY_cluster > 0; --minY_cluster, d -= strideY) {
         normal[1] = cosatan(d);
         normal[2] = sinatan(d);
         distance = Math.abs(vec4.dot(normal, lightPos));
@@ -137,8 +136,8 @@ export default class ClusteredRenderer {
       // ----------------------
       var minZ_cluster;
       d = - clusterZ * strideZ;
-      for (minZ_cluster = clusterZ; minZ_cluster >= 0; --minZ_cluster, d -= strideZ) {
-        distance = d - camera.near - lightPos[2];
+      for (minZ_cluster = clusterZ; minZ_cluster > 0; --minZ_cluster, d += strideZ) {
+        distance = - lightPos[2] - camera.near + d;
         if (distance > lightRadius) {
           break;
         }
@@ -155,9 +154,9 @@ export default class ClusteredRenderer {
 
       // update cluster lights
       // ranges partial inclusive [min, max)
-      for (let c_z = minZ_cluster; c_z <= maxZ_cluster; ++c_z) {
-        for (let c_y = minY_cluster; c_y <= maxY_cluster; ++c_y) {
-          for (let c_x = minX_cluster; c_x <= maxX_cluster; ++c_x) {
+      for (let c_z = minZ_cluster; c_z < maxZ_cluster; ++c_z) {
+        for (let c_y = minY_cluster; c_y < maxY_cluster; ++c_y) {
+          for (let c_x = minX_cluster; c_x < maxX_cluster; ++c_x) {
             let j = c_x + c_y * this._xSlices + c_z * this._xSlices * this._ySlices;
 
             //     cluster0    |     cluster1    |    cluster 2
@@ -167,8 +166,8 @@ export default class ClusteredRenderer {
             var numLights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)];
             numLights++;
             if (numLights <= MAX_LIGHTS_PER_CLUSTER) {
-              var pixelRow = Math.floor(numLights / 4);
-              var pixelComponent = numLights % 4;
+              var pixelRow = Math.floor(numLights * 0.25);
+              var pixelComponent = numLights - 4 * pixelRow;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, pixelRow) + pixelComponent] = li;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)] = numLights;
             }
