@@ -41,17 +41,6 @@ export default class ClusteredRenderer {
         return Math.exp(normalizedZ * Math.log(camera.far - SPECIAL_NEARPLANE + 1.0)) + SPECIAL_NEARPLANE - 1.0;
       }            
     }
-
-    function getIndexZ(ViewZ, zSlices)
-    {
-      if (ViewZ < SPECIAL_NEARPLANE)
-        return 0; 
-      else
-      {
-         return Math.log(ViewZ - SPECIAL_NEARPLANE + 1.0) / Math.log(camera.far - SPECIAL_NEARPLANE + 1.0) * (zSlices - 1) + 1;
-      }            
-    }
-
     for(let i = 0; i< NUM_LIGHTS; i++)
     {
 
@@ -67,8 +56,7 @@ export default class ClusteredRenderer {
          vec4.transformMat4(LightCameraSpace, LightWorldSpce, viewMatrix);
 
          //Negative z to Positive z
-
-         const Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0) * Math.abs(LightCameraSpace[2]);
+         const Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0);
          const width_SliceY = Width_Y / parseFloat(this._ySlices);
          const Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
          const width_SliceX = Width_X / parseFloat(this._xSlices);
@@ -83,6 +71,7 @@ export default class ClusteredRenderer {
 
 
 // for x and y can do it simple. But not for z.
+/*
          let begin_X = parseInt((((LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)) > 0)?
          (LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)):0) / parseFloat(width_SliceX)) - 1;
          let end_X = parseInt(
@@ -100,20 +89,59 @@ export default class ClusteredRenderer {
          (1.0 * Width_Y / 2.0))
          / parseFloat(width_SliceY)
          ) + 10;
+        */// distance between light point and sliceX plane (ignore Y value)
+        function distanceX(distance, width, lightPos)
+        {
+          distance = (lightPos[0] - width*lightPos[2]) / Math.sqrt(1.0 + width * width);
+          return distance;
+        }
 
-         const minRadiusDistanceZ = LightCameraSpace[2] - lightRadius;
-         for(begin_Z = 0; begin_Z <= this._zSlices; begin_Z++){
-            if( (getViewZ(begin_Z + 1, this._zSlices) > minRadiusDistanceZ)){
-              break;
-            }
-         }
-         const maxRadiusDistanceZ = LightCameraSpace[2] + lightRadius;
-         for(end_Z = this._zSlices; end_Z >= begin_Z; end_Z--){
-            if((getViewZ(end_Z-1, this._zSlices) <= maxRadiusDistanceZ)){
-              end_Z += 2;
-              break;
-            }
-         }
+        // distance between light point and sliceY plane (ignore X value)
+        function distanceY(distance, height, lightPos)
+        {
+          distance = (lightPos[1] - height*lightPos[2]) / Math.sqrt(1.0 + height * height);
+          return distance;
+        }
+        let begin_X;
+        for(begin_X = 0; begin_X <= this._xSlices; begin_X++){
+          if( distanceX(distance, width_SliceX * (begin_X + 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
+            break;
+          }
+        }
+        let end_X;
+        for(end_X = this._xSlices; end_X >= begin_X; end_X--){
+          if( -distanceX(distance, width_SliceX * (end_X - 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
+            end_X--;
+            break;
+          }
+        }
+        let begin_Y;
+        for(begin_Y = 0; begin_Y <= this._ySlices; begin_Y++){
+          if( distanceY(distance, width_SliceY * (begin_Y + 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
+            break;
+          }
+        }
+        let end_Y;
+        for(end_Y = this._ySlices; end_Y >= begin_Y; end_Y--){
+          if( -distanceY(distance, width_SliceY * (end_Y - 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
+            end_Y--;
+            break;
+          }
+        }
+
+        const minRadiusDistanceZ = LightCameraSpace[2] - lightRadius;
+        for(begin_Z = 0; begin_Z <= this._zSlices; begin_Z++){
+          if( (getViewZ(begin_Z + 1, this._zSlices) > minRadiusDistanceZ)){
+            break;
+          }
+        }
+        const maxRadiusDistanceZ = LightCameraSpace[2] + lightRadius;
+        for(end_Z = this._zSlices; end_Z >= begin_Z; end_Z--){
+          if((getViewZ(end_Z-1, this._zSlices) <= maxRadiusDistanceZ)){
+            end_Z += 2;
+            break;
+          }
+        }
         for(let x = begin_X; x <= end_X; x++){
           for(let y = begin_Y; y <= end_Y; y++){
             for(let z = begin_Z; z <= end_Z; z++){

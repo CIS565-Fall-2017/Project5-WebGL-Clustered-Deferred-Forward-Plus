@@ -12,9 +12,11 @@ export default function(params) {
   uniform sampler2D u_lightbuffer;
   uniform mat4 u_viewMatrix;
   uniform mat4 u_invViewMatrix;
+  uniform mat4 u_invProjectionMatrix;
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
-
+  uniform float u_farPlane;
+  uniform float u_nearPlane;
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
@@ -88,11 +90,11 @@ export default function(params) {
     const int num_xSlices = ${params.xSliceCount};
     const int num_ySlices = ${params.ySliceCount};
     const int num_zSlices = ${params.zSliceCount};
-    vec4 viewCoords = vec4(v_position.xyz,1);
-    viewCoords = viewCoords * u_viewMatrix;
+    vec4 viewCoords = vec4(gl_FragCoord.xyz,1);
+    viewCoords = u_invProjectionMatrix * viewCoords;
     const int numClusters = num_xSlices * num_ySlices * num_zSlices;
-    float nearPlane = 0.1;
-    float farPlane  = 2000.0;
+    float nearPlane = u_farPlane;
+    float farPlane  = u_nearPlane;
     float specialNearPlane = 3.0;
     float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
     float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
@@ -110,12 +112,10 @@ export default function(params) {
     } 
     int clusterIndex = xid + yid * num_xSlices + zid * num_xSlices * num_ySlices;
     float clusterUcoord = float(clusterIndex + 1) / float(numClusters + 1);
-
-//Read in the lights in that cluster from the populated data
+    //Read in the lights in that cluster from the populated data
     int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterUcoord, 0.0))[0]);   
     const int maxNumLights = int(min(float(${params.numLights}), float(${params.num_maxLightsPerCluster})));
-
-//Do shading for just those lights
+    //Do shading for just those lights
     for (int i = 1; i <= maxNumLights; i++)
     {
       if (lightCount < i)
