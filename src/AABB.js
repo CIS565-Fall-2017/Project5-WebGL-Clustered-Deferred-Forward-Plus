@@ -11,12 +11,12 @@ export default class AABB //class for Axis Aligned Bounding Boxes
 
   calcAABB_PointLight(lightPos, radius)
   {
-    this.min[0] = lightPos.x - radius;
-    this.min[1] = lightPos.y - radius;
-    this.min[2] = lightPos.z - radius;
+    this.min[0] = lightPos[0] - radius;
+    this.min[1] = lightPos[1] - radius;
+    this.min[2] = lightPos[2] - radius;
 
-    this.max[0] = lightPos.x + radius;
-    this.max[1] = lightPos.y + radius;
-    this.max[2] = lightPos.z + radius;
+    this.max[0] = lightPos[0] + radius;
+    this.max[1] = lightPos[1] + radius;
+    this.max[2] = lightPos[2] + radius;
   }
 }
