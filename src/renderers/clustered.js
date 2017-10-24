@@ -1,4 +1,4 @@
-import { mat4, vec4, vec3 } from 'gl-matrix';
+import { mat4, vec2, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
@@ -17,16 +17,25 @@ class Plane_points{
    }
  } 
 
-
-function computeDistance_Point_Plane(point, plane){
+function computesignedDistance_Point_Plane(point, plane){
   //point is vec3,
-  var nor = vec3.create();
+  let point_3 = vec3.fromValues(point[0], point[1], point[2]);
+  let nor = vec3.create();
   vec3.normalize(nor, plane.nor);
-  var ori_3 = vec3.fromValues(plane.ori[0], plane.ori[1], plane.ori[2]);
-  var dir_3 = vec3.create();
-  vec3.subtract(dir_3, point, ori_3);
-  var distance = Math.abs(vec3.dot(dir_3, nor));
+  let ori_3 = vec3.fromValues(plane.ori[0], plane.ori[1], plane.ori[2]);
+  let dir_3 = vec3.create();
+  vec3.subtract(dir_3, point_3, ori_3);
+  let distance = vec3.dot(dir_3, nor);
   return distance;
+}
+
+
+function get_2D_Normal(Side2) {
+  // because the division happen on the clip whose z = 1
+    let Hypot = Math.sqrt(1 + Side2*Side2);
+    let normSide1 = 1 / Hypot;
+    let normSide2 = -Side2*normSide1;//lhs of plane, 2nd comp needs to be pos, rhs of plane 2nd comp needs to be neg
+    return vec2.fromValues(normSide1, normSide2);
 }
 
 export default class ClusteredRenderer {
@@ -37,198 +46,216 @@ export default class ClusteredRenderer {
     this._ySlices = ySlices;
     this._zSlices = zSlices;
     // construct planes of the slices
-    this._xPlanes = [];
-    this._yPlanes = [];
-    this._zPlanes = [];
   }
 
-init_Planes(camera){
-    this._xPlanes = [];
-    this._yPlanes = [];
-    this._zPlanes = [];
-    var inverse_viewMatrix = mat4.create();
-    mat4.copy(inverse_viewMatrix, camera.matrixWorld.elements);
-    var inverse_ProjectionMatrix = mat4.create();
-    mat4.invert(inverse_ProjectionMatrix, camera.projectionMatrix.elements);
-    var inverse_viewProjectionMatrix = mat4.create();
-    //vp = pv, so inverse(vp) = inverse(v)*inverse(p)
-    mat4.multiply(inverse_viewProjectionMatrix, inverse_viewMatrix, inverse_ProjectionMatrix)
-    //var minX = -1,maxX = this.xSlices,minY = -1,maxY = this.ySlices,minZ = -1,maxZ = this.zSlices;
+// init_Planes(camera){
+//     camera.updateMatrixWorld();
+//     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
+//     this._xPlanes = [];
+//     this._yPlanes = [];
+//     this._zPlanes = [];
 
-    for(let i = 0; i < this._xSlices + 1; ++i){
-      var ori_World = vec4.create();
-      var v1_World = vec4.create();
-      var v2_World = vec4.create();
-      var nor_World3 = vec3.create();
-      var nor_World3_normalized = vec3.create();
-      var edge1_4 = vec4.create();
-      var edge2_4 = vec4.create();
-      //1. Compute origin: select a point in NDC, then multiply by inverse_viewProjectionMatrix
-      var ori_NDC = vec4.fromValues(-1 + 2/this._xSlices*i, -1 + 2/this._xSlices, 0, 1);
-      //2. Compute normal: select 2 other points: one on screen, the other is in different Z value,
-      var v1_NDC = vec4.fromValues(-1 + 2/this._xSlices*i, -1 + 4/this._xSlices, 0, 1);
-      var v2_NDC = vec4.fromValues(-1 + 2/this._xSlices*i, -1 + 2/this._xSlices, 0.5, 1);
-      //then do inverse Transformation to world space
-      vec4.transformMat4(ori_World, ori_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v1_World, v1_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v2_World, v2_NDC, inverse_viewProjectionMatrix);
-      vec4.scale(ori_World, ori_World, 1 / ori_World[3]);
-      vec4.scale(v1_World, v1_World, 1 / v1_World[3]);
-      vec4.scale(v2_World, v2_World, 1 / v2_World[3]);
-      //finally do cross product
-      vec4.subtract(edge1_4, v1_World, ori_World);
-      vec4.subtract(edge2_4, v2_World, ori_World);
-      var edge1_3 = vec3.fromValues(edge1_4[0], edge1_4[1], edge1_4[2]);
-      var edge2_3 = vec3.fromValues(edge2_4[0], edge2_4[1], edge2_4[2]);
-      vec3.cross(nor_World3, edge2_3, edge1_3);
-      vec3.normalize(nor_World3_normalized, nor_World3);
-      this._xPlanes[i] = new Plane(ori_World, nor_World3_normalized);
-    }
-    for(let i = 0; i < this._ySlices + 1; ++i){
-      var ori_World = vec4.create();
-      var v1_World = vec4.create();
-      var v2_World = vec4.create();
-      var nor_World3 = vec3.create();
-      var nor_World3_normalized = vec3.create();
-      var edge1_4 = vec4.create();
-      var edge2_4 = vec4.create();
-      var ori_NDC = vec4.fromValues(-1 + 2/this._ySlices, -1 + 2/this._ySlices*i, 0, 1);
-      var v1_NDC = vec4.fromValues(-1 + 4/this._ySlices, -1 + 2/this._ySlices*i, 0, 1);
-      var v2_NDC = vec4.fromValues(-1 + 2/this._ySlices, -1 + 2/this._ySlices*i, 0.5, 1);
-      vec4.transformMat4(ori_World, ori_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v1_World, v1_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v2_World, v2_NDC, inverse_viewProjectionMatrix);
-      vec4.scale(ori_World, ori_World, 1 / ori_World[3]);
-      vec4.scale(v1_World, v1_World, 1 / v1_World[3]);
-      vec4.scale(v2_World, v2_World, 1 / v2_World[3]);
-      //finally do cross product
-      vec4.subtract(edge1_4, v1_World, ori_World);
-      vec4.subtract(edge2_4, v2_World, ori_World);
-      var edge1_3 = vec3.fromValues(edge1_4[0], edge1_4[1], edge1_4[2]);
-      var edge2_3 = vec3.fromValues(edge2_4[0], edge2_4[1], edge2_4[2]);
-      vec3.cross(nor_World3, edge2_3, edge1_3);
-      vec3.normalize(nor_World3_normalized, nor_World3);
-      this._yPlanes[i] = new Plane(ori_World, nor_World3_normalized);
-    }
-    for(let i = 0; i < this._zSlices + 1; ++i){
-      var ori_World = vec4.create();
-      var v1_World = vec4.create();
-      var v2_World = vec4.create();
-      var nor_World3 = vec3.create();
-      var nor_World3_normalized = vec3.create();
-      var edge1_4 = vec4.create();
-      var edge2_4 = vec4.create();
-      var origin_NDC = vec4.fromValues(0, 0, 1/this._zSlices*i, 1);
-      var v1_NDC = vec4.fromValues(1, 0, 1/this._zSlices*i, 1);
-      var v2_NDC = vec4.fromValues(0, 1, 1/this._zSlices*i, 1);
-      vec4.transformMat4(ori_World, ori_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v1_World, v1_NDC, inverse_viewProjectionMatrix);
-      vec4.transformMat4(v2_World, v2_NDC, inverse_viewProjectionMatrix);
-      vec4.scale(ori_World, ori_World, 1 / ori_World[3]);
-      vec4.scale(v1_World, v1_World, 1 / v1_World[3]);
-      vec4.scale(v2_World, v2_World, 1 / v2_World[3]);
-      //finally do cross product
-      vec4.subtract(edge1_4, v1_World, ori_World);
-      vec4.subtract(edge2_4, v2_World, ori_World);
-      var edge1_3 = vec3.fromValues(edge1_4[0], edge1_4[1], edge1_4[2]);
-      var edge2_3 = vec3.fromValues(edge2_4[0], edge2_4[1], edge2_4[2]);
-      vec3.cross(nor_World3, edge2_3, edge1_3);
-      vec3.normalize(nor_World3_normalized, nor_World3);
-      this._zPlanes[i] = new Plane(ori_World, nor_World3_normalized);
-    }
-  }
+//     var near_clip = camera.near;
+//     var far_clip = camera.far;
+//     var FOV = camera.fov * (Math.PI/180.0);
+//     var aspect_ratio = camera.aspect;
+
+//     // z = camera.far / 2
+//     var clip_width = (far_clip / 2) * Math.tan(FOV/2) * 2;
+//     var clip_height = clip_width / aspect_ratio;
+
+//     for(let i = 0; i < this._xSlices + 1; ++i){
+//       var ori_camera = vec4.fromValues(0.0,0.0,0.0,1.0);
+//       var v1_camera = vec4.create();
+//       var v2_camera = vec4.create();
+//       var nor_camera = vec3.create();
+//       var nor_camera_normalized = vec3.create();
+//       vec4.set(v1_camera, -clip_width/2 + clip_width/this._xSlices * i, clip_height / 2, far_clip / 2, 1);
+//       vec4.set(v2_camera, -clip_width/2 + clip_width/this._xSlices * i, -clip_height / 2, far_clip / 2, 1);
+
+//       var edge1_3 = vec3.fromValues(v1_camera[0], v1_camera[1], v1_camera[2]);
+//       var edge2_3 = vec3.fromValues(v2_camera[0], v2_camera[1], v2_camera[2]);
+
+//       vec3.cross(nor_camera, edge1_3, edge2_3);
+//       vec3.normalize(nor_camera_normalized, nor_camera);
+//       this._xPlanes[i] = new Plane(ori_camera, nor_camera_normalized);
+//     }
+//     for(let i = 0; i < this._ySlices + 1; ++i){
+//       var ori_camera = vec4.fromValues(0.0,0.0,0.0,1.0);
+//       var v1_camera = vec4.create();
+//       var v2_camera = vec4.create();
+//       var nor_camera = vec3.create();
+//       var nor_camera_normalized = vec3.create();
+//       vec4.set(v1_camera, -clip_width/2, -clip_height / 2 + clip_height / this._ySlices * i, far_clip / 2, 1);
+//       vec4.set(v2_camera, clip_width/2, -clip_height / 2 + clip_height / this._ySlices * i, far_clip / 2, 1);
+
+//       var edge1_3 = vec3.fromValues(v1_camera[0], v1_camera[1], v1_camera[2]);
+//       var edge2_3 = vec3.fromValues(v2_camera[0], v2_camera[1], v2_camera[2]);
+
+//       vec3.cross(nor_camera, edge2_3, edge1_3);
+//       vec3.normalize(nor_camera_normalized, nor_camera);
+//       this._yPlanes[i] = new Plane(ori_camera, nor_camera_normalized);
+//     }
+//     for(let i = 0; i < this._zSlices + 1; ++i){
+//       var z_Depth = near_clip + (far_clip - near_clip) / this._zSlices * i;
+//       var ori_camera = vec4.fromValues(0.0,0.0,z_Depth,1.0);
+//       var nor_camera = vec3.fromValues(0.0,0.0,1.0);
+//       this._zPlanes[i] = new Plane(ori_camera, nor_camera);
+//     }
+//   }
 
   test(){
-    for(let i = 0; i < 10; ++i){
-
+    //console.log(this._xPlanes);
+    for (let z = 0; z < this._zSlices; ++z) {
+      for (let y = 0; y < this._ySlices; ++y) {
+       for (let x = 0; x < this._xSlices; ++x) {
+        let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+       // Reset the light count to 0 for every cluster
+          console.log('x='+x+',y='+y+',z='+z+' - light_count:' +this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)]);
+        }
+      }
     }
   }
-  /*Is_Intersect_Light_Cluster(scene, lights_index, clusters_index){
-    //console.log(this._xSlices);
-    //console.log("sadas");
-    var cluster_x = (clusters_index % (this._xSlices * this._ySlices))%this._zSlices;
-    return true;
-  }*/
   
 
   updateClusters(camera, viewMatrix, scene) {
-    //this.test();
-    this.init_Planes(camera);
-    var total_ligths_num = scene.lights.length;
-    //console.log(total_ligths_num);
-    for(let i = 0; i < total_ligths_num; ++i){
-      //iterate through all the lights
-      //compute minX, minY, minZ, maxX, maxY, maxZ(which are edge slices no. of the light cover)
-      var maxX = -2,minX = this._xSlices+1,maxY = -2,minY = this._ySlices+1,maxZ = -2,minZ = this._zSlices+1;
-      //examine X slices (16+1)
-      for(let x = 0; x < this._xSlices + 1; ++x){
-        var dist = computeDistance_Point_Plane(scene.lights[i].position, this._xPlanes[x]);
-        var r = scene.lights[i].radius;
-        if(dist < r){
-          //this slice is inside of light radius
-          minX = Math.min(minX, x-1);
-          maxX = Math.max(maxX, x+1);
+    //clear clusterTexture
+    for (let z = 0; z < this._zSlices; ++z) {
+      for (let y = 0; y < this._ySlices; ++y) {
+       for (let x = 0; x < this._xSlices; ++x) {
+        let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+       // Reset the light count to 0 for every cluster
+        this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
         }
-      }
-
-      //examine Y slices
-      for(let y = 0; y < this._ySlices + 1; ++y){
-        var dist = computeDistance_Point_Plane(scene.lights[i].position, this._yPlanes[y]);
-        var r = scene.lights[i].radius;
-        if(dist < r){
-          //this slice is inside of light radius
-          minY = Math.min(minY, y-1);
-          maxY = Math.max(maxY, y+1);
-        }
-      }
-      //examine Z slices
-      for(let z = 0; z < this._zSlices + 1; ++z){
-        var dist = computeDistance_Point_Plane(scene.lights[i].position, this._zPlanes[z]);
-        var r = scene.lights[i].radius;
-        if(dist < r){
-          //this slice is inside of light radius
-          minZ = Math.min(minZ, z-1);
-          maxZ = Math.max(maxZ, z+1);
-        }
-      }
-      if(minX <= maxX && minY <= maxY && minZ <= maxZ){
-        //in this case, the light is overlapping with the frustum
-        //clamp
-        minX = Math.clamp(minX, 0, this._xSlices); 
-        maxX = Math.clamp(maxX, 0, this._xSlices); 
-        minY = Math.clamp(minY, 0, this._ySlices); 
-        maxY = Math.clamp(maxY, 0, this._ySlices); 
-        minZ = Math.clamp(minZ, 0, this._zSlices); 
-        maxZ = Math.clamp(maxZ, 0, this._zSlices); 
-        //iterate through the overlapping clusters, then write the light index into its texture buffer.
       }
     }
-    //console.log(this._zPlanes);
-    // TODO: Update the cluster texture with the count and indices of the lights in each cluster
-    // This will take some time. The math is nontrivial...
+    //
+    //this.init_Planes(camera);
+    
+    //camera.updateMatrixWorld();
+    let near_clip = camera.near;
+    let far_clip = camera.far;
+    let FOV = camera.fov * (Math.PI/180.0);
+    let aspect_ratio = camera.aspect;
 
-//     for (let z = 0; z < this._zSlices; ++z) {
-//       for (let y = 0; y < this._ySlices; ++y) {
-//         for (let x = 0; x < this._xSlices; ++x) {
-//           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-//           // Reset the light count to 0 for every cluster
-//           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-//           var light_count = 0;
-//           for(let k = 0; k < NUM_LIGHTS; ++k){
-//             if(this.Is_Intersect_Light_Cluster(scene, k, i)){
-// //              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, light_count+1)] = k;
-// //              light_count += 1;
-// //              if(light_count == MAX_LIGHTS_PER_CLUSTER){
-// //                this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = light_count;
-// //                continue;
-// //              }
-//             }
-//           }
-//           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = light_count;
-//         }
-//       }
-//     }
+    let XStride = (Math.tan(FOV/2.0) * 2.0 / this._xSlices) * aspect_ratio;
+    let YStride = (Math.tan(FOV/2.0) * 2.0 / this._ySlices);
+    let ZStride = (camera.far - camera.near) / this._zSlices;
+    // the z of this clip is 1
+    let OriX = -Math.tan(FOV/2.0) * aspect_ratio;
+    let OriY = -Math.tan(FOV/2.0);
+    //console.log(this._xPlanes);
+    //console.log(this._yPlanes);
+    //console.log(this._zPlanes);
+
+    for(let i = 0; i < NUM_LIGHTS; ++i){
+      //iterate through all the lights
+      //compute minX, minY, minZ, maxX, maxY, maxZ(which are edge slices no. of the light cover)
+      let r = scene.lights[i].radius;
+      let lightPos_camera =  vec4.fromValues(scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2], 1.0);
+      //transform light pos from world space to camera space
+      vec4.transformMat4(lightPos_camera, lightPos_camera, viewMatrix);
+      lightPos_camera[2] *= -1.0;
+      //var s = 1/lightPos_camera[3];
+      //vec4.scale(lightPos_camera, 1/lightPos_camera[3]);
+      //console.log(lightPos_camera);
+      //examine X slices (16+1)
+
+      //find minX
+      let minX = this._xSlices;
+      for(let x = 0; x < this._xSlices + 1; ++x){
+        let norm2 = vec2.clone(get_2D_Normal(OriX+XStride*x));
+        let norm3 = vec3.fromValues(norm2[0], 0, norm2[1]);     
+        if(vec3.dot(lightPos_camera, norm3) < r){
+          minX = Math.max(x-1, 0); 
+          break;
+        }
+      }
+      //find maxX
+      let maxX = this._xSlices;
+      for(let x = minX + 1; x < this._xSlices + 1; ++x){
+        let norm2 = vec2.clone(get_2D_Normal(OriX+XStride*x));
+        let norm3 = vec3.fromValues(norm2[0], 0, norm2[1]);
+        if(vec3.dot(lightPos_camera, norm3) < -r){
+          maxX = Math.max(0, x);
+          break;
+        }
+      }
+
+      //find minY
+      let minY = this._ySlices;
+      for(let y = 0; y < this._ySlices + 1; ++y) {
+        let norm2 = vec2.clone(get_2D_Normal(OriY+YStride*y));
+        let norm3 = vec3.fromValues(0, norm2[0], norm2[1]);        
+        if(vec3.dot(lightPos_camera, norm3) < r){
+          minY = Math.max(0, y-1);
+          break;
+        }
+      }
+      
+      //find maxY
+      let maxY = this._ySlices;
+      for(let y = minY+1; y < this.ySlices + 1; ++y) {
+        let norm2 = vec2.clone(get_2D_Normal(OriY+YStride*y));
+        let norm3 = vec3.fromValues(0, norm2[0], norm2[1]);
+        if(vec3.dot(lightPos_camera, norm3) < -r) {
+          maxY = Math.max(0, y);
+          break;
+        }
+      }
+
+      //find minZ
+      let minZ = this._zSlices;
+      let light_z_start = lightPos_camera[2] - r;
+      for(let z = 0; z < this._zSlices + 1; ++z) {
+        if(camera.near + z * ZStride > light_z_start){
+          minZ = Math.max(0, z-1);
+          break;
+        }
+      }
+      //find maxZ
+      let maxZ = this._zSlices;
+      let light_z_end = lightPos_camera[2] + r;
+      for(let z = minZ+1; z < this._zSlices + 1; ++z){
+        if(camera.near + z * ZStride > light_z_end){
+          maxZ = Math.max(0, z);
+          break;
+        }
+      }
+        //in this case, the light is overlapping with the frustum
+        //clamp
+      // if(maxX < 2){
+      //   console.log('light ' + i + ': ' + minX+' ' +maxX+' ' +minY+' ' +maxY+' ' +minZ+' ' +maxZ);
+      //   console.log(lightPos_camera);
+      //   console.log(this._xPlanes, this._yPlanes, this._zPlanes);
+      //   console.log('radiius = ' + r);
+      // }
+      //console.log('light ' + i + ': ' + minX+' ' +maxX+' ' +minY+' ' +maxY+' ' +minZ+' ' +maxZ);
+      //iterate through the overlapping clusters, then write the light index into its texture buffer.
+      for(let x = minX; x < maxX; ++x){
+        for(let y = minY; y < maxY; ++y){
+          for(let z = minZ; z < maxZ; ++z){
+            let cluster_linear_idx = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+            let light_count_idx = this._clusterTexture.bufferIndex(cluster_linear_idx, 0);
+            let light_count = this._clusterTexture.buffer[light_count_idx];
+
+            if(light_count < MAX_LIGHTS_PER_CLUSTER){
+              //write into the clusterTexture
+              //i is light index
+              light_count += 1;
+              let texel = Math.floor(light_count/4);
+              let texel_idx = this._clusterTexture.bufferIndex(cluster_linear_idx, texel);
+              let texel_offset = light_count - texel * 4;
+              this._clusterTexture.buffer[texel_idx + texel_offset] = i;
+              this._clusterTexture.buffer[light_count_idx] = light_count;
+            }
+          }
+        }
+      }
+    } //light loop ends here
 
     this._clusterTexture.update();
+    //this.test();
+    //console.log(this._clusterTexture.buffer);
   }
 }

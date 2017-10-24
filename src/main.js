@@ -35,7 +35,7 @@ const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
 
 camera.position.set(-10, 8, 0);
-cameraControls.target.set(0, 2, 0);
+cameraControls.target.set(0, 8, 0);
 gl.enable(gl.DEPTH_TEST);
 
 function render() {

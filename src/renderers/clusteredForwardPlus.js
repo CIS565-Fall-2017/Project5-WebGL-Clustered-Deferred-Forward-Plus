@@ -6,6 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -15,15 +16,20 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS,
+      numLights: NUM_LIGHTS, 
+      num_xSlices: xSlices, 
+      num_ySlices: ySlices, 
+      num_zSlices: zSlices, 
+      num_maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_cameraInfo', 'u_inverseProjection'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+    this._inverseProjectionMatrix = mat4.create();
   }
 
   render(camera, scene) {
@@ -32,7 +38,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
-
+    mat4.invert(this._inverseProjectionMatrix, this._projectionMatrix);
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
     
@@ -64,6 +70,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_inverseProjection, false, this._inverseProjectionMatrix);
+    // Upload the camera info
+    gl.uniform4f(this._shaderProgram.u_cameraInfo, canvas.width, canvas.height, camera.near, camera.far);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
