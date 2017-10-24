@@ -106,7 +106,7 @@ export default function(params) {
     //light count for the cluster takes up the first component 
     //in the first pixel so we'll need to to +1 in places
     //where were calculating the residing pixel
-    int numTexelsInColumn = int(float(${params.maxLightsPerCluster}+1) / 4.0) + 1;
+    int numTexelsInColumn = int(float(${params.maxLightsPerCluster}+1) * 0.25) + 1;
     vec3 fragColor = vec3(0.0);
 
     //TEST VALS
@@ -146,7 +146,7 @@ export default function(params) {
     for (int i = 0; i < ${params.numLights}; ++i) {
 
         if(i >= clusterLightCount) { break; } 
-        int texelIdx = (i+1) / 4;
+        int texelIdx = int(float(i+1) * 0.25);
         float V = float(texelIdx+1) / float(numTexelsInColumn+1);
         vec4 texel = texture2D(u_clusterbuffer, vec2(U,V));
         

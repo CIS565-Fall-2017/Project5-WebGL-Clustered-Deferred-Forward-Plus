@@ -4,6 +4,7 @@ precision highp float;
 
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
+uniform mat4 u_viewMatrix;
 
 varying vec3 v_position;
 varying vec3 v_normal;
@@ -22,7 +23,10 @@ void main() {
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
     // TODO: populate your g buffer
-     gl_FragData[0] = vec4(col, 0.0);
-     gl_FragData[1] = vec4(norm, 0.0);//only need x and y cam space, reconstruct z later
-     gl_FragData[2] = vec4(v_position, 1.0);
+
+     //packed normal
+    vec3 normView = normalize(vec3(u_viewMatrix * vec4(norm,0.0)));
+    gl_FragData[0] = vec4(col, normView.x);
+    gl_FragData[1] = vec4(v_position, normView.y);
+    gl_FragData[2] = vec4(norm, 0.0);
 }

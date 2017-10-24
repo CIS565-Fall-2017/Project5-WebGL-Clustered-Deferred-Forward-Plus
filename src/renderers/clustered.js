@@ -2,7 +2,7 @@ import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 1000;
 
 function getNormalComponents(bigSide2) {
     //normal connects from point on hypot to end of view vec, can form 4 similar triangles 
@@ -38,14 +38,14 @@ export default class ClusteredRenderer {
     }
 
     //loop lights
-    //find the 6 planes out of all the planes that divide up the frustrum that contain the light
+    //find the 6 planes out of all the planes that divide up the camera frustrum that contain the light
     //use those indices to loop over our cluster texture, update each cluster's light count and add the light 
-    //to their buckets
-    //need functions for figuring out planes based on camera space positions on the near plane(for x and y) and -z axis
+    //to theri buckets
+    //need functions for figuring out planes based on camera space positions on the view vector(for x and y) and -z axis
 
-    //Anther idea: + cleaner code probably, - more math
-    //or for x and y slice plane tests you could premult the view matrix by a rotation amount to rotate that
-    //plane to the y = 0 or x = 0 plane of the original camera space and check to see if the lights x or y 
+    //Anther idea: + cleaner code probably?, - more math
+    //or for x and y slice plane tests you could premult(local rotation) the view matrix by a rotation amount to rotate the cluster plane
+    //plane in question to the y = 0 or x = 0 plane of the original camera space and check to see if the lights x or y 
     //pos is less than the radius. this rotation angle wont be an integer mult of some base value but you'll need
     //to calc the angle based on the num of pixels it covers from the middle of the screen
 
@@ -65,6 +65,10 @@ export default class ClusteredRenderer {
     //with that, you no longer have to form a plane and do a dot product and 
     //see if its within range of the radius just figure out the aabb ndc xy point's plane bounds using the 
     // ndc slice strides
+    //^^ dont think this will work when the point is near the center of the screen. Instead get the camera space xy bound
+    //then rotate this square(2 points, ll, ur) in model space about y then x (euler order yx) to have it face the viewer,
+    //(orthogonal to the ray from the eye to the center of the light sphere) translate to world light position, 
+    //then transform to ndc using viewprojection, do perspective divide. divide ndc into slices and step until you find the bounds.
 
 
     //one side of the triangle is the view vector (0,0,1) and the other is the length to the top frust plane
