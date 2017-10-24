@@ -43,7 +43,10 @@ The outter light loop overhead is 4 divides 38 mults and 26 adds. Looking at htt
 <br />
 <br />
 
-**Renderer in Debug Mode**<br />
+**Renderer: Clustered Deferred**<br />
+![](img/jif.gif)
+
+**Screenshot**
 ![](img/clusteredDeferred.png)
 
 **Data**<br />
