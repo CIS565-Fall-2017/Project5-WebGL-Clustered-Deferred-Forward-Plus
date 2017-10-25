@@ -7,6 +7,8 @@ export default function(params) {
   uniform vec2 u_cluster_tile_size;
   uniform float u_cluster_depth_stride;
   uniform mat4 u_viewMatrix;
+  uniform mat4 u_invViewMatrix;
+  uniform mat4 u_invViewProjMatrix;
   uniform sampler2D u_clusterbuffer;
 
 
@@ -15,14 +17,6 @@ export default function(params) {
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
 
   varying vec2 v_uv;
-
-  vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
-    normap = normap * 2.0 - 1.0;
-    vec3 up = normalize(vec3(0.001, 1, 0.001));
-    vec3 surftan = normalize(cross(geomnor, up));
-    vec3 surfbinor = cross(geomnor, surftan);
-    return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
-  }
 
   struct Light {
     vec3 position;
@@ -82,25 +76,39 @@ export default function(params) {
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv); // v_position
 
     // optimized g-buffer
-    // g-buffer[0] color.x  color.y  color.z  viewSpaceDepth
-    // g-buffer[1] normal.x normal.y 0.0      0.0
-    vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
-    vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
-    vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
 
-    //reconstruct normal
-    //normal.z = sqrt(1.0 - normal.x * normal.x - normal.y * normal.y);
+    // g-buffer[0] : color.x   | color.y   | color.z   | viewSpaceDepth
+    // g-buffer[1] : normal.x  | normal.y  | 0.0       | NDC_Depth
+
+    vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
+    // vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
+    vec2 enc_nor = texture2D(u_gbuffers[1], v_uv).xy;
+    // vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
+
+    float NDC_depth = texture2D(u_gbuffers[1], v_uv).w;
+
+    // reconstruct v_position
+    vec4 screenPos = vec4(v_uv * 2.0 - vec2(1.0), NDC_depth, 1.0);
+    vec4 tmp_pos = u_invViewProjMatrix * screenPos;
+    tmp_pos = tmp_pos / tmp_pos.w;
+    vec3 v_position = tmp_pos.xyz;
+
+    // reconstruct normal
+    vec3 normal;
+    normal.xy = enc_nor;
+    normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy));
+    normal    = vec3(u_invViewMatrix * vec4(normal, 0.0));
 
     vec3 fragColor = vec3(0.0);
 
-    vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
+    //vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
 
-    //float viewSpaceDepth = texture2D(u_gbuffers[0], v_uv).w;
+    float viewSpaceDepth = texture2D(u_gbuffers[0], v_uv).w;
 
     // determine which cluster this fragment is in
     int cluster_Idx_x = int(gl_FragCoord.x / u_cluster_tile_size.x);
     int cluster_Idx_y = int(gl_FragCoord.y / u_cluster_tile_size.y);
-    int cluster_Idx_z = int((-pos_viewSpace.z - u_nearClip) / u_cluster_depth_stride);
+    int cluster_Idx_z = int((-viewSpaceDepth - u_nearClip) / u_cluster_depth_stride);
 
     // clusterTexture Size
     const int clusterTexutreWidth  = int(${params.numXSlices}) * int(${params.numYSlices}) * int(${params.numZSlices});

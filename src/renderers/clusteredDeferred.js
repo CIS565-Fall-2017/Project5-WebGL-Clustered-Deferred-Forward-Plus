@@ -12,7 +12,7 @@ import ClusteredRenderer from './clustered';
 import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 //export const NUM_GBUFFERS = 4;
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 2;
 
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
@@ -37,13 +37,15 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numYSlices: ySlices,
       numZSlices: zSlices,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride', 'u_viewMatrix', 'u_clusterbuffer',],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride', 'u_viewMatrix', 'u_clusterbuffer', 'u_invViewProjMatrix', 'u_invViewMatrix'],
       attribs: ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+    this._invViewMatrix = mat4.create();
+    this._invViewProjMatrix = mat4.create();
   }
 
   setupDrawBuffers(width, height) {
@@ -116,6 +118,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    mat4.invert(this._invViewMatrix, this._viewMatrix);
+    mat4.invert(this._invViewProjMatrix, this._viewProjectionMatrix);
 
     // Render to the whole screen
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -177,7 +181,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.uniform1f(this._progShade.u_nearClip, camera.near);
     gl.uniform1f(this._progShade.u_cluster_depth_stride, (camera.far - camera.near) / this._zSlices);
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
-
+    gl.uniformMatrix4fv(this._progShade.u_invViewMatrix, false, this._invViewMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_invViewProjMatrix, false, this._invViewProjMatrix);
 
     // Bind g-buffers
     const firstGBufferBinding = 2; // You may have to change this if you use other texture slots
