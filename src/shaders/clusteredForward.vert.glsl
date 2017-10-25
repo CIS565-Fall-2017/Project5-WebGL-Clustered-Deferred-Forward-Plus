@@ -1,4 +1,4 @@
-#version 100
+// file=""#version 100
 precision highp float;
 
 uniform mat4 u_viewProjectionMatrix;
