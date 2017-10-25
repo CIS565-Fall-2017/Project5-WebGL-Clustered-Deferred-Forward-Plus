@@ -32,10 +32,10 @@ export default class ClusteredRenderer {
     var zinterval = (camera.far - camera.near)/this._zSlices;
     var nearPlaneZ = camera.near;
     var farPlaneZ = camera.far;
-    var frustrumMaxX = farPlaneZ* Math.tan((camera.fov/2)*Math.PI/180)*2;
-    var xIntervalMax = frustrumMaxX/this._xSlices;
-    var frustrumMaxY = frustrumMaxX/camera.aspect;
+    var frustrumMaxY = farPlaneZ* Math.tan((camera.fov/2)*Math.PI/180)*2;
     var yIntervalMax = frustrumMaxY/this._ySlices;
+    var frustrumMaxX = frustrumMaxY*camera.aspect;
+    var xIntervalMax = frustrumMaxX/this._xSlices;
     //debugger;
     for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
       
@@ -82,12 +82,17 @@ export default class ClusteredRenderer {
           //debugger;
           if(lightDistanceToPlane>0){
             if(lightDistanceToPlane < lightRadius && !minXFound){
-              minX = xPlaneIdx-1;
+              if(xPlaneIdx>1){
+                minX = xPlaneIdx-1;
+              }
+             
               minXFound = true;
             }
           }else{
             if(!minXFound){
-              minX = xPlaneIdx-1;
+              if(xPlaneIdx>1){
+                minX = xPlaneIdx-1;
+              }              
               minXFound = true;
             }
             if(-lightDistanceToPlane > lightRadius && !maxXFound){
@@ -118,12 +123,16 @@ export default class ClusteredRenderer {
           let lightDistanceToPlane=vec3.dot(lightPos,faceNormal);
           if(lightDistanceToPlane>0){
             if(lightDistanceToPlane < lightRadius && !minYFound){
-              minY = yPlaneIdx;
+              if(yPlaneIdx>1){
+                minY = yPlaneIdx-1;
+              }
               minYFound = true;
             }
           }else{
             if(!minYFound){
-              minY = yPlaneIdx-1;
+              if(yPlaneIdx>1){
+                minY = yPlaneIdx-1;
+              }
               minYFound = true;
             }
             if(-lightDistanceToPlane > lightRadius && !maxYFound){
@@ -144,12 +153,16 @@ export default class ClusteredRenderer {
         let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + zPlaneIdx*zinterval);
         if(lightDistanceToPlane>0){
           if(lightDistanceToPlane < lightRadius && !minZFound){
-            minZ = zPlaneIdx;
+            if(zPlaneIdx>1){
+              minZ = zPlaneIdx-1;
+            }    
             minZFound = true;
           }
         }else{
           if(!minZFound){
-            minZ = zPlaneIdx-1;
+            if(zPlaneIdx>1){
+              minZ = zPlaneIdx-1;
+            }            
             minZFound = true;
           }
           if(-lightDistanceToPlane > lightRadius && !maxZFound){
@@ -181,7 +194,7 @@ export default class ClusteredRenderer {
       }
     }
     //console.log(minX, maxX)
-   // debugger;
+    //debugger;
   }
   this._clusterTexture.update();
 }

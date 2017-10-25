@@ -6,7 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-import MAX_LIGHTS_PER_CLUSTER from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -17,6 +17,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix',
     'u_viewMatrix', 'u_fov', 'u_aspectRatio', 'u_zSliceNum', 'u_xSliceNum', 'u_ySliceNum', 'u_zFar', 'u_zNear', 'u_maxlightsPerCluster'],
@@ -29,7 +30,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   }
 
   render(camera, scene) {
-    console.log(camera.fov)
+    //console.log(camera.fov)
     //debugger;
     // Update the camera matrices
     camera.updateMatrixWorld();
