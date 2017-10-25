@@ -7,17 +7,23 @@ import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
+
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
 
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
-    
+
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
+      numXSlices: xSlices,
+      numYSlices: ySlices,
+      numZSlices: zSlices,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -34,8 +40,8 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
-    
+    this.updateClusters(camera, this._viewMatrix, scene, this._viewProjectionMatrix);
+
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
@@ -76,6 +82,21 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+
+
+    gl.uniform2f(this._shaderProgram.u_cluster_tile_size, (canvas.width )/this._xSlices, (canvas.height)/this._ySlices);
+    gl.uniform1f(this._shaderProgram.u_nearClip, camera.near);
+    gl.uniform1f(this._shaderProgram.u_cluster_depth_stride, (camera.far - camera.near) / this._zSlices);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    //let deg2rad = Math.PI/180.0;
+    //gl.uniform1f(this._shaderProgram.u_fovby2_radius, deg2rad * camera.fov/2.0);
+    //gl.uniform1f(this._shaderProgram.u_ySlices, this._ySlices);
+    //gl.uniform1f(this._shaderProgram.u_cluster_tile_size_x, (canvas.width )/this._xSlices);
+    //gl.uniform1f(this._shaderProgram.u_cluster_tile_size_y, (canvas.height)/this._ySlices);
+    //gl.uniform1f(this._shaderProgram.u_zSlices, this._zSlices);
+    //gl.uniform1f(this._shaderProgram.u_xSlices, this._xSlices);
+
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

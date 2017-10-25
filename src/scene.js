@@ -1,11 +1,13 @@
 const MinimalGLTFLoader = require('../lib/minimal-gltf-loader');
 import { gl } from './init';
 
-// TODO: Edit if you want to change the light initial positions 
+// TODO: Edit if you want to change the light initial positions
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
 export const LIGHT_RADIUS = 5.0;
-export const LIGHT_DT = -0.03;
+//export const LIGHT_DT = -0.3;
+export const LIGHT_DT = 0.0;
+
 
 // TODO: This controls the number of lights
 export const NUM_LIGHTS = 100;
@@ -36,18 +38,18 @@ class Scene {
     var glTFLoader = new MinimalGLTFLoader.glTFLoader(gl);
     glTFLoader.loadGLTF(url, glTF => {
       var curScene = glTF.scenes[glTF.defaultScene];
-      
+
       var webGLTextures = {};
-    
+
       // temp var
       var i,len;
       var primitiveOrderID;
-    
+
       var mesh;
       var primitive;
       var vertexBuffer;
       var indicesBuffer;
-    
+
       // textures setting
       var textureID = 0;
       var textureInfo;
@@ -56,30 +58,30 @@ class Scene {
       var magFilter, minFilter, wrapS, wrapT;
       var image;
       var texture;
-    
+
       // temp for sponza
       var colorTextureName = 'texture_color';
       var normalTextureName = 'texture_normal';
-    
+
       for (var tid in glTF.json.textures) {
         textureInfo = glTF.json.textures[tid];
         target = textureInfo.target || gl.TEXTURE_2D;
         format = textureInfo.format || gl.RGBA;
         internalFormat = textureInfo.format || gl.RGBA;
         type = textureInfo.type || gl.UNSIGNED_BYTE;
-    
+
         image = glTF.images[textureInfo.source];
-    
+
         texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + textureID);
         gl.bindTexture(target, texture);
-    
+
         switch(target) {
           case 3553: // gl.TEXTURE_2D
             gl.texImage2D(target, 0, internalFormat, format, type, image);
             break;
         }
-    
+
         // !! Sampler
         // raw WebGL 1, no sampler object, set magfilter, wrapS, etc
         samplerInfo = glTF.json.samplers[textureInfo.sampler];
@@ -91,22 +93,22 @@ class Scene {
         gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, magFilter);
         gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS);
         gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT);
-        if (minFilter == gl.NEAREST_MIPMAP_NEAREST || 
-            minFilter == gl.NEAREST_MIPMAP_LINEAR || 
+        if (minFilter == gl.NEAREST_MIPMAP_NEAREST ||
+            minFilter == gl.NEAREST_MIPMAP_LINEAR ||
             minFilter == gl.LINEAR_MIPMAP_NEAREST ||
             minFilter == gl.LINEAR_MIPMAP_LINEAR ) {
           gl.generateMipmap(target);
         }
-    
-    
+
+
         gl.bindTexture(target, null);
-    
+
         webGLTextures[tid] = {
           texture: texture,
           target: target,
           id: textureID
         };
-    
+
         textureID++;
       }
 
@@ -146,7 +148,7 @@ class Scene {
             uvInfo: {size: uvInfo.size, type: uvInfo.type, stride: uvInfo.stride, offset: uvInfo.offset},
 
             // specific textures temp test
-            colmap: webGLTextures[colorTextureName].texture, 
+            colmap: webGLTextures[colorTextureName].texture,
             normap: webGLTextures[normalTextureName].texture
           });
         }
@@ -180,16 +182,16 @@ class Scene {
       }
 
       gl.bindBuffer(gl.ARRAY_BUFFER, model.attributes);
-      
+
       gl.enableVertexAttribArray(shaderProgram.a_position);
       gl.vertexAttribPointer(shaderProgram.a_position, model.posInfo.size, model.posInfo.type, false, model.posInfo.stride, model.posInfo.offset);
-  
+
       gl.enableVertexAttribArray(shaderProgram.a_normal);
       gl.vertexAttribPointer(shaderProgram.a_normal, model.norInfo.size, model.norInfo.type, false, model.norInfo.stride, model.norInfo.offset);
-  
+
       gl.enableVertexAttribArray(shaderProgram.a_uv);
       gl.vertexAttribPointer(shaderProgram.a_uv, model.uvInfo.size, model.uvInfo.type, false, model.uvInfo.stride, model.uvInfo.offset);
-  
+
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.idx);
 
       gl.drawElements(model.gltf.mode, model.gltf.indices.length, model.gltf.indicesComponentType, 0);
