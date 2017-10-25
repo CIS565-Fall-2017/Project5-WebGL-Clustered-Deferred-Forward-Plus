@@ -83,6 +83,7 @@ export default class ClusteredRenderer {
 
             if(totalNumLights < MAX_LIGHTS_PER_CLUSTER)
             {
+              totalNumLights++;
               let v = floor((totalNumLights) / 4);
               let pixelIdx = (totalNumLights) % 4;
   
@@ -90,7 +91,7 @@ export default class ClusteredRenderer {
               // bufferIndex(u, 0) + 0] = LIGHT COUNT;
               // bufferIndex(u, v) + 0...3] = LIGHT ID'S;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(u, v) + pixelIdx] = lightIdx; 
-            }
+            }//end light if check
                
           }//end for x
         }//end for y
