@@ -89,6 +89,15 @@ export default function(params) {
     return clusterXID + clusterYID * ${params.xSlices} + clusterZID * ${params.xSlices} * ${params.ySlices};
   }
 
+  vec3 getClusterColor(vec3 position) {
+    float frustrumWidth = u_frustrumRatios.x * abs(position.z);
+    float frustrumHeight = u_frustrumRatios.y * abs(position.z);
+    float clusterXID = floor((.5 * frustrumWidth + position.x)/frustrumWidth * ${params.xSlices});
+    float clusterYID = floor((.5 * frustrumHeight + position.y)/frustrumHeight * ${params.ySlices});
+    float clusterZID = floor((abs(position.z) - u_nearFar.x) / (u_nearFar.y - u_nearFar.x) * ${params.zSlices});
+    return vec3(clusterXID / ${params.xSlices}, clusterYID / ${params.ySlices}, clusterZID / ${params.zSlices});
+  }
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
