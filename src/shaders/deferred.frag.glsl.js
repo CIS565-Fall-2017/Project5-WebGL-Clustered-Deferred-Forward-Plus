@@ -94,6 +94,10 @@ export default function(params) {
     vec3 v_position = tmp_pos.xyz;
 
     // reconstruct normal
+    // when reconstruct a normal, it should happen on view space,
+    // so that we can really handle normals of fragment we really see(deferred shading)
+    // But in our case, v_position and normal should on world space
+    // so we tranform normal back to world space
     vec3 normal;
     normal.xy = enc_nor;
     normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy));
