@@ -86,21 +86,21 @@ export default function(params) {
     // g-buffer[1] normal.x normal.y 0.0      0.0
     vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
     vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
-    //vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
+    vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
 
     //reconstruct normal
-    normal.z = sqrt(1.0 - normal.x * normal.x - normal.y * normal.y);
+    //normal.z = sqrt(1.0 - normal.x * normal.x - normal.y * normal.y);
 
     vec3 fragColor = vec3(0.0);
 
-    //vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
+    vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
 
-    float viewSpaceDepth = texture2D(u_gbuffers[0], v_uv).w;
+    //float viewSpaceDepth = texture2D(u_gbuffers[0], v_uv).w;
 
     // determine which cluster this fragment is in
     int cluster_Idx_x = int(gl_FragCoord.x / u_cluster_tile_size.x);
     int cluster_Idx_y = int(gl_FragCoord.y / u_cluster_tile_size.y);
-    int cluster_Idx_z = int((-viewSpaceDepth - u_nearClip) / u_cluster_depth_stride);
+    int cluster_Idx_z = int((-pos_viewSpace.z - u_nearClip) / u_cluster_depth_stride);
 
     // clusterTexture Size
     const int clusterTexutreWidth  = int(${params.numXSlices}) * int(${params.numYSlices}) * int(${params.numZSlices});

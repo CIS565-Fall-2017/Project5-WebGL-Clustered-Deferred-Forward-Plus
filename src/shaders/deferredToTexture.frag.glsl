@@ -25,19 +25,19 @@ void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    //vec4 v_pos_NDC = u_viewProjectionMatrix * vec4(v_position, 1.0);
-    //v_pos_NDC /= v_pos_NDC.w;
+    vec4 v_pos_NDC = u_viewProjectionMatrix * vec4(v_position, 1.0);
+    v_pos_NDC /= v_pos_NDC.w;
 
-    //vec3 depth = vec3(v_pos_NDC.z);
+    vec3 depth = vec3(v_pos_NDC.z);
 
-    vec4 v_pos_ViewSpace = u_viewMatrix * vec4(v_position, 1.0);
+    //vec4 v_pos_ViewSpace = u_viewMatrix * vec4(v_position, 1.0);
 
     // TODO: populate your g buffer
-    gl_FragData[0] = vec4(col, v_pos_ViewSpace.z);
-    gl_FragData[1] = vec4(norm.x, norm.y, 0.0, 0.0);
+    //gl_FragData[0] = vec4(col, v_pos_ViewSpace.z);
+    //gl_FragData[1] = vec4(norm.x, norm.y, 0.0, 0.0);
 
-    //gl_FragData[0] = vec4(col, 0.0);
-    //gl_FragData[1] = vec4(norm, 0.0);
-    //gl_FragData[2] = vec4(depth, 0.0);
-    //gl_FragData[3] = vec4(v_position, 1.0);
+    gl_FragData[0] = vec4(col, 0.0);
+    gl_FragData[1] = vec4(norm, 0.0);
+    gl_FragData[2] = vec4(depth, 0.0);
+    gl_FragData[3] = vec4(v_position, 1.0);
 }

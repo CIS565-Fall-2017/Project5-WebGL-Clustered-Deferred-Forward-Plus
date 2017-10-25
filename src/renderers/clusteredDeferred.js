@@ -9,8 +9,10 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
+
 //export const NUM_GBUFFERS = 4;
-export const NUM_GBUFFERS = 2;
+export const NUM_GBUFFERS = 4;
 
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
@@ -162,14 +164,14 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
     // Set the light texture as a uniform input to the shader
-    gl.activeTexture(gl.TEXTURE2); //gl.activeTexture(gl.TEXTURE4);
+    gl.activeTexture(gl.TEXTURE0); //gl.activeTexture(gl.TEXTURE4);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
-    gl.uniform1i(this._progShade.u_lightbuffer, 2); //gl.uniform1i(this._progShade.u_lightbuffer, 4);
+    gl.uniform1i(this._progShade.u_lightbuffer, 0); //gl.uniform1i(this._progShade.u_lightbuffer, 4);
 
     // Set the cluster texture as a uniform input to the shader
-    gl.activeTexture(gl.TEXTURE3);//gl.activeTexture(gl.TEXTURE5);
+    gl.activeTexture(gl.TEXTURE1);//gl.activeTexture(gl.TEXTURE5);
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
-    gl.uniform1i(this._progShade.u_clusterbuffer, 3);//gl.uniform1i(this._progShade.u_clusterbuffer, 5);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 1);//gl.uniform1i(this._progShade.u_clusterbuffer, 5);
 
     gl.uniform2f(this._progShade.u_cluster_tile_size, (canvas.width )/this._xSlices, (canvas.height)/this._ySlices);
     gl.uniform1f(this._progShade.u_nearClip, camera.near);
@@ -178,7 +180,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
 
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = 2; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
