@@ -42,8 +42,8 @@ export default class ClusteredRenderer
 
     //find bounding x and y values of the camera frustum    
     this.vertical_FoV = camera.fov;
-    var tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
-    var tan_Horizontal_FoV_by_2 = camera.aspect * tan_Vertical_FoV_by_2;    
+    this.tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
+    var tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
     this.horizontal_FoV = 2 * Math.atan(tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
 
     /*
@@ -70,7 +70,11 @@ export default class ClusteredRenderer
   createPlane(planeNormal, pointOnPlane)
   {
     var d = vec3.dot(planeNormal, pointOnPlane);
-    var plane = new Plane(planeNormal[0], planeNormal[1], planeNormal[2], d);
+    var plane = vec4.create();
+    plane[0] = planeNormal[0];
+    plane[1] = planeNormal[1];
+    plane[2] = planeNormal[2];
+    plane[3] = d;
     return plane;
   }
 
@@ -78,9 +82,9 @@ export default class ClusteredRenderer
   {
     //returns a vec3
     var planeNormal = vec3.create();
-    var normalizedVec;
+    var normalizedVec = vec3.create();
     vec3.normalize(normalizedVec, pointOnPlane);
-    vec3.cross(planeNormal, normalizedVec, perpendicularVectorOnPlane); // this makes the normal of all the 
+    vec3.cross(planeNormal, perpendicularVectorOnPlane, normalizedVec ); // this makes the normal of all the 
                                                                 //planes be in the same hemisphere as the +ve x axis
     vec3.normalize(planeNormal, planeNormal);
 
@@ -91,30 +95,18 @@ export default class ClusteredRenderer
   {
     //returns a Plane
     var mag;
-    mag = Math.sqrt(plane.a * plane.a + plane.b * plane.b + plane.c * plane.c);
-    plane.a = plane.a / mag;
-    plane.b = plane.b / mag;
-    plane.c = plane.c / mag;
-    plane.d = plane.d / mag;
+    mag = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+    plane[0] = plane[0] / mag;
+    plane[1] = plane[1] / mag;
+    plane[2] = plane[2] / mag;
+    plane[3] = plane[3] / mag;
   }
 
-  classifyPoint(plane, point)
+  distanceToPoint(plane, point)
   {
-    //returns a Halfspace
-    var d = plane.a*point.x + plane.b*point.y + plane.c*point.z + plane.d;
-
-    if (d < 0)
-    {
-      return Halfspace.NEGATIVE;
-    }
-    else if (d > 0)
-    {
-      return Halfspace.POSITIVE;
-    }
-    else
-    {
-      return Halfspace.ON_PLANE;
-    }
+    //returns a signed Distance
+    var SD = plane[0]*point[0] + plane[1]*point[1] + plane[2]*point[2] + plane[3];
+    return SD;
   }
 
   classifyPointwithSD(d)
@@ -153,11 +145,11 @@ export default class ClusteredRenderer
     }
 
     //instead of using the farclip plane as the arbitrary plane to base all our calculations and division splitting off of
-    const yStride = (tan_Vertical_FoV_by_2 * 2.0 / this._ySlices);
-    const xStride = (tan_Vertical_FoV_by_2 * 2.0 / this._xSlices) * camera.aspect;
+    const yStride = (this.tan_Vertical_FoV_by_2 * 2.0 / this._ySlices);
+    const xStride = (this.tan_Vertical_FoV_by_2 * 2.0 / this._xSlices) * camera.aspect;
     const zStride = (camera.far - camera.near) / this._zSlices;
-    const yStrideStart = -tan_Vertical_FoV_by_2;
-    const xStrideStart = -tan_Vertical_FoV_by_2 * camera.aspect;
+    const yStrideStart = -this.tan_Vertical_FoV_by_2;
+    const xStrideStart = -this.tan_Vertical_FoV_by_2 * camera.aspect;
 
     var xStartIndex, yStartIndex, zStartIndex;
     var xEndIndex, yEndIndex, zEndIndex;
@@ -177,7 +169,7 @@ export default class ClusteredRenderer
                                      _lightPos[1], 
                                      _lightPos[2] );
 
-      lightPos.z *= -1; //camera looks down negative z, make z axis positive to make calculations easier
+      lightPos[2] *= -1; //camera looks down negative z, make z axis positive to make calculations easier
       
       // now using the min and max of the AABB determine which clusters the light lies in
       // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
@@ -230,6 +222,7 @@ export default class ClusteredRenderer
         }
       }
 
+      //debugger;
       pointOnPlane[0] = 0;
       //________________________startY___________________________
       for(let i=0; i<this._ySlices; i++)
@@ -268,7 +261,7 @@ export default class ClusteredRenderer
       }
       
       //________________________startZ___________________________
-      let lightZnear = lightPos[2] - radius;
+      let lightZnear = lightPos[2] - lightRadius;
       for(let i=0; i<this._zSlices; i++)
       {
           if(camera.near + i*zStride > lightZnear)
@@ -279,10 +272,10 @@ export default class ClusteredRenderer
       }
       
       //________________________endZ_____________________________
-      let lightZfar = lightPos[2] + radius;
+      let lightZfar = lightPos[2] + lightRadius;
       for(let i=zStartIndex; i<this._zSlices; i++)
       {
-        if(camera.near + i*zStride > lightZnear)
+        if(camera.near + i*zStride > lightZfar)
         {
             zEndIndex = Math.max(0, i-1);
             break;
@@ -291,11 +284,11 @@ export default class ClusteredRenderer
       //_____________________________________________________
       //_____________________________________________________
 
-      for (let z = zStartIndex; z < zEndIndex; ++z)
+      for (let z = zStartIndex; z <= zEndIndex; ++z)
       {
-        for (let y = yStartIndex; y < yEndIndex; ++y)
+        for (let y = yStartIndex; y <= yEndIndex; ++y)
         {
-          for (let x = xStartIndex; x < xEndIndex; ++x) 
+          for (let x = xStartIndex; x <= xEndIndex; ++x) 
           {
             let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster

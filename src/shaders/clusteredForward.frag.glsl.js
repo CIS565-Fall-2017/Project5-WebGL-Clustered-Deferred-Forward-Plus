@@ -165,14 +165,14 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    //gl_FragColor = vec4(albedo, 1.0);
+    gl_FragColor = vec4(albedo, 1.0);
     // gl_FragColor = vec4(floor((fragXangle/ u_xStride)/float(numXSlices)), 
     //                     floor((fragXangle/ u_xStride)/float(numXSlices)), 
     //                     floor((fragXangle/ u_xStride)/float(numXSlices)), 1.0);
 
-    gl_FragColor = vec4(float(clusterNumLights/maxLightsPerCluster), 
-                        float(clusterNumLights/maxLightsPerCluster), 
-                        float(clusterNumLights/maxLightsPerCluster), 1.0);
+    // gl_FragColor = vec4(float(clusterNumLights/maxLightsPerCluster), 
+    //                     float(clusterNumLights/maxLightsPerCluster), 
+    //                     float(clusterNumLights/maxLightsPerCluster), 1.0);
 
   }
   `;
