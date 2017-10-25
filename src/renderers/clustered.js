@@ -23,7 +23,7 @@ export default class ClusteredRenderer {
     this._zSlices = zSlices;
   }
 
-  updateClusters(camera, viewMatrix, scene) {
+  updateClusters(camera, viewMatrix, projectionMatrix, scene) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
@@ -161,7 +161,7 @@ export default class ClusteredRenderer {
                     let lightCountIdx = this._clusterTexture.bufferIndex(clusterIdx, 0);
                     let lightCount = 1 + this._clusterTexture.buffer[lightCountIdx];
 
-                    if(lightCount < MAX_LIGHTS_PER_CLUSTER) {
+                    if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
                         this._clusterTexture.buffer[lightCountIdx] = lightCount;
                         let texel = Math.floor(lightCount*0.25);
                         let texelIdx = this._clusterTexture.bufferIndex(clusterIdx, texel);
@@ -174,6 +174,156 @@ export default class ClusteredRenderer {
 
     }//end light loop
 
+
+
     this._clusterTexture.update();
   }//end updateClusters
 }//end clusteredrenderer class
+
+
+
+
+
+
+
+//    //one side of the triangle is the view vector (0,0,1) and the other is the length to the top frust plane
+//    //mult by 2 to get total vertical length then chop this length up
+//    const yPlaneStride = (2.0 / this._ySlices);
+//    const xPlaneStride = (2.0 / this._xSlices);
+//    const zPlaneStride = (camera.far - camera.near) / this._zSlices;
+//    const yPlaneStrideStart = -1.0;
+//    const xPlaneStrideStart = -1.0;
+//
+//    //https://www.npmjs.com/package/gl-vec4
+//    //plato's response: http://mathhelpforum.com/calculus/46006-shortest-distance-plane-sphere-difficult.html
+//    //the signed distance from a point A to a plane containing a point P and a normal n is: dot(A-P, n)
+//    //https://mathbitsnotebook.com/Geometry/Similarity/SMProofs.html
+//    for(let i = 0; i < NUM_LIGHTS; ++i) {
+//        let radius = scene.lights[i].radius;
+//        let lightPos = vec4.fromValues(scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2], 1.0);
+//        vec4.transformMat4(lightPos, lightPos, viewMatrix);
+//        lightPos[2] *= -1.0;//cam looks down neg Z, make z positive
+//        let lightPos3 = vec3.fromValues(lightPos[0], lightPos[1], lightPos[2]);
+//       
+//        //additional work
+//        let signx = 1;
+//        let signy = 1;
+//        if(0 > lightPos[0]) {signx = -1.0;}
+//        if(0 > lightPos[1]) {signy = -1.0;}
+//        let xzLightPos = vec2.fromValues(lightPos[0],lightPos[2]);
+//        let yzLightPos = vec2.fromValues(lightPos[1],lightPos[2]);
+//        let xzLightPosLen = vec2.length(xzLightPos);
+//        let yzLightPosLen = vec2.length(yzLightPos);
+//        let cosx = xzLightPos[1] / xzLightPosLen;//angle formed between z axis and yz plane light pos
+//        let cosy = yzLightPos[1] / yzLightPosLen;//angle formed between z axis and xz plane light pos
+//        let sinx = Math.sqrt(1.0-cosx*cosx);
+//        let siny = Math.sqrt(1.0-cosy*cosy);
+//
+//        //rotate the points
+//        //Y rotation first then x(by that i mean successive local rotate(euler), euler x then y would be skewed i think)
+//        let modelAABBMin = vec3.fromValues(-radius,-radius, 0.0);
+//        let modelAABBMax = vec3.fromValues( radius, radius, 0.0);
+//
+//        let rotXAABBMin = vec3.fromValues(modelAABBMin[0], cosy*modelAABBMin[1], signy*-siny*modelAABBMin[1]);
+//        let rotXAABBMax = vec3.fromValues(modelAABBMax[0], cosy*modelAABBMax[1], signy*-siny*modelAABBMax[1]);
+//
+//        let rotYXAABBMin = vec3.fromValues(cosx*rotXAABBMin[0] + -signx*sinx*rotXAABBMin[2], rotXAABBMin[1],
+//                                           -signx*-sinx*rotXAABBMin[0] + cosx*rotXAABBMin[2]);
+//        let rotYXAABBMax = vec3.fromValues(cosx*rotXAABBMax[0] + -signx*sinx*rotXAABBMax[2], rotXAABBMax[1],
+//                                           -signx*-sinx*rotXAABBMax[0] + cosx*rotXAABBMax[2]);
+//
+//        //translate back into camera space
+//        vec3.add(rotYXAABBMin, rotYXAABBMin, lightPos3);
+//        vec3.add(rotYXAABBMax, rotYXAABBMax, lightPos3);
+//
+//        //project onto screen
+//        let projectedAABBMin = vec2.fromValues(projectionMatrix[0]*rotYXAABBMin[0] / rotYXAABBMin[2],
+//                                               projectionMatrix[5]*rotYXAABBMin[1] / rotYXAABBMin[2]);
+//        let projectedAABBMax = vec2.fromValues(projectionMatrix[0]*rotYXAABBMax[0] / rotYXAABBMax[2],
+//                                               projectionMatrix[5]*rotYXAABBMax[1] / rotYXAABBMax[2]);
+//
+//        //end addtional work
+//        
+//        //X//
+//        //TODO: turn start and end idx find into function
+//        let xStartIdx = this._xSlices;
+//        let xndc = -1.0 - xPlaneStride;
+//        for(let iter = 0; iter <= this._xSlices; ++iter) {
+//            xndc += xPlaneStride;
+//            if(xndc > projectedAABBMin[0]) {
+//                xStartIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//        }
+//        
+//        let xStopIdx = this._xSlices;
+//        for(let iter = xStartIdx+1; iter<=this.xSlices; ++iter) {
+//            if(xndc > projectedAABBMax[0]) {
+//                xStopIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//            xndc += xPlaneStride;
+//        }
+//
+//        //Y//
+//        let yStartIdx = this._ySlices;
+//        let yndc = -1.0 - yPlaneStride;
+//        for(let iter = 0; iter <= this._ySlices; ++iter) {
+//            yndc += yPlaneStride;
+//            if(yndc > projectedAABBMin[1]) {
+//                yStartIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//        }
+//
+//        let yStopIdx = this._ySlices;
+//        for(let iter = 0; iter <= this._ySlices; ++iter) {
+//            if(yndc > projectedAABBMax[1]) {
+//                yStartIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//            yndc += yPlaneStride;
+//        }
+//        
+//
+//        //Z//
+//        let zStartIdx = this._zSlices;
+//        let lightZStart = lightPos[2] - radius;
+//        for(let iter = 0; iter <= this._zSlices; ++iter) {
+//            if(camera.near + iter*zPlaneStride > lightZStart) {
+//                zStartIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//        }
+//      
+//        let zStopIdx = this._zSlices;
+//        let lightZStop = lightPos[2] + radius;
+//        for(let iter = zStartIdx+1; iter<=this.zSlices; ++iter) {
+//            if(camera.near + iter*zPlaneStride > lightZStop) {
+//                zStopIdx = Math.max(0,iter-1);
+//                break;
+//            }
+//        }
+//
+//
+//        //update count, make sure we're not going over the max lights
+//        //put i in the correct component of the correct pixel
+//        for(let z = zStartIdx; z < zStopIdx; ++z) {
+//            for(let y = yStartIdx; y < yStopIdx; ++y) {
+//                for(let x = xStartIdx; x < xStopIdx; ++x) {
+//                    let clusterIdx = x + y*this._xSlices + z*this._xSlices*this._ySlices;
+//                    let lightCountIdx = this._clusterTexture.bufferIndex(clusterIdx, 0);
+//                    let lightCount = 1 + this._clusterTexture.buffer[lightCountIdx];
+//
+//                    if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
+//                        this._clusterTexture.buffer[lightCountIdx] = lightCount;
+//                        let texel = Math.floor(lightCount*0.25);
+//                        let texelIdx = this._clusterTexture.bufferIndex(clusterIdx, texel);
+//                        let componentIdx = lightCount - texel*4;
+//                        this._clusterTexture.buffer[texelIdx+componentIdx] = i;
+//                    }
+//                }//x
+//            }//y 
+//        }//z
+//
+//    }//end light loop

@@ -38,7 +38,7 @@ numLights: NUM_LIGHTS, xSlices: xSlices, ySlices: ySlices, zSlices: zSlices, max
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewMatrix, this._projectionMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
