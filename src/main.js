@@ -15,6 +15,7 @@ const params = {
 
 setRenderer(params.renderer);
 
+//Inputs into renderers: number of x, y, and z slices to split the frustum into
 function setRenderer(renderer) {
   switch(renderer) {
     case FORWARD:

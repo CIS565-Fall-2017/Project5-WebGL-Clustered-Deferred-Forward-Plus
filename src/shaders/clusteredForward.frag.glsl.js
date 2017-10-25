@@ -1,5 +1,14 @@
 export default function(params) {
   return `
+
+  /* 
+    TODO:
+    - Determine the cluster for a fragment
+    - Read in the lights in that cluster from the populated data 
+    - Do shading for just those lights
+    - You may find it necessary to bind additional uniforms in src/renderers/clusteredForwardPlus.js
+  */
+
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
@@ -98,4 +107,73 @@ export default function(params) {
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
-}
+
+
+
+  /*
+      TODO: 
+
+      - Determine the cluster this fragment belongs to 
+          - Get current fragment with glFragCoord
+          - ??? Make a cluster struct (like Lights). It would have numLights and listList
+      - Read data inside u_clusterbuffer 
+      - Loop over light indices 
+
+      index -> pixel index
+      pixel index => v coord of texture
+      get texel from texture
+      access correct component of texture
+
+      pixel 0, component z
+      pixel = (index + 1)/4
+      component = (index + 1) - 4 * pixel
+
+      v = (pixel + 1) / (max lights per cluter + 1 + 1)
+      texel  = texture2d(buffer, vec2(uv))
+      lightindex = texel[component]
+      if(compoenet == 0)
+      lightindex = texel[0]
+
+      if(compoenet == 1)
+      lightindex = texel[1]
+
+      if(compoenet == 2)
+      lightindex = texel[2]
+
+      if(compoenet == 3)
+      lightindex = texel[3]
+
+
+      dividing by texture 
+      (2 + 1)/ (5 + 1)
+
+
+
+
+      ------------------ OTHER NOTES ------------------
+
+      // send inverse projection matrix and number of slices to fragment shader to bring into view space
+      // position is in world space (v_position from vertex shader), and you want it in eye space. multiply by view matrix 
+      //do this to get z coord
+      //glfragcoord.xy to get x and y (this is your pixel position)
+      // you need to send height and width of screen 
+
+
+      ------------------ WHITEBOARD NOTES ------------------
+      you get v_position from vertex shader. this is in world space
+      multiply this by view matrix to bring the position into camera space 
+      this means you need to pass in the view matrix into the fragment shader
+
+      get the z value from this, floor it to the chunks of slice size
+      if in camera space, it goes from 0 to farPlaneZ (FIGURE OUT HOW TO GET THIS)
+          divide the space by 15 (slice size), and find which slice of 15th the z value floors to
+      
+      identify the cluster the fragment is located in
+
+      get the x and y value for the fragment with glFragCoord.xy. this is in pixel space
+      need to pass in screen width and height
+
+
+
+  */
+}//end export default function
