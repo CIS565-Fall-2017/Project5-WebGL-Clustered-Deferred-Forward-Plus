@@ -101,7 +101,7 @@ export default function(params) {
     vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
     int xid = int(gl_FragCoord.x / xSliceWidth);
     int yid = int(gl_FragCoord.y / ySliceWidth);
-    float viewZ = -viewCoords.z;
+    float viewZ = viewCoords.z;
     int zid = 0;    
     //special near depth slice    
     if(viewZ >= specialNearPlane)

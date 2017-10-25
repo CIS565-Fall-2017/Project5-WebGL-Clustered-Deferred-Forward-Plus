@@ -3,7 +3,7 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
-export const SPECIAL_NEARPLANE = 3.0;
+export const SPECIAL_NEARPLANE = 50.0;
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
