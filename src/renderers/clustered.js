@@ -161,17 +161,22 @@ export default class ClusteredRenderer
 
     var xStartIndex, yStartIndex, zStartIndex;
     var xEndIndex, yEndIndex, zEndIndex;
-    var lightAABB;
+    var lightPos, lightAABB;
     var clusterLightCount;
 
     for (let i=0; i<numLights; i++)
     {
       let lightRadius = scene.lights[i].radius;
-      var lightPos = vec4.fromValues(scene.lights[i].position[0], 
-                                     scene.lights[i].position[1], 
-                                     scene.lights[i].position[2], 
-                                     1.0);      
-      vec4.transformMat4(lightPos, lightPos, viewMatrix); //World to View
+      var _lightPos = vec4.fromValues(scene.lights[i].position[0], 
+                                      scene.lights[i].position[1], 
+                                      scene.lights[i].position[2], 
+                                      1.0);
+      vec4.transformMat4(_lightPos, _lightPos, viewMatrix); //World to View
+
+      var lightPos = vec3.fromValues(_lightPos[0], 
+                                     _lightPos[1], 
+                                     _lightPos[2] );
+
       lightPos.z *= -1; //camera looks down negative z, make z axis positive to make calculations easier
       
       // now using the min and max of the AABB determine which clusters the light lies in
@@ -185,7 +190,7 @@ export default class ClusteredRenderer
       yStartIndex = this._ySlices; yEndIndex = this._ySlices;
       zStartIndex = this._zSlices; zEndIndex = this._zSlices;
 
-      var pointOnPlane = vec3.fromValues(xStrideStart, 0.0, 1.0);
+      var pointOnPlane = vec3.fromValues(0.0, 0.0, 1.0);
       var upVec = vec3.fromValues(0.0, 1.0, 0.0);
       var rightVec = vec3.fromValues(1.0, 0.0, 0.0);
 
@@ -197,11 +202,12 @@ export default class ClusteredRenderer
         var planeNor = this.calcPlaneNormal(pointOnPlane, upVec);
         var plane = this.createPlane(planeNor, pointOnPlane);
         this.normalizePlane(plane);
-        var minSD = this.distanceToPoint(plane, lightAABB.min);
+        var minSD = this.distanceToPoint(plane, lightPos);
 
         if(minSD<lightRadius)
         {
-          xStartIndex = Math.max(0, i);
+          xStartIndex = Math.max(0, i-1); //i-1 because if it the plane is inside the radial 
+          //extent of the light then the light also has an effect beyond that plane
           break;
         }
       }
@@ -209,31 +215,78 @@ export default class ClusteredRenderer
       //________________________endX_____________________________
       for(let i=xStartIndex; i<this._xSlices; i++)
       {
+        pointOnPlane[0] = xStrideStart + xStride*i;
         
+        var planeNor = this.calcPlaneNormal(pointOnPlane, upVec);
+        var plane = this.createPlane(planeNor, pointOnPlane);
+        this.normalizePlane(plane);
+        var minSD = this.distanceToPoint(plane, lightPos);
+
+        if(minSD<-lightRadius) //-ve light radius because the signed Distance is defined along the normal of the plane
+        {
+          xEndIndex = Math.max(xStartIndex, i-1);; //i-1 because if it the plane is inside the radial 
+          //extent of the light then the light also has an effect beyond that plane
+          break;
+        }
       }
 
+      pointOnPlane[0] = 0;
       //________________________startY___________________________
       for(let i=0; i<this._ySlices; i++)
       {
+        pointOnPlane[1] = yStrideStart + yStride*i;
         
+        var planeNor = this.calcPlaneNormal(pointOnPlane, rightVec);
+        var plane = this.createPlane(planeNor, pointOnPlane);
+        this.normalizePlane(plane);
+        var minSD = this.distanceToPoint(plane, lightPos);
+
+        if(minSD<lightRadius)
+        {
+          yStartIndex = Math.max(0, i-1); //i-1 because if it the plane is inside the radial 
+          //extent of the light then the light also has an effect beyond that plane
+          break;
+        }
       }
       
       //________________________endY_____________________________
       for(let i=yStartIndex; i<this._ySlices; i++)
       {
+        pointOnPlane[1] = yStrideStart + yStride*i;
         
+        var planeNor = this.calcPlaneNormal(pointOnPlane, rightVec);
+        var plane = this.createPlane(planeNor, pointOnPlane);
+        this.normalizePlane(plane);
+        var minSD = this.distanceToPoint(plane, lightPos);
+
+        if(minSD<-lightRadius) //-ve light radius because the signed Distance is defined along the normal of the plane
+        {
+          yEndIndex = Math.max(yStartIndex, i-1); //i-1 because if it the plane is inside the radial 
+          //extent of the light then the light also has an effect beyond that plane
+          break;
+        }
       }
       
       //________________________startZ___________________________
+      let lightZnear = lightPos[2] - radius;
       for(let i=0; i<this._zSlices; i++)
       {
-        
+          if(camera.near + i*zStride > lightZnear)
+          {
+              zStartIndex = Math.max(0, i-1);
+              break;
+          }
       }
       
       //________________________endZ_____________________________
+      let lightZfar = lightPos[2] + radius;
       for(let i=zStartIndex; i<this._zSlices; i++)
       {
-        
+        if(camera.near + i*zStride > lightZnear)
+        {
+            zEndIndex = Math.max(0, i-1);
+            break;
+        }
       }
       //_____________________________________________________
       //_____________________________________________________
