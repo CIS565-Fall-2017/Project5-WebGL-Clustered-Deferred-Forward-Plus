@@ -5,6 +5,8 @@ import AABB from '../aabb'
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
+
+
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -108,7 +110,7 @@ export default class ClusteredRenderer {
         vec3.normalize(n, n);
 
         // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.max, n);
+        let d = vec3.dot(lightBB.min, n);
         // console.log("d: " + d);       
         
         // Light is on the right side of the plane
@@ -145,7 +147,7 @@ export default class ClusteredRenderer {
         let d = vec3.dot(lightBB.min, n);
         // console.log("d: " + d);       
         
-        // Light is `above the plane
+        // Light is above the plane
         if(d > 0) {
           minY = ySlice;
           break; 
@@ -170,7 +172,7 @@ export default class ClusteredRenderer {
         vec3.normalize(n, n);
 
         // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.max, n);
+        let d = vec3.dot(lightBB.min, n);
         // console.log("d: " + d);       
         
         // Light is below the plane
@@ -225,19 +227,52 @@ export default class ClusteredRenderer {
       console.log("maxZ: " + maxZ);
       console.log("-----------------");
 
+      let tooManyLights = false;
       for(let z = minZ; z < maxZ; z++) {
         for(let y = minY; y < maxY; y++) {
           for(let x = minX; x < maxX; x++) {
+            // Cluster index
             let index = x + (y * this._xSlices) + (z * this._xSlices * this._ySlices);
 
-            //TODO
+            // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+            // component0 |count|lid0|lid1|lid2 || count|lid0|lid1|lid2 || count|lid0|lid1|lid2
+            // component1 |lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6
+            // component2 |lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10
+            // (v)
+
+            // Gets the light count for each cluster
+            let lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)];
+            // Increment light count since this light is in the cluster
+            lightCount++;
+
+            if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
+              // Update the light count in the texture buffer
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)] = lightCount;
+              
+              // component0 |count|lid0|lid1|lid2
+              let lightInPixel = (lightCount + 1) % 4;
+              let component = Math.floor((lightCount + 1) / 4);
+
+              // Update the pixel to include the current light index
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(lightInPixel, component)] = i;
+            }
+            else {
+              tooManyLights = true;
+              break;
+            }
+          } // End x loop
+
+          if(tooManyLights) {
+            break;
           }
+        } // End y loop
+        
+        if(tooManyLights) {
+          break;
         }
-      }
+      } // End z loop
     } // End light loop
     
-    
-
     this._clusterTexture.update();
   }
 }
