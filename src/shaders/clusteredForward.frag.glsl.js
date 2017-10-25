@@ -107,6 +107,7 @@ export default function(params) {
   int numXSlices = ${params.numXSlices};
   int numYSlices = ${params.numYSlices};
   int numZSlices = ${params.numZSlices};
+  int maxLightsPerCluster = ${params.maxLightsPerCluster};
 
   void main()
   {
@@ -140,6 +141,7 @@ export default function(params) {
     vec2 cluster_uv = vec2(cluster_u, 0);
     int clusterNumLights = int ( ExtractFloatFromClusterTexture(cluster_u, 0) );
 
+/*
     for (int i = 0; i < ${params.maxLightsPerCluster}; ++i) 
     {
       if(i >= clusterNumLights)
@@ -158,11 +160,20 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
+*/
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = vec4(albedo, 1.0);
+    // gl_FragColor = vec4(floor((fragXangle/ u_xStride)/float(numXSlices)), 
+    //                     floor((fragXangle/ u_xStride)/float(numXSlices)), 
+    //                     floor((fragXangle/ u_xStride)/float(numXSlices)), 1.0);
+
+    gl_FragColor = vec4(float(clusterNumLights/maxLightsPerCluster), 
+                        float(clusterNumLights/maxLightsPerCluster), 
+                        float(clusterNumLights/maxLightsPerCluster), 1.0);
+
   }
   `;
 }
