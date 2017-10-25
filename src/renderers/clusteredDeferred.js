@@ -28,8 +28,26 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      screenWidth : canvas.width,
+      screenHeight: canvas.height,
+      xSliceCount : xSlices,
+      ySliceCount : ySlices,
+      zSliceCount : zSlices,
+      num_maxLightsPerCluster : 100,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: [
+      'u_gbuffers[0]', 
+      'u_gbuffers[1]', 
+      'u_gbuffers[2]', 
+      'u_gbuffers[3]',
+      'u_lightbuffer',
+      'u_clusterbuffer',
+      'u_viewMatrix',
+      'u_cameraWorld',
+      'u_farPlane',
+      'u_nearPlane',
+      'u_invProjectionMatrix'
+      ],
       attribs: ['a_uv'],
     });
 
@@ -154,9 +172,27 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._shaderProgram.u_lightbuffer, 2);
 
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
+
+    // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    let invprojection = mat4.create();
+    mat4.invert(invprojection, this._projectionMatrix);
+    let invView = mat4.create();
+    mat4.invert(invView      , this._viewMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_invViewMatrix, false, invView);
+    gl.uniformMatrix4fv(this._shaderProgram.u_invProjectionMatrix, false, invprojection);
+    gl.uniform1f(this._shaderProgram.u_farPlane,camera.far);
+    gl.uniform1f(this._shaderProgram.u_nearPlane,camera.near);
     // Bind g-buffers
-    const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
+    const firstGBufferBinding = 4; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
       gl.activeTexture(gl[`TEXTURE${i + firstGBufferBinding}`]);
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
