@@ -105,7 +105,8 @@ export default function(params) {
       if (i >= count) {
         break;
       }
-      int j = int(texture2D(u_clusterbuffer, vec2(u, float((i + 1)/4)))[mod(i + 1, 4.0)]);
+      int v = (i + 1)/4;
+      int j = int(texture2D(u_clusterbuffer, vec2(u, float(v)))[mod(i + 1, 4.0)]);
       Light light = UnpackLight(j);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;

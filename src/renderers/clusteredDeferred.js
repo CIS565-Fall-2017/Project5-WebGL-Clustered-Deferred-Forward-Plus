@@ -29,7 +29,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_viewMatrix', 'u_lightbuffer', 'u_clusterbuffer', 'u_slices', 'u_numclusters', 'u_cameranear', 'u_camerafar', 'u_res'],
       attribs: ['a_uv'],
     });
 
@@ -123,6 +123,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -154,6 +155,12 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    gl.uniform1f(this._progShade.u_numclusters, this._xSlices * this._ySlices * this._zSlices); 
+    gl.uniform1f(this._progShade.u_cameranear, camera.near); 
+    gl.uniform1f(this._progShade.u_camerafar, camera.far);
+    gl.uniform2f(this._progShade.u_res, canvas.width, canvas.height); 
+    gl.uniform3f(this._progShade.u_slices, this._xSlices, this._ySlices, this._zSlices);
+    gl.uniform3f(this._progShade.u_slices, this._xSlices, this._ySlices, this._zSlices);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
