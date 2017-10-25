@@ -8,8 +8,8 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-
 import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
+
 
 //export const NUM_GBUFFERS = 4;
 export const NUM_GBUFFERS = 2;
@@ -26,7 +26,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_viewMatrix',],
-      attribs: ['a_position', 'a_normal', 'a_uv'],
+      attribs:  ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
@@ -38,7 +38,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numZSlices: zSlices,
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride', 'u_viewMatrix', 'u_clusterbuffer', 'u_invViewProjMatrix', 'u_invViewMatrix'],
-      attribs: ['a_uv'],
+      attribs:  ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
