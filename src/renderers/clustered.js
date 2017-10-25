@@ -69,11 +69,11 @@ export default class ClusteredRenderer {
       vec3.normalize(lightDir, lightDir);
       var t = 1.0 / lightDir[2];
       var clusterX = Math.floor((t * lightDir[0] + strideX * (this._xSlices / 2.0)) / strideX);
-      if (clusterX < 0 || clusterX >= this._xSlices) continue;
+      // if (clusterX < 0 || clusterX >= this._xSlices) continue;
       var clusterY = Math.floor((t * lightDir[1] + strideY * (this._ySlices / 2.0)) / strideY);
-      if (clusterY < 0 || clusterY >= this._ySlices) continue;
+      // if (clusterY < 0 || clusterY >= this._ySlices) continue;
       var clusterZ = Math.floor((-lightPos[2] - camera.near) / strideZ);
-      if (clusterZ < 0 || clusterZ >= this._zSlices) continue;
+      // if (clusterZ < 0 || clusterZ >= this._zSlices) continue;
 
       var normal = vec4.create();
       normal[3] = 0;
@@ -88,22 +88,28 @@ export default class ClusteredRenderer {
       for (minX_cluster = clusterX; minX_cluster > 0; --minX_cluster, d -= strideX) {
         normal[0] = cosatan(d);
         normal[2] = sinatan(d);
+        vec4.normalize(normal, normal);
         distance = Math.abs(vec4.dot(normal, lightPos));
         if (distance > lightRadius) {
           break;
         }
       }
+      if (minX_cluster >= this._xSlices) continue;
+      minX_cluster = Math.max(minX_cluster, 0);
 
       var maxX_cluster;
       d = (clusterX + 1 - this._xSlices / 2.0) * strideX;
       for (maxX_cluster = clusterX + 1; maxX_cluster < this._xSlices; ++maxX_cluster, d += strideX) {
         normal[0] = cosatan(d);
         normal[2] = sinatan(d);
+        vec4.normalize(normal, normal);
         distance = Math.abs(vec4.dot(normal, lightPos));
         if (distance > lightRadius) {
           break;
         }
       }
+      if (maxX_cluster < 0) continue;
+      maxX_cluster = Math.min(maxX_cluster, this._xSlices);
 
       // ----------------------
       // YZ planes (horizontal)
@@ -114,22 +120,28 @@ export default class ClusteredRenderer {
       for (minY_cluster = clusterY; minY_cluster > 0; --minY_cluster, d -= strideY) {
         normal[1] = cosatan(d);
         normal[2] = sinatan(d);
+        vec4.normalize(normal, normal);
         distance = Math.abs(vec4.dot(normal, lightPos));
         if (distance > lightRadius) {
           break;
         }
       }
+      if (minY_cluster >= this._ySlices) continue;
+      minY_cluster = Math.max(minY_cluster, 0);
 
       var maxY_cluster;
       d = (clusterY + 1 - this._ySlices / 2.0) * strideY;
       for (maxY_cluster = clusterY + 1; maxY_cluster < this._ySlices; ++maxY_cluster, d += strideY) {
         normal[1] = cosatan(d);
         normal[2] = sinatan(d);
+        vec4.normalize(normal, normal);
         distance = Math.abs(vec4.dot(normal, lightPos));
         if (distance > lightRadius) {
           break;
         }
       }
+      if (maxY_cluster < 0) continue;
+      maxY_cluster = Math.min(maxY_cluster, this._ySlices);
 
       // ----------------------
       // XY planes (perpendicular to camera)
@@ -142,6 +154,8 @@ export default class ClusteredRenderer {
           break;
         }
       }
+      if (minZ_cluster >= this._zSlices) continue;
+      minZ_cluster = Math.max(minZ_cluster, 0);
 
       var maxZ_cluster;
       d = (clusterZ + 1) * strideZ;
@@ -151,6 +165,8 @@ export default class ClusteredRenderer {
           break;
         }
       }
+      if (maxZ_cluster < 0) continue;
+      maxZ_cluster = Math.min(maxZ_cluster, this._zSlices);
 
       // update cluster lights
       // ranges partial inclusive [min, max)
