@@ -7,6 +7,28 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 import AABB from '../AABB'
 
+//struct factory
+function makeStruct(names) {
+  var names = names.split(' ');
+  var count = names.length;
+  function constructor() {
+    for (var i = 0; i < count; i++) 
+    {
+      this[names[i]] = arguments[i];
+    }
+  }
+  return constructor;
+}
+
+// halfspace enum
+var Halfspace = {
+  NEGATIVE: -1,
+  ON_PLANE: 0,
+  POSITIVE: 1,
+};
+
+var Plane = makeStruct("a b c d");
+
 export default class ClusteredRenderer 
 {
   constructor(xSlices, ySlices, zSlices, camera, MaxLightsPerCluster) 
@@ -23,35 +45,6 @@ export default class ClusteredRenderer
     var tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
     var tan_Horizontal_FoV_by_2 = camera.aspect * tan_Vertical_FoV_by_2;    
     this.horizontal_FoV = 2 * Math.atan(tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
-
-    this.xStride = ((this.horizontal_FoV)/this._xSlices);
-    this.yStride = ((this.vertical_FoV)/this._ySlices);
-    this.zStride = (camera.far/this._zSlices);
-
-    this.hLeftVec = vec3.create();
-    var hleftPoint = camera.far*tan_Horizontal_FoV_by_2;
-    vec3.set(this.hLeftVec, hleftPoint, 0, camera.far);
-
-    this.vTopVec = vec3.create();
-    var vTopPoint = camera.far*tan_Vertical_FoV_by_2;
-    vec3.set(this.vTopVec, vTopPoint, 0, camera.far);
-
-    this.centerVec = vec3.create();
-    vec3.set(this.centerVec, 0, 0, camera.far);
-    vec3.normalize(this.centerVec, this.centerVec);
-
-    this.vRightVec = vec3.create();
-    vec3.set(this.vRightVec, -hleftPoint, 0, camera.far);
-    vec3.normalize(this.vRightVec, this.vRightVec);
-
-    this.vBottomVec = vec3.create();
-    vec3.set(this.vBottomVec, -vTopPoint, 0, camera.far);
-    vec3.normalize(this.vBottomVec, this.vBottomVec);
-
-    this.boundsleft = vec3.dot(this.hLeftVec, this.centerVec);
-    this.boundsRight = vec3.dot(this.vRightVec, this.centerVec);
-    this.boundsup = vec3.dot(this.vTopVec, this.centerVec);
-    this.boundsdown = vec3.dot(this.vBottomVec, this.centerVec);
 
     /*
     Layout of _clusterTexture
@@ -74,62 +67,71 @@ export default class ClusteredRenderer
     */
   }
 
-  clamp(value, lower, upper)
+  createPlane(planeNormal, pointOnPlane)
   {
-    return Math.max(lower, Math.min(value, upper));
+    var d = vec3.dot(planeNormal, pointOnPlane);
+    var plane = new Plane(planeNormal[0], planeNormal[1], planeNormal[2], d);
+    return plane;
   }
 
-  findMinMaxClusterIndexBounds_Equiangular(minIndex, maxIndex, viewMatrix, lightAABB)
+  calcPlaneNormal(pointOnPlane, perpendicularVectorOnPlane)
   {
-    // This function finds the lightCluster Index Bounds
-    var lightMinXPos = vec3.create();
-    var lightMaxXPos = vec3.create();
-    var lightMinYPos = vec3.create();
-    var lightMaxYPos = vec3.create();
+    //returns a vec3
+    var planeNormal = vec3.create();
+    var normalizedVec;
+    vec3.normalize(normalizedVec, pointOnPlane);
+    vec3.cross(planeNormal, normalizedVec, perpendicularVectorOnPlane); // this makes the normal of all the 
+                                                                //planes be in the same hemisphere as the +ve x axis
+    vec3.normalize(planeNormal, planeNormal);
 
-    vec3.set(lightMinXPos, lightAABB.min[0], 0, lightAABB.min[2]);
-    vec3.set(lightMaxXPos, lightAABB.max[0], 0, lightAABB.max[2]);
-    vec3.set(lightMinYPos, 0, lightAABB.min[1], lightAABB.min[2]);
-    vec3.set(lightMaxYPos, 0, lightAABB.max[1], lightAABB.max[2]);
+    return planeNormal;
+  }
 
-    var temp1 = vec3.create();
-    var halfspace = 1;
-    var theta1, theta2, theta3, theta4;
-    
-    vec3.normalize(temp1, lightMinXPos);
-    theta1 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
-    if(lightAABB.min[0]>0)
+  normalizePlane(plane)
+  {
+    //returns a Plane
+    var mag;
+    mag = Math.sqrt(plane.a * plane.a + plane.b * plane.b + plane.c * plane.c);
+    plane.a = plane.a / mag;
+    plane.b = plane.b / mag;
+    plane.c = plane.c / mag;
+    plane.d = plane.d / mag;
+  }
+
+  classifyPoint(plane, point)
+  {
+    //returns a Halfspace
+    var d = plane.a*point.x + plane.b*point.y + plane.c*point.z + plane.d;
+
+    if (d < 0)
     {
-      theta1 += this.horizontal_FoV*0.5;
+      return Halfspace.NEGATIVE;
     }
-
-    vec3.normalize(temp1, lightMaxXPos);
-    theta2 = Math.abs(vec3.dot(lightMaxXPos, this.centerVec))* (180.0/Math.PI);
-    if(lightAABB.max[0]>0)
+    else if (d > 0)
     {
-      theta2 += this.horizontal_FoV*0.5;
+      return Halfspace.POSITIVE;
     }
-
-    vec3.normalize(temp1, lightMinYPos);
-    theta3 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
-    if(lightAABB.min[1]<0)
+    else
     {
-      theta3 += this.vertical_FoV*0.5;
+      return Halfspace.ON_PLANE;
     }
+  }
 
-    vec3.normalize(temp1, lightMaxYPos);
-    theta4 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
-    if(lightAABB.max[1]<0)
+  classifyPointwithSD(d)
+  {
+    //returns a Halfspace
+    if (d < 0)
     {
-      theta4 += this.vertical_FoV*0.5;
+      return Halfspace.NEGATIVE;
     }
-
-    minIndex[0] = this.clamp(Math.floor(theta1 / this.xStride), 0, this._xSlices);
-    maxIndex[0] = this.clamp(Math.floor(theta2 / this.xStride), 0, this._xSlices);
-    minIndex[1] = this.clamp(Math.floor(theta3 / this.yStride), 0, this._ySlices);
-    maxIndex[1] = this.clamp(Math.floor(theta4 / this.yStride), 0, this._ySlices);
-    minIndex[2] = this.clamp(Math.floor(lightAABB.min[2] / this.zStride), 0, this._zSlices);
-    maxIndex[2] = this.clamp(Math.floor(lightAABB.max[2] / this.zStride), 0, this._zSlices);
+    else if (d > 0)
+    {
+      return Halfspace.POSITIVE;
+    }
+    else
+    {
+      return Halfspace.ON_PLANE;
+    }
   }
 
   updateClusters(camera, viewMatrix, scene, camRight, camDown, numLights) 
@@ -150,37 +152,97 @@ export default class ClusteredRenderer
       }
     }
 
-    var farPos = vec3.create();
-    var _lightPos = vec4.create();
-    var lightPos = vec3.create();
+    //instead of using the farclip plane as the arbitrary plane to base all our calculations and division splitting off of
+    const yStride = (tan_Vertical_FoV_by_2 * 2.0 / this._ySlices);
+    const xStride = (tan_Vertical_FoV_by_2 * 2.0 / this._xSlices) * camera.aspect;
+    const zStride = (camera.far - camera.near) / this._zSlices;
+    const yStrideStart = -tan_Vertical_FoV_by_2;
+    const xStrideStart = -tan_Vertical_FoV_by_2 * camera.aspect;
 
+    var xStartIndex, yStartIndex, zStartIndex;
+    var xEndIndex, yEndIndex, zEndIndex;
     var lightAABB;
     var clusterLightCount;
 
     for (let i=0; i<numLights; i++)
     {
-      vec4.set(_lightPos, scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2], 1.0);      
-      vec4.transformMat4(_lightPos, _lightPos, viewMatrix); //World to View
-      vec3.set(lightPos, _lightPos[0], _lightPos[1], _lightPos[2]); //copy into vec3 version of lightPos
-
-      lightAABB = new AABB();
-      lightAABB.calcAABB_PointLight(lightPos, scene.lights[i].radius);
-
+      let lightRadius = scene.lights[i].radius;
+      var lightPos = vec4.fromValues(scene.lights[i].position[0], 
+                                     scene.lights[i].position[1], 
+                                     scene.lights[i].position[2], 
+                                     1.0);      
+      vec4.transformMat4(lightPos, lightPos, viewMatrix); //World to View
+      lightPos.z *= -1; //camera looks down negative z, make z axis positive to make calculations easier
+      
       // now using the min and max of the AABB determine which clusters the light lies in
       // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
       // z under goes perspective correction and so the ZY planes are angled
-      var minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index;
-      var minIndex = vec3.create();
-      var maxIndex = vec3.create();
-      this.findMinMaxClusterIndexBounds_Equiangular(minIndex, maxIndex, viewMatrix, lightAABB);
 
-      //console.log("min max X:   " + minIndex + "   " + maxIndex);
+      //_____________________________________________________
+      //__________Update Start and Stop Indices______________
+      //_____________________________________________________
+      xStartIndex = this._xSlices; xEndIndex = this._xSlices;
+      yStartIndex = this._ySlices; yEndIndex = this._ySlices;
+      zStartIndex = this._zSlices; zEndIndex = this._zSlices;
 
-      for (let z = minIndex[2]; z <= maxIndex[2]; ++z)
+      var pointOnPlane = vec3.fromValues(xStrideStart, 0.0, 1.0);
+      var upVec = vec3.fromValues(0.0, 1.0, 0.0);
+      var rightVec = vec3.fromValues(1.0, 0.0, 0.0);
+
+      //________________________startX___________________________
+      for(let i=0; i<this._xSlices; i++)
       {
-        for (let y = minIndex[1]; y <= maxIndex[1]; ++y)
+        pointOnPlane[0] = xStrideStart + xStride*i;
+        
+        var planeNor = this.calcPlaneNormal(pointOnPlane, upVec);
+        var plane = this.createPlane(planeNor, pointOnPlane);
+        this.normalizePlane(plane);
+        var minSD = this.distanceToPoint(plane, lightAABB.min);
+
+        if(minSD<lightRadius)
         {
-          for (let x = minIndex[0]; x <= maxIndex[0]; ++x) 
+          xStartIndex = Math.max(0, i);
+          break;
+        }
+      }
+
+      //________________________endX_____________________________
+      for(let i=xStartIndex; i<this._xSlices; i++)
+      {
+        
+      }
+
+      //________________________startY___________________________
+      for(let i=0; i<this._ySlices; i++)
+      {
+        
+      }
+      
+      //________________________endY_____________________________
+      for(let i=yStartIndex; i<this._ySlices; i++)
+      {
+        
+      }
+      
+      //________________________startZ___________________________
+      for(let i=0; i<this._zSlices; i++)
+      {
+        
+      }
+      
+      //________________________endZ_____________________________
+      for(let i=zStartIndex; i<this._zSlices; i++)
+      {
+        
+      }
+      //_____________________________________________________
+      //_____________________________________________________
+
+      for (let z = zStartIndex; z < zEndIndex; ++z)
+      {
+        for (let y = yStartIndex; y < yEndIndex; ++y)
+        {
+          for (let x = xStartIndex; x < xEndIndex; ++x) 
           {
             let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster
@@ -190,17 +252,16 @@ export default class ClusteredRenderer
             {
               //console.log("updating cluster" + j);
               clusterLightCount++;
-              console.log("here");
               let clusterLightIndex = Math.floor(clusterLightCount/4);
               let clusterLightSubIndex = clusterLightCount%4;
 
               // Update the light index for the particular cluster in the light buffer
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, clusterLightIndex) + clusterLightSubIndex] = i;
             }
-          }
-        }
-      }
-    }
+          }//x
+        }//y
+      }//z
+    }//loop over lights
 
     this._clusterTexture.update();
   }
