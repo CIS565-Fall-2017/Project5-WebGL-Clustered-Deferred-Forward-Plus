@@ -5,8 +5,6 @@ import AABB from '../aabb'
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
-
-
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -219,15 +217,15 @@ export default class ClusteredRenderer {
       // minZ = lightBB.min[2] / zStride;
       // maxZ = lightBB.max[2] / zStride;
 
-      console.log("minX: " + minX);
-      console.log("maxX: " + maxX);
-      console.log("minY: " + minY);
-      console.log("maxY: " + maxY);
-      console.log("minZ: " + minZ);
-      console.log("maxZ: " + maxZ);
-      console.log("-----------------");
+      // console.log("minX: " + minX);
+      // console.log("maxX: " + maxX);
+      // console.log("minY: " + minY);
+      // console.log("maxY: " + maxY);
+      // console.log("minZ: " + minZ);
+      // console.log("maxZ: " + maxZ);
 
       let tooManyLights = false;
+      let lightCount = 0;
       for(let z = minZ; z < maxZ; z++) {
         for(let y = minY; y < maxY; y++) {
           for(let x = minX; x < maxX; x++) {
@@ -241,7 +239,7 @@ export default class ClusteredRenderer {
             // (v)
 
             // Gets the light count for each cluster
-            let lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)];
+            lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)];
             // Increment light count since this light is in the cluster
             lightCount++;
 
@@ -271,6 +269,9 @@ export default class ClusteredRenderer {
           break;
         }
       } // End z loop
+
+    console.log("Number of Lights: " + lightCount)
+    console.log("-----------------");
     } // End light loop
     
     this._clusterTexture.update();
