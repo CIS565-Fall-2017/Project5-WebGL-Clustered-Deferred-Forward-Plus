@@ -3,9 +3,11 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Ricky Rajani
+* Tested on: **Google Chrome 62.0.3202** on
+  Windows 10, i5-6200U @ 2.30GHz, Intel(R) HD Graphics 520 4173MB (Personal Computer)
+
+This project implements Clustered Deferred and Forward+ Shading using WebGL.
 
 ### Live Online
 
@@ -15,14 +17,67 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+### Features
+- Clustered Forward+
+- Clustered Deferred
+- Blinn-Phong shading
+- Optimizations of g-buffers
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+### Performance Analysis
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+- Clustered Shading
+  - TODO: Overview
+  - Per-cluster light backface culling
+  - Better worse case performance with large depth discontinuities
 
+- Clustered Forward+
+  - TODO: Overview
+  - Forward shading with light culling for screen-space tiles
+  - Designed for today’s GPUs
+  - High compute-to-memory ratio
+
+- Clustered Deferred
+  - TODO: Overview
+  - Performance depends more on screen resolution than scene complexity.
+
+Testing number of lights
+  - Number of Lights : 500, 1000, 1500
+  - Light's radius	: 3.0
+  - Resolution	: 1920 x 1080
+  - Cluster Dimension : 16 x 16 x 16
+  
+Testing light radius
+  - Number of Lights : 500, 1000, 1500
+  - Light's radius	: 1.0, 3.0, 5.0
+  - Resolution	: 1920 x 1080
+  - Cluster Dimension : 16 x 16 x 16
+
+Testing resolution
+  - Number of Lights : 500, 1000, 1500
+  - Light's radius	: 3.0
+  - Resolution	: 800 X 600, 1280 x 1084, 1920 x 1080
+  - Cluster Dimension : 16 x 16 x 16
+  
+Testing cluster sizes
+  - Number of Lights : 1000
+  - Light's radius	: 3.0
+  - Resolution	: 1920 x 1080
+  - Cluster Dimension : 1 X 1 X 1, 4 x 4 x 4, 16 x 16 x 16,
+  
+- TODO: Add analysis
+  
+Blinn Phone Shading Model:
+  - TODO: Add graph comparing times of labert and blinn phong on Forward+ and Deferred with 500, 1000, 1500 lights
+  - TODO: Add analysis
+  
+Optimized g-buffer format:
+  - TODO: Overview
+  - Used two rather than four g-buffers
+    - Use 2-component normals
+    - Reduce number of properties passed via g-buffer by reconstructing world space position using camera matrices and X/Y/depth
+      - G-buffer01: {color.r, color.g, color.b, depth}
+      - G-buffer02: {normal.x, normal.y, - , - }
+  - TODO: Add graph comparing times of 2 versus 4 g-buffers on Forward+ and Deferred with 500, 1000, 1500 lights
 
 ### Credits
 
