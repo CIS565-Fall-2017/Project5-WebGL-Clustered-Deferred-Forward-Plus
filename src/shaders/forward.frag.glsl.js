@@ -39,6 +39,8 @@ export default function(params) {
       return texel[2];
     } else if (pixelComponent == 3) {
       return texel[3];
+    } else {
+      return texel[0];
     }
   }
 
@@ -82,9 +84,9 @@ export default function(params) {
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+      float NdotL = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += albedo * NdotL * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);

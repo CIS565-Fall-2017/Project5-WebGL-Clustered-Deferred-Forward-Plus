@@ -6,6 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -16,14 +17,20 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      num_xSlices: xSlices,
+      num_ySlices: ySlices,
+      num_zSlices: zSlices,
+      num_maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_invProjectionMatrix', 'u_invViewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_screenbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+    this._invprojectionMatrix = mat4.create();
+    this._invViewMatrix = mat4.create();
   }
 
   render(camera, scene) {
@@ -32,10 +39,12 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
+    mat4.invert(this._invprojectionMatrix, this._projectionMatrix);
+    mat4.copy(this._invViewMatrix, camera.matrixWorld.elements);
 
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
-    
+
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
@@ -76,6 +85,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._shaderProgram.u_invProjectionMatrix, false, this._invprojectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_invViewMatrix, false, this._invViewMatrix);
+    gl.uniform4f(this._shaderProgram.u_screenbuffer, canvas.width, canvas.height, camera.near, camera.far);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
