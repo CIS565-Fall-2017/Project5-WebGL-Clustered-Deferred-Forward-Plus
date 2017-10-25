@@ -144,7 +144,7 @@ export default class ClusteredRenderer {
         }
       }
     }
-    debugger;
+    //debugger;
     this._clusterTexture.update();
   }
 
