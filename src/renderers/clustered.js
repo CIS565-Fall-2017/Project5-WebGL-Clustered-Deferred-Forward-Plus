@@ -30,14 +30,28 @@ export default class ClusteredRenderer
 
     this.hLeftVec = vec3.create();
     var hleftPoint = camera.far*tan_Horizontal_FoV_by_2;
-    vec3.set(this.hLeftVec, -hleftPoint, 0, camera.far);
+    vec3.set(this.hLeftVec, hleftPoint, 0, camera.far);
 
     this.vTopVec = vec3.create();
     var vTopPoint = camera.far*tan_Vertical_FoV_by_2;
     vec3.set(this.vTopVec, vTopPoint, 0, camera.far);
 
     this.centerVec = vec3.create();
-    vec3.set(this.vTopVec, 0, 0, camera.far);
+    vec3.set(this.centerVec, 0, 0, camera.far);
+    vec3.normalize(this.centerVec, this.centerVec);
+
+    this.vRightVec = vec3.create();
+    vec3.set(this.vRightVec, -hleftPoint, 0, camera.far);
+    vec3.normalize(this.vRightVec, this.vRightVec);
+
+    this.vBottomVec = vec3.create();
+    vec3.set(this.vBottomVec, -vTopPoint, 0, camera.far);
+    vec3.normalize(this.vBottomVec, this.vBottomVec);
+
+    this.boundsleft = vec3.dot(this.hLeftVec, this.centerVec);
+    this.boundsRight = vec3.dot(this.vRightVec, this.centerVec);
+    this.boundsup = vec3.dot(this.vTopVec, this.centerVec);
+    this.boundsdown = vec3.dot(this.vBottomVec, this.centerVec);
 
     /*
     Layout of _clusterTexture
@@ -60,7 +74,12 @@ export default class ClusteredRenderer
     */
   }
 
-  findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index, viewMatrix, camRight, camDown, lightAABB)
+  clamp(value, lower, upper)
+  {
+    return Math.max(lower, Math.min(value, upper));
+  }
+
+  findMinMaxClusterIndexBounds_Equiangular(minIndex, maxIndex, viewMatrix, lightAABB)
   {
     // This function finds the lightCluster Index Bounds
     var lightMinXPos = vec3.create();
@@ -74,152 +93,43 @@ export default class ClusteredRenderer
     vec3.set(lightMaxYPos, 0, lightAABB.max[1], lightAABB.max[2]);
 
     var temp1 = vec3.create();
-    vec3.normalize(camRight, camRight);
-    vec3.normalize(camDown, camDown);
     var halfspace = 1;
     var theta1, theta2, theta3, theta4;
     
-    var curr_hLeft = vec3.create();
-    var curr_vTop = vec3.create();
-    vec3.normalize(curr_hLeft, this.hLeftVec);
-    vec3.normalize(curr_vTop, this.vTopVec);
-
-    debugger;
-    //_____________________________MinXIndex________________________
-    if(lightAABB.min[0] < this.hLeftVec[0])
+    vec3.normalize(temp1, lightMinXPos);
+    theta1 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
+    if(lightAABB.min[0]>0)
     {
-      minX_Index = 0;
-    }
-    else if(lightAABB.min[0] > -this.hLeftVec[0])
-    {
-      minX_Index = this._xSlices; // purposefully set to outside of the index --> for loop wont go through
-    }
-    else
-    {
-      vec3.normalize(temp1, lightMinXPos);
-      var dot = vec3.dot(temp1, curr_hLeft);
-      if(dot<0)
-      {
-        //beyond midway point and could possibly go over 90 degrees
-        dot = vec3.dot(temp1, this.centerVec);
-        theta1 = this.horizontal_FoV * 0.5 + Math.acos(dot) * (180.0/Math.PI);
-      }
-      else
-      {
-        theta1 = Math.acos(dot) * (180.0/Math.PI);
-      }
-
-      minX_Index = Math.floor(theta1 / this.xStride);
+      theta1 += this.horizontal_FoV*0.5;
     }
 
-    //_____________________________MaxXIndex________________________
-    if(lightAABB.max[0] < this.hLeftVec[0])
+    vec3.normalize(temp1, lightMaxXPos);
+    theta2 = Math.abs(vec3.dot(lightMaxXPos, this.centerVec))* (180.0/Math.PI);
+    if(lightAABB.max[0]>0)
     {
-      maxX_Index = 0;
-    }
-    else if(lightAABB.min[0] > -this.hLeftVec[0])
-    {
-      maxX_Index = this._xSlices; // purposefully set to outside of the index --> for loop wont go through
-    }
-    else
-    {
-      vec3.normalize(temp1, lightMaxXPos);
-      var dot = vec3.dot(temp1, curr_hLeft);
-      if(dot<0)
-      {
-        //beyond midway point and could possibly go over 90 degrees
-        dot = vec3.dot(temp1, this.centerVec);
-        theta2 = this.horizontal_FoV * 0.5 + Math.acos(dot) * (180.0/Math.PI);
-      }
-      else
-      {
-        theta2 = Math.acos(dot) * (180.0/Math.PI);
-      }
-
-      maxX_Index = Math.floor(theta2 / this.xStride);
+      theta2 += this.horizontal_FoV*0.5;
     }
 
-    //_____________________________MinYIndex________________________
-    if(lightAABB.min[1] < this.vTopVec[1])
+    vec3.normalize(temp1, lightMinYPos);
+    theta3 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
+    if(lightAABB.min[1]<0)
     {
-      minY_Index = 0;
-    }
-    else if(lightAABB.min[1] > -this.vTopVec[1])
-    {
-      minY_Index = this._ySlices; // purposefully set to outside of the index --> for loop wont go through
-    }
-    else
-    {
-      vec3.normalize(temp1, lightMinYPos);
-      var dot = vec3.dot(temp1, curr_vTop);
-      if(dot<0)
-      {
-        //beyond midway point and could possibly go over 90 degrees
-        dot = vec3.dot(temp1, this.centerVec);
-        theta3 = this.vertical_FoV * 0.5 + Math.acos(dot) * (180.0/Math.PI);
-      }
-      else
-      {
-        theta3 = Math.acos(dot) * (180.0/Math.PI);
-      }
-
-      minY_Index = Math.floor(theta3 / this.yStride);
+      theta3 += this.vertical_FoV*0.5;
     }
 
-    //_____________________________MaxYIndex________________________
-    if(lightAABB.max[1] < this.vTopVec[1])
+    vec3.normalize(temp1, lightMaxYPos);
+    theta4 = Math.abs(vec3.dot(temp1, this.centerVec))* (180.0/Math.PI);
+    if(lightAABB.max[1]<0)
     {
-      maxY_Index = 0;
-    }
-    else if(lightAABB.max[1] > -this.vTopVec[1])
-    {
-      maxY_Index = this._ySlices; // purposefully set to outside of the index --> for loop wont go through
-    }
-    else
-    {
-      vec3.normalize(temp1, lightMaxYPos);
-      var dot = vec3.dot(temp1, curr_vTop);
-      if(dot<0)
-      {
-        //beyond midway point and could possibly go over 90 degrees
-        dot = vec3.dot(temp1, this.centerVec);
-        theta4 = this.vertical_FoV * 0.5 + Math.acos(dot) * (180.0/Math.PI);
-      }
-      else
-      {
-        theta4 = Math.acos(dot) * (180.0/Math.PI);
-      }
-
-      maxY_Index = Math.floor(theta4 / this.yStride);
-    }
-    
-    //now find the other z bounds rather easily using the AABB and then fill those clusters with the current light
-    //Assumption: z is in a 0 to 1 range, the camera is at z=0 and 1 is the far_clip_plane
-    if(lightAABB.min[2] < 0.01)
-    {
-      minZ_Index = 0;
-    }
-    else if(lightAABB.min[2] > 1000)
-    {
-      minZ_Index = this._zSlices;
-    }
-    else
-    {
-      minZ_Index = Math.floor(lightAABB.min.z / this.zStride);
+      theta4 += this.vertical_FoV*0.5;
     }
 
-    if(lightAABB.max[2] < 0.01)
-    {
-      maxZ_Index = 0;
-    }
-    else if(lightAABB.max[2] > 1000)
-    {
-      maxZ_Index = this._zSlices;
-    }
-    else
-    {
-      maxZ_Index = Math.floor(lightAABB.max.z / this.zStride);
-    }    
+    minIndex[0] = this.clamp(Math.floor(theta1 / this.xStride), 0, this._xSlices);
+    maxIndex[0] = this.clamp(Math.floor(theta2 / this.xStride), 0, this._xSlices);
+    minIndex[1] = this.clamp(Math.floor(theta3 / this.yStride), 0, this._ySlices);
+    maxIndex[1] = this.clamp(Math.floor(theta4 / this.yStride), 0, this._ySlices);
+    minIndex[2] = this.clamp(Math.floor(lightAABB.min[2] / this.zStride), 0, this._zSlices);
+    maxIndex[2] = this.clamp(Math.floor(lightAABB.max[2] / this.zStride), 0, this._zSlices);
   }
 
   updateClusters(camera, viewMatrix, scene, camRight, camDown, numLights) 
@@ -260,18 +170,17 @@ export default class ClusteredRenderer
       // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
       // z under goes perspective correction and so the ZY planes are angled
       var minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index;
-      this.findMinMaxClusterIndexBounds_Equiangular(minZ_Index, maxZ_Index, minY_Index, maxY_Index, minX_Index, maxX_Index, 
-                                                    viewMatrix, camRight, camDown, lightAABB);
+      var minIndex = vec3.create();
+      var maxIndex = vec3.create();
+      this.findMinMaxClusterIndexBounds_Equiangular(minIndex, maxIndex, viewMatrix, lightAABB);
 
-      console.log("min max X:   " + minX_Index + "   " + maxX_Index);
-      console.log("min max Y:   " + minY_Index + "   " + maxY_Index);
-      console.log("min max Z:   " + minZ_Index + "   " + maxZ_Index);
+      //console.log("min max X:   " + minIndex + "   " + maxIndex);
 
-      for (let z = minZ_Index; z <= maxZ_Index; ++z)
+      for (let z = minIndex[2]; z <= maxIndex[2]; ++z)
       {
-        for (let y = minY_Index; y <= maxY_Index; ++y)
+        for (let y = minIndex[1]; y <= maxIndex[1]; ++y)
         {
-          for (let x = minX_Index; x <= maxX_Index; ++x) 
+          for (let x = minIndex[0]; x <= maxIndex[0]; ++x) 
           {
             let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster
@@ -281,7 +190,7 @@ export default class ClusteredRenderer
             {
               //console.log("updating cluster" + j);
               clusterLightCount++;
-
+              console.log("here");
               let clusterLightIndex = Math.floor(clusterLightCount/4);
               let clusterLightSubIndex = clusterLightCount%4;
 
