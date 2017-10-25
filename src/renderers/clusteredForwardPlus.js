@@ -16,8 +16,12 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSliceNum : xSlices,
+      ySliceNum : ySlices,
+      zSliceNum : zSlices
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                  'u_frustrumRatios', 'u_nearFar'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -64,6 +68,15 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    //upload the width and height ratios
+    let heightRatio = Math.tan(camera.fov / 2) * 2;
+    let widthRatio = camera.aspect * heightRatio;
+    gl.uniform2f(this._shaderProgram.u_frustrumRatios, widthRatio, heightRatio);
+
+    //upload near and far clipping planes
+    gl.uniform2f(this._shaderProgram.u_nearFar, camera.near, camera.far);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

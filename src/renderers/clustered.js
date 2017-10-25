@@ -21,20 +21,20 @@ export default class ClusteredRenderer {
   /*
   Options parameter includes: 
   stride : distance between clusters
-  clusterIndex : index of cluster
+  strideMultiple : how many strides to take for the given plane
   axis : which axis of cluster we are using
   output : output vec3
   */
   calculatePlaneNormal(options) {
     if (options.axis === 'horizontal') {
-      let d = options.stride * options.clusterIndex;
+      let d = options.stride * options.strideMultiple;
       let x = 1 / Math.sqrt(1 + d * d);
       let z = d / Math.sqrt(1 + d * d);
       options.output.x = x;
       options.output.y = 0;
       options.output.z = z;
     } else {
-      let d = options.stride * options.clusterIndex;
+      let d = options.stride * options.strideMultiple;
       let y = 1 / Math.sqrt(1 + d * d);
       let z = d / Math.sqrt(1 + d * d);
       options.output.x = 0;
@@ -79,20 +79,20 @@ export default class ClusteredRenderer {
     var lightPositionScratch = vec3.create();
 
     for (let z = 0; z < this._zSlices; ++z) {
-      z1OriginScratch.z = 5 + z * ((camera.far - camera.near) / this._zSlices) 
-      z2OriginScratch.z = 5 + (z + 1) * ((camera.far - camera.near) / this._zSlices) 
+      z1OriginScratch.z = z * ((camera.far - camera.near) / this._zSlices); 
+      z2OriginScratch.z = (z + 1) * ((camera.far - camera.near) / this._zSlices); 
       for (let y = 0; y < this._ySlices; ++y) {
         calculatePlaneNormal({
-          'stride' : clusterHeight,
-          'clusterIndex' : y - this._ySlices / 2,
-          'axis' : 'vertical',
-          'output' : y1NormalScratch,
+          stride : clusterHeight,
+          strideMultiple : y - this._ySlices / 2,
+          axis : 'vertical',
+          output : y1NormalScratch,
         });
         calculatePlaneNormal({
-          'stride' : clusterHeight,
-          'clusterIndex' : (y - this._ySlices / 2) + 1,
-          'axis' : 'vertical',
-          'output' : y2NormalScratch,
+          stride : clusterHeight,
+          strideMultiple : (y - this._ySlices / 2) + 1,
+          axis : 'vertical',
+          output : y2NormalScratch,
         });
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
@@ -100,16 +100,16 @@ export default class ClusteredRenderer {
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
           //Calculate normals for planes
           calculatePlaneNormal({
-            'stride' : clusterWidth,
-            'clusterIndex' : x - this._xSlices / 2,
-            'axis' : 'horizontal',
-            'output' : x1NormalScratch,
+            stride : clusterWidth,
+            strideMultiple : x - this._xSlices / 2,
+            axis : 'horizontal',
+            output : x1NormalScratch,
           });
           calculatePlaneNormal({
-            'stride' : clusterWidth,
-            'clusterIndex' : (x - this._xSlices / 2) + 1,
-            'axis' : 'horizontal',
-            'output' : x2NormalScratch,
+            stride : clusterWidth,
+            strideMultiple : (x - this._xSlices / 2) + 1,
+            axis : 'horizontal',
+            output : x2NormalScratch,
           });
 
           //Loop through lights
