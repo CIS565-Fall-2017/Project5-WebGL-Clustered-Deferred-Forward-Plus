@@ -12,7 +12,6 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
-  uniform mat4 u_viewProjectionMatrix;
   uniform vec4 u_cameraInfo;
   uniform mat4 u_viewMatrix;
 
@@ -25,7 +24,7 @@ export default function(params) {
     vec3 up = normalize(vec3(0.001, 1, 0.001));
     vec3 surftan = normalize(cross(geomnor, up));
     vec3 surfbinor = cross(geomnor, surftan);
-    return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
+    return normalize(normap.y * surftan + normap.x * surfbinor + normap.z * geomnor);
   }
 
   struct Light {
@@ -148,6 +147,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
     
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = vec4(normal, 1.0);
 
     // int k = maxLights;
     // float t = float(light_count)/float(k);
