@@ -55,7 +55,7 @@ export default class ClusteredRenderer {
       var frustum_height = 2.0 * Math.tan(half_fov_rad) * camera.far;
       
       // Calculate the frustum width and height according to lightPos
-      var light_frustum_height = 2.0 * lightPos.z * Math.tan(half_fov_rad);
+      var light_frustum_height = 2.0 * lightPos[2] * Math.tan(half_fov_rad);
       var light_frustum_width = light_frustum_height * camera.aspect;
 
       // Stride = total distance of frustum / slice size (aka 15)
@@ -63,12 +63,12 @@ export default class ClusteredRenderer {
       var y_stride = light_frustum_height / this._ySlices;
       var x_stride = light_frustum_width / this._xSlices;
 
-      var z_min = minBB.z / z_stride;
-      var z_max = maxBB.z / z_stride;
-      var y_min = (minBB.y + (light_frustum_height / 2.0)) / y_stride;
-      var y_max = (maxBB.y + (light_frustum_height / 2.0)) / y_stride;
-      var x_min = (minBB.x + (light_frustum_width / 2.0)) / x_stride;
-      var x_max = (maxBB.x + (light_frustum_width / 2.0)) / x_stride;
+      var z_min = minBB[2] / z_stride;
+      var z_max = maxBB[2] / z_stride;
+      var y_min = (minBB[1] + (light_frustum_height / 2.0)) / y_stride;
+      var y_max = (maxBB[1] + (light_frustum_height / 2.0)) / y_stride;
+      var x_min = (minBB[0] + (light_frustum_width / 2.0)) / x_stride;
+      var x_max = (maxBB[0] + (light_frustum_width / 2.0)) / x_stride;
 
       // totalNumLights++;
 
