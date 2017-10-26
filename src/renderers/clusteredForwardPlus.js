@@ -7,6 +7,8 @@ import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
+import { MAX_LIGHTS_PER_CLUSTER } from '../scene';
+
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
@@ -16,9 +18,13 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      maxLightsPerCluster : MAX_LIGHTS_PER_CLUSTER,
+      x_slices : this._xSlices,
+      y_slices : this._ySlices,
+      z_slices : this._zSlices,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
-                'u_screenheight','u_screenwidth', 'u_clusterslices', 'u_viewmatrix', 'u_maxLightsPerCluster'],
+                'u_screenHeight','u_screenWidth', 'u_camNear', 'u_camFar', 'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -77,6 +83,15 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._shaderProgram._viewMatrix, false, this._viewMatrix);
+    gl.uniform1f(this._shaderProgram.u_camNear, camera.near);
+    gl.uniform1f(this._shaderProgram.u_camFar, camera.far);
+
+    var half_fov_rad = ((camera.fov / 2.0) * Math.PI) / 180.0;
+    var frustum_width = 2.0 * Math.atan(Math.tan(half_fov_rad) * camera.aspect);      
+    var frustum_height = 2.0 * Math.tan(half_fov_rad) * camera.far;
+    gl.uniform1f(this._shaderProgram.u_screenHeight, frustum_height);
+    gl.uniform1f(this._shaderProgram.u_screenWidth, frustum_width);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

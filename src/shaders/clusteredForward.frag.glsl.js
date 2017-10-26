@@ -21,16 +21,12 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
-
   // More uniforms 
-  uniform float u_screenheight;
-  uniform float u_screenwidth;
-  uniform float u_clusterslices;
-  uniform mat4 u_viewmatrix;
-  uniform float u_maxLightsPerCluster;
+  uniform float u_screenHeight;
+  uniform float u_screenWidth;
   uniform vec3 u_cameraFar;
   uniform vec3 u_cameraNear;
-
+  uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -107,88 +103,81 @@ export default function(params) {
   // -------------------------------------
 
   struct Cluster {
+    int idx;
     float numLights;
-    float lightList[u_maxLightsPerCluster];
+    int lightsList[${params.maxLightsPerCluster}];
   };
 
   // -------------------------------------
 
-  float ExtractFromCluster(sampler2D clusterTexture, int textureWidth, int textureHeight, int lightIdx, int component) 
+  // texWidth = numClusters 
+  // texHeight = ceil((maxLightsPerCluster + 1)/ 4)
+  float UnpackCluster(sampler2D clusterTexture, float u, int lightIdx) 
   {
-
-    float v = (lightIdx + 1) / 4;
-    float pixelComponent = (lightIdx + 1) % 4;
-
+    Cluster cluster;
+    cluster.idx = u;
 
 
-    float u = float(index + 1) / float(textureWidth + 1);
+    float totalNumRowsPerCluster = floor((${params.maxLightsPerCluster} + 1) / 4);
 
-    int pixel = component / 4;
-    float v = float(pixel + 1) / float(textureHeight + 1);
-    int pixelComponent = component - pixel * 4;
-    
+    // vec4 comp 0 to totalNumRowsPerCluster - 1 = texture2D(u_clusterbuffer, vec2(u, 0 to totalNumRowsPerCluster));
 
 
+    // index along height of texture
+    int pixel = floor((lightIdx + 1) / 4);
+    float v = float(pixel + 1) / float(${params.maxLightsPerCluster} + 1);
 
     vec4 texel = texture2D(texture, vec2(u, v));
 
-    if (pixelComponent == 0) 
-    {
+    // WHICH ONE IS IT????
+    int pixelComponent = (lightIdx + 1) % 4;
+    int pixelComponent = pixel * 4 - (lightIdx + 1);
+
+
+
+    if (pixelComponent == 0) {
       return texel[0];
-    } 
-    else if (pixelComponent == 1) 
-    {
+    } else if (pixelComponent == 1) {
       return texel[1];
-    } 
-    else if (pixelComponent == 2) 
-    {
+    } else if (pixelComponent == 2) {
       return texel[2];
-    } 
-    else if (pixelComponent == 3) 
-    {
+    } else if (pixelComponent == 3) {
       return texel[3];
     }
-
-
-
-    v = (pixel + 1) / (max lights per cluter + 1 + 1)
-    texel  = texture2d(buffer, vec2(uv))
-    lightindex = texel[component]
-    if(compoenet == 0)
-    lightindex = texel[0]
-
-    if(compoenet == 1)
-    lightindex = texel[1]
-
-    if(compoenet == 2)
-    lightindex = texel[2]
-
-    if(compoenet == 3)
-    lightindex = texel[3]
-
-
-
-
-
   }
   
   // -------------------------------------  
 
-  void main() {
+  void main() 
+  {
+    vec4 _fragPos = viewMatrix * vec4(v_position, 1.0);
+    vec3 fragPos = vec3(_fragPos); 
+
+    float z_stride = (u_cameraFar - u_cameraNear) / ${params.z_slices};
+    float y_stride = u_screenHeight / ${params.y_slices};
+    float x_stride = u_screenWidth / ${params.x_slices};
+
+    // gl_FragCoord.xy are in pixel/screen space, .z is in [0, 1]
+    // DO WE NEED TO MULTIPLY Z BY -1? SINCE LOOKING DOWN -Z?
+    int z_cluster_idx = floor(-fragPos.z / z_stride);
+    int y_cluster_idx = floor((gl_FragCoord.y + (u_screenHeight / 2.0)) / y_stride);
+    int x_cluster_idx = floor((gl_FragCoord.x + (u_screenWidth / 2.0)) / x_stride);
+
+    // Calculate u index into cluster texture
+    int u = x_cluster_idx + 
+            (y_cluster_idx * ${params.x_slices}) + 
+            (z_cluster_idx * ${params.x_slices} * ${params.y_slices});
+
+    // Get the light count and list of lights from cluster texture
+
+
+
+
+    // Light Calculation
+
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-
-    vec4 _fragPos = viewMatrix * vec4(v_position, 1.0);
-    vec3 fragPos = vec3(_fragPos);
-
-
-    // gl_FragCoord.xy are in pixel/screen space
-    // gl_FragCoord.z is in [0, 1]
-    float z_stride = (u_cameraFar - u_cameraNear) / u_clusterslices;
-    float z_cluster = fragPos.z / z_stride;
-    float y_cluster = gl_FragCoord.y / u_screenHeight;
-    float x_cluster = gl_FragCoord.x / u_screenWidth;
 
     vec3 fragColor = vec3(0.0);
 

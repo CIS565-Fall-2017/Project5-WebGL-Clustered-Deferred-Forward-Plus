@@ -2,7 +2,10 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+import { MAX_LIGHTS_PER_CLUSTER } from '../scene';
+
+// I've defined this in scene.js now
+// export const MAX_LIGHTS_PER_CLUSTER = 100; 
 
 const YZ_PLANE = false;
 const XZ_PLANE = false;
@@ -15,6 +18,8 @@ export default class ClusteredRenderer {
     this._ySlices = ySlices;
     this._zSlices = zSlices;
   }
+
+  clamp(val, minVal, maxVal)  {  return Math.min(Math.max(val, minVal), maxVal);  }
 
   updateClusters(camera, viewMatrix, scene) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
@@ -51,8 +56,8 @@ export default class ClusteredRenderer {
       // Note: camera.fov = vertical fov
       var half_fov_rad = ((camera.fov / 2.0) * Math.PI) / 180.0;
       
-      var frustum_width = 2.0 * Math.atan(Math.tan(half_fov_rad) * camera.aspect);      
-      var frustum_height = 2.0 * Math.tan(half_fov_rad) * camera.far;
+      // var frustum_width = 2.0 * Math.atan(Math.tan(half_fov_rad) * camera.aspect);      
+      // var frustum_height = 2.0 * Math.tan(half_fov_rad) * camera.far;
       
       // Calculate the frustum width and height according to lightPos
       var light_frustum_height = 2.0 * lightPos[2] * Math.tan(half_fov_rad);
@@ -63,22 +68,23 @@ export default class ClusteredRenderer {
       var y_stride = light_frustum_height / this._ySlices;
       var x_stride = light_frustum_width / this._xSlices;
 
-      // Note: DO I NEED TO CLAMP????
-      var z_min = Math.floor(minBB[2] / z_stride);
-      var z_max = Math.floor(maxBB[2] / z_stride);
-      var y_min = Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride);
-      var y_max = Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride);
-      var x_min = Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride);
-      var x_max = Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride);
-
-      // totalNumLights++;
+      // Divide height and width by 2 because we have 0,0 in the middle
+      // Note: Make sure to clamp b/c you might get a light that's outside of frustum, hence index out of bounds
+      var z_min = clamp(Math.floor(minBB[2] / z_stride), 0, this._zSlices);
+      var z_max = clamp(Math.floor(maxBB[2] / z_stride), 0, this._zSlices);
+      var y_min = clamp(Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
+      var y_max = clamp(Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
+      var x_min = clamp(Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
+      var x_max = clamp(Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
 
       for (let _z = z_min; _z < z_max; ++_z) {
         for (let _y = y_min; _y < y_max; ++_y) {
           for (let _x = x_min; _x < x_max; ++_x) {
 
             // Index into texture buffer
-            let u = _x + _y * this._xSlices + _z * this._xSlices * this._ySlices;
+            let u = _x + 
+                    (_y * this._xSlices) + 
+                    (_z * this._xSlices * this._ySlices);
             
             totalNumLights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(u, 0) + 0];
 
@@ -97,7 +103,6 @@ export default class ClusteredRenderer {
           }//end for x
         }//end for y
       }//end for z
-
     }//end for all lights    
 
     this._clusterTexture.update();
