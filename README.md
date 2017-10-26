@@ -14,12 +14,11 @@ This project implements Clustered Deferred and Forward+ Shading using WebGL.
 - Num of Lights: 1500
 - Light Radius: 3.0
 
-[![](img/live.PNG)]
+![](img/live.PNG)
 
 ### Demo Video/GIF
 
-[![](img/videoScreenshot.PNG)]
-[![](https://www.youtube.com/watch?v=vU8VylBNE9A&feature=youtu.be)]
+[![Foo](img/videoScreenshot.PNG)](https://www.youtube.com/watch?v=vU8VylBNE9A&feature=youtu.be)
 
 ### Features
 - Clustered Forward+
