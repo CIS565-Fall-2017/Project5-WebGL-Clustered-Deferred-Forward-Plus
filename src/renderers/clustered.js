@@ -87,12 +87,23 @@ export default class ClusteredRenderer {
       lViewPos = vec4.transformMat4(lViewPos, lPos, viewMatrix);
       lPos[2] = -lPos[2]; // flip z because it is inverted..
 
-      let xmin = this._xSlices; 
-      let ymin = this._ySlices;
-      let zmin = this._zSlices;
-      let xmax = this._xSlices; 
-      let ymax = this._ySlices;
-      let zmax = this._zSlices;
+      let xmin = -1; 
+      let ymin = -1;
+      let zmin = -1;
+      let xmax = -1; 
+      let ymax = -1;
+      let zmax = -1;
+
+      // compute zmin and zmax just by getting lpos.z-radius and lpos.z+radius...
+      let zcam = lPos[2] - camera.near;
+      zmin = Math.floor((zcam - lRad) / stepZ);
+      if(zmin > this._zSlices) {
+        continue;
+      }
+      zmax = Math.floor((zcam + lRad) / stepZ);
+      if(zmax < 0) {
+        continue;
+      }
 
       for(let i = 0; i < this._xSlices; i++) {
         let nor = this.computeComponents(i * stepX - halfX);
@@ -126,20 +137,16 @@ export default class ClusteredRenderer {
         }
       }
 
-      for(let i = 0; i < this._zSlices; i++) {
-        if (camera.near + i * stepZ > lPos[2] - lRad) { // search starts at NCP not origin...
-          zmin = i;
-          break;
-        }
+      if(xmin === -1 || xmax === -1 || ymin === -1 || ymax === -1) {
+        continue;
       }
 
-      for(let i = zmin + 1; i < this._zSlices; i++) {
-        if (camera.near + i * stepZ > lPos[2] + lRad) {
-          zmax = i;
-          break;
-        }
-      }
-
+      xmin = Math.max(0, xmin);
+      ymin = Math.max(0, ymin);
+      zmin = Math.max(0, zmin);
+      xmax = Math.min(this._xSlices, xmax);
+      ymax = Math.min(this._ySlices, ymax);
+      zmax = Math.min(this._zSlices, zmax);
 
       for (let z = zmin; z < zmax; ++z) {
         for (let y = ymin; y < ymax; ++y) {

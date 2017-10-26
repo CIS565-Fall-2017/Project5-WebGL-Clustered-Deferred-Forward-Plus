@@ -13,6 +13,8 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  uniform mat4 viewMat;
+  uniform vec4 sceneDim; // width, height, near, far
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -87,13 +89,21 @@ export default function(params) {
     // Read in the lights in that cluster from the populated data
     // Do shading for just those lights
 
-    vec4 clusterPos = vec4(gl_FragCoord.xyz / slices, 1.0); // (v_position - sizeMin) / (sizeMax - sizeMin) * slices;
+    // here, Z is not in the correct space..?? Also maybe include screensize as everything is 0-1
+    // recompute using view matrix..
+    // vec4 clusterPos = vec4(gl_FragCoord.xyz / slices, 1.0); // (v_position - sizeMin) / (sizeMax - sizeMin) * slices;
+    
+    vec4 clusterPos = viewMatrix * vec4(v_position,1.0); // see google group...
+    clusterPos.x = clusterPos.x / sceneDim.x * slices.x;
+    clusterPos.y = clusterPos.y / sceneDim.y * slices.y;
+    clusterPos.z = clusterPos.z / (sceneDim.w - sceneDim.z) * slices.z;
+
     clusterPos = vec4(floor(clusterPos.x), floor(clusterPos.y), floor(clusterPos.z), 1.0);
 
     // optimize z using non linear scale once linear works..
     // show perf. comparison..
 
-    int clusterIdx = int(clusterPos.x + clusterPos.y * slices.x + clusterPos.y * slices.x * slices.y);
+    int clusterIdx = int(clusterPos.x + clusterPos.y * slices.x + clusterPos.z * slices.x * slices.y);
     int slicesSize = int(slices.x * slices.y * slices.z);
     int clusterTexCoord = (clusterIdx + 1) / (slicesSize + 1); // like u in UnpackLight()..
 
@@ -103,7 +113,7 @@ export default function(params) {
       if(i >= numLights) {
         break;
       }
-      int clusterTex = i / 4; // acts like floor..
+      int clusterTex = i / 4; // floors by default..
       int lightIdx = int(ExtractFloat(u_clusterbuffer, slicesSize, ${params.maxLights},clusterIdx, i));
 
       // shading
