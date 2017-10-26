@@ -10,6 +10,7 @@ export const LIGHT_DT = -0.03;
 // TODO: This controls the number of lights
 export const NUM_LIGHTS = 100;
 
+
 class Scene {
   constructor() {
     this.lights = [];
