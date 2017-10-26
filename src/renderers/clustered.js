@@ -16,7 +16,7 @@ export default class ClusteredRenderer
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
-    this._MaxLightsPerCluster = MaxLightsPerCluster;
+    this._MaxLightsPerCluster = MaxLightsPerCluster + 1;
 
     //find bounding x and y values of the camera frustum    
     this.vertical_FoV = camera.fov;
@@ -102,9 +102,11 @@ export default class ClusteredRenderer
       xStride = w_lightFrustum/this._xSlices;
       yStride = h_lightFrustum/this._ySlices;
 
-      zStartIndex = Math.floor(lightAABB.min[2]/this.zStride) - 1;
+      zStartIndex = Math.floor(lightAABB.min[2]/this.zStride) - 1; // Need to extend this by -1 and +1 to avoid edge cases where light 
+                                                                   //technically could fall outside the bounds we make because the planes themeselves are tilted by some angle
+                                                                   // the effect is exaggerated the steeper the angle the plane makes is
       zEndIndex = Math.floor(lightAABB.max[2]/this.zStride) + 1;
-      
+
       yStartIndex = Math.floor((lightAABB.min[1] + h_lightFrustum*0.5)/yStride);
       yEndIndex = Math.floor((lightAABB.max[1] + h_lightFrustum*0.5)/yStride);
 
@@ -139,15 +141,6 @@ export default class ClusteredRenderer
       xStartIndex = this.clamp(xStartIndex, 0, this._xSlices-1);
       xEndIndex = this.clamp(xEndIndex, 0, this._xSlices-1);
 
-      // zStartIndex = 0;
-      // zEndIndex = 14;
-
-      // yStartIndex = 0;
-      // yEndIndex = 14;
-
-      // xStartIndex = 0;
-      // xEndIndex = 14;
-
       for (let z = zStartIndex; z <= zEndIndex; ++z)
       {        
         for (let y = yStartIndex; y <= yEndIndex; ++y)
@@ -174,24 +167,6 @@ export default class ClusteredRenderer
         }//y
       }//z
     }//loop over lights
-
-    //to print things per cluster
-    // for (let z = zStartIndex; z <= zEndIndex; ++z)
-    // {
-    //   for (let y = yStartIndex; y <= yEndIndex; ++y)
-    //   {
-    //     for (let x = xStartIndex; x <= xEndIndex; ++x) 
-    //     {
-    //       let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-
-    //       var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
-    //       // console.log("clusterID: ", clusterID);
-    //       // //console.log("cluster light ID: ");
-    //       // console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
-    //       this._clusterTexture.buffer[lightCountIndex] = Math.floor(Math.random()*1000); 
-    //     }
-    //   }
-    // }
 
     this._clusterTexture.update();
   }
