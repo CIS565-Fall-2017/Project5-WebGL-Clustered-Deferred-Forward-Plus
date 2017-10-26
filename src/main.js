@@ -20,24 +20,28 @@ setRenderer(params.renderer);
 function setRenderer(renderer) {
   switch(renderer) {
     case FORWARD:
-      params._renderer = new ForwardRenderer();
+      params._renderer = new ForwardRenderer(params.Bloom);
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom);
       break;
   }
 }
 
 function setBloom(){
-  //params.isBloom = !params.isBloom;
-  if(params.Bloom){
-    console.log("Now Bloom is true~!");
-  }
-  else{
-    console.log("Now Bloom is false~!");
+  switch(params.renderer) {
+    case FORWARD:
+      params._renderer = new ForwardRenderer(params.Bloom);
+      break;
+    case CLUSTERED_FORWARD_PLUS:
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom);
+      break;
+    case CLUSTERED_DEFFERED:
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom);
+      break;
   }
 }
 

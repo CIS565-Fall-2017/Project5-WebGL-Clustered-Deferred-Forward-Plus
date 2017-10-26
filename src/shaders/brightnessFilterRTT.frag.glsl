@@ -1,5 +1,5 @@
 #version 100
-// #extension GL_EXT_draw_buffers: enable
+#extension GL_EXT_draw_buffers: enable
 precision highp float;
 
 uniform sampler2D u_oriSceenBuffer;
@@ -15,5 +15,9 @@ void main() {
 
     OriCol = brightness * OriCol;
 
-    gl_FragColor = vec4(OriCol, 1.0);
+    //gl_FragColor = vec4(OriCol, 1.0);
+
+    //Render to FBO
+    gl_FragData[0] = vec4(OriCol, 1.0);
+
 }
