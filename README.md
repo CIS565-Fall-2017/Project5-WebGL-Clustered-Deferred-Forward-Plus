@@ -27,25 +27,25 @@ Features Introduction
 
 ### Clustered Forward+
 
-	* Divide the whole scene into clusters based on screen tile dividing and camera space z dividing.
-	* Build a data structure to keep track of how many lights are in each cluster and what their indices are
-	* Render the scene using only the lights that overlap a given cluster
+* Divide the whole scene into clusters based on screen tile dividing and camera space z dividing.
+* Build a data structure to keep track of how many lights are in each cluster and what their indices are
+* Render the scene using only the lights that overlap a given cluster
 
 ###	Clustered Deferred
 
-	* Reuse clustering logic from Clustered Forward+
-	* Store vertex attributes in g-buffer for later use.
-	* Only do lighting on the nearest fragments. 
-	* Read g-buffer in fragment shader and applying clustered based light to produce final output.
+* Reuse clustering logic from Clustered Forward+
+* Store vertex attributes in g-buffer for later use.
+* Only do lighting on the nearest fragments. 
+* Read g-buffer in fragment shader and applying clustered based light to produce final output.
 
 ###	Effects
 
-	* Implement deferred Blinn-Phong shading for point lights.
+* Implement deferred Blinn-Phong shading for point lights.
 
 ###	Optimizations
 
-	* Pack normal vector into vec2 and stored in g-buffer. 
-	* Use 2 g-buffer instead of 4 g-buffer using proper compress technique.
+* Pack normal vector into vec2 and stored in g-buffer. 
+* Use 2 g-buffer instead of 4 g-buffer using proper compress technique.
 	
 Performance Analysis
 ======================
@@ -53,6 +53,7 @@ Performance Analysis
 ###	Different running time for different render techniques
 
 [![](charts/1.png)]
+
 
 Naive Forward rendering will go through all the lights in every fragment to calculate the render result.
 
