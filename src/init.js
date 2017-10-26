@@ -1,5 +1,5 @@
 // TODO: Change this to enable / disable debug mode
-export const DEBUG = true;
+export const DEBUG = false;
 
 import DAT from 'dat-gui';
 import WebGLDebug from 'webgl-debug';
