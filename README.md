@@ -13,10 +13,17 @@ ___
   * Cluster Shading: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
   * The following are the results of **Clustered-Deferred Shading** with different shaders:
   
- | **Regular Shading** | **Blinn-Phong Shading**| **Toon Shading**|
-|---|---|---|
-|<img src="./results/regular.gif" width="410" height="230">|<img src="./results/blinn_phong.gif" width="410" height="230">|<img src="./results/toon.gif" width="410" height="230">|
+ | **Regular Shading** |
+|---|
+|<img src="./results/regular.gif" width="1200" height="600">|
 
+| **Blinn-Phong Shading**|
+|---|
+|<img src="./results/blinn_phong.gif" width="1200" height="600">|
+
+| **Toon Shading**|
+|---|
+|<img src="./results/toon.gif" width="1200" height="600">|
 
 ### Live Online
 
