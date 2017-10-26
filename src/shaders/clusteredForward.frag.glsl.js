@@ -8,6 +8,11 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  // u_dims: X and Y are screen dims (divide gl_FragCoord by this)
+  //         Z is ???
+  uniform vec3 u_dims;
+  // number of slices in each dimension
+  uniform vec3 u_sliceCount;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -57,7 +62,7 @@ export default function(params) {
     // LOOK: This extracts the 4th float (radius) of the (index)th light in the buffer
     // Note that this is just an example implementation to extract one float.
     // There are more efficient ways if you need adjacent values
-    light.radius = ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
+    light.radius = v1.w;//ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
 
     light.color = v2.rgb;
     return light;
@@ -81,8 +86,24 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    // TODO: pass in as uniform??
+    float texWidth = u_sliceCount.x * u_sliceCount.y * u_sliceCount.z;
+    // TODO: hardcoded height for now
+    float texHeight = ceil(101.0 / 4.0);
+    texHeight = 26.0;
+    texWidth = 15.0 * 15.0 * 15.0;
+
+    vec3 clusterCoords = vec3(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x), floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y), floor(gl_FragCoord.z * u_sliceCount.z));
+    int idx = int(clusterCoords.x + (clusterCoords.y * u_sliceCount.x) + (clusterCoords.z * u_sliceCount.x * u_sliceCount.y)); 
+    int lightCount = int(ExtractFloat(u_clusterbuffer, int(texWidth), int(texHeight), idx, 0));
+    //lightCount = 100;
+
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      if (i == lightCount) {
+        break;
+      } 
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, int(texWidth), int(texHeight), idx, i + 1));
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -96,6 +117,11 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
+    //gl_FragColor = vec4(float(lightCount) / 10.0, float(lightCount) / 10.0, float(lightCount) / 10.0, 1.0);
+
+    //gl_FragColor = vec4((gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,1.0);//gl_FragCoord.x / u_dims.x, gl_FragCoord.y / u_dims.y, 0.0, 1.0);
+    //gl_FragColor = vec4(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x) / u_sliceCount.x, floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y) / u_sliceCount.y, 0.0, 1.0);
   }
   `;
 }

@@ -17,7 +17,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -76,6 +76,11 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    // bind u_dims
+    gl.uniform3fv(this._shaderProgram.u_dims, vec3.fromValues(canvas.width, canvas.height, 1));
+
+    // bind u_sliceCount
+    gl.uniform3fv(this._shaderProgram.u_sliceCount, vec3.fromValues(this._xSlices, this._ySlices, this._zSlices));
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
