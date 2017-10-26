@@ -7,28 +7,6 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 import AABB from '../AABB'
 
-//struct factory
-function makeStruct(names) {
-  var names = names.split(' ');
-  var count = names.length;
-  function constructor() {
-    for (var i = 0; i < count; i++) 
-    {
-      this[names[i]] = arguments[i];
-    }
-  }
-  return constructor;
-}
-
-// halfspace enum
-var Halfspace = {
-  NEGATIVE: -1,
-  ON_PLANE: 0,
-  POSITIVE: 1,
-};
-
-var Plane = makeStruct("a b c d");
-
 export default class ClusteredRenderer 
 {
   constructor(xSlices, ySlices, zSlices, camera, MaxLightsPerCluster) 
@@ -43,8 +21,10 @@ export default class ClusteredRenderer
     //find bounding x and y values of the camera frustum    
     this.vertical_FoV = camera.fov;
     this.tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
-    var tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
-    this.horizontal_FoV = 2 * Math.atan(tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
+    this.tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
+    this.horizontal_FoV = 2 * Math.atan(this.tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
+
+    this.zStride = (camera.far-camera.near)/this._zSlices;
 
     /*
     Layout of _clusterTexture
@@ -66,67 +46,13 @@ export default class ClusteredRenderer
     to find light placement within pixel = (light_num + 1) % 4 
     */
   }
-
-  createPlane(planeNormal, pointOnPlane)
+  
+  clamp(value, lower, upper)
   {
-    var d = vec3.dot(planeNormal, pointOnPlane);
-    var plane = vec4.create();
-    plane[0] = planeNormal[0];
-    plane[1] = planeNormal[1];
-    plane[2] = planeNormal[2];
-    plane[3] = d;
-    return plane;
+    return Math.max(lower, Math.min(value, upper));
   }
 
-  calcPlaneNormal(pointOnPlane, perpendicularVectorOnPlane)
-  {
-    //returns a vec3
-    var planeNormal = vec3.create();
-    var normalizedVec = vec3.create();
-    vec3.normalize(normalizedVec, pointOnPlane);
-    vec3.cross(planeNormal, perpendicularVectorOnPlane, normalizedVec ); // this makes the normal of all the 
-                                                                //planes be in the same hemisphere as the +ve x axis
-    vec3.normalize(planeNormal, planeNormal);
-
-    return planeNormal;
-  }
-
-  normalizePlane(plane)
-  {
-    //returns a Plane
-    var mag;
-    mag = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
-    plane[0] = plane[0] / mag;
-    plane[1] = plane[1] / mag;
-    plane[2] = plane[2] / mag;
-    plane[3] = plane[3] / mag;
-  }
-
-  distanceToPoint(plane, point)
-  {
-    //returns a signed Distance
-    var SD = plane[0]*point[0] + plane[1]*point[1] + plane[2]*point[2] + plane[3];
-    return SD;
-  }
-
-  classifyPointwithSD(d)
-  {
-    //returns a Halfspace
-    if (d < 0)
-    {
-      return Halfspace.NEGATIVE;
-    }
-    else if (d > 0)
-    {
-      return Halfspace.POSITIVE;
-    }
-    else
-    {
-      return Halfspace.ON_PLANE;
-    }
-  }
-
-  updateClusters(camera, viewMatrix, scene, camRight, camDown, numLights) 
+  updateClusters(camera, viewMatrix, scene, numLights) 
   {
     //This function updates the cluster texture with the count and indices of the lights in each cluster
 
@@ -145,20 +71,17 @@ export default class ClusteredRenderer
     }
 
     //instead of using the farclip plane as the arbitrary plane to base all our calculations and division splitting off of
-    const yStride = (this.tan_Vertical_FoV_by_2 * 2.0 / this._ySlices);
-    const xStride = (this.tan_Vertical_FoV_by_2 * 2.0 / this._xSlices) * camera.aspect;
-    const zStride = (camera.far - camera.near) / this._zSlices;
-    const yStrideStart = -this.tan_Vertical_FoV_by_2;
-    const xStrideStart = -this.tan_Vertical_FoV_by_2 * camera.aspect;
-
+    var xStride, yStride, zStride;
     var xStartIndex, yStartIndex, zStartIndex;
     var xEndIndex, yEndIndex, zEndIndex;
-    var lightPos, lightAABB;
+
+    var h_lightFrustum, w_lightFrustum;
+    var lightRadius;
     var clusterLightCount;
 
     for (let i=0; i<numLights; i++)
     {
-      let lightRadius = scene.lights[i].radius;
+      lightRadius = scene.lights[i].radius;
       var _lightPos = vec4.fromValues(scene.lights[i].position[0], 
                                       scene.lights[i].position[1], 
                                       scene.lights[i].position[2], 
@@ -168,146 +91,95 @@ export default class ClusteredRenderer
       var lightPos = vec3.fromValues(_lightPos[0], 
                                      _lightPos[1], 
                                      _lightPos[2] );
-
       lightPos[2] *= -1; //camera looks down negative z, make z axis positive to make calculations easier
       
-      // now using the min and max of the AABB determine which clusters the light lies in
-      // x and y planes do not have an angle to them and so can be done similar to grid indexing for boids
-      // z under goes perspective correction and so the ZY planes are angled
+      var lightAABB = new AABB();
+      lightAABB.calcAABB_PointLight(lightPos, lightRadius);
 
-      //_____________________________________________________
-      //__________Update Start and Stop Indices______________
-      //_____________________________________________________
-      xStartIndex = this._xSlices; xEndIndex = this._xSlices;
-      yStartIndex = this._ySlices; yEndIndex = this._ySlices;
-      zStartIndex = this._zSlices; zEndIndex = this._zSlices;
+      h_lightFrustum = this.tan_Vertical_FoV_by_2*lightPos[2]*2;
+      w_lightFrustum = camera.aspect*h_lightFrustum;
 
-      var pointOnPlane = vec3.fromValues(0.0, 0.0, 1.0);
-      var upVec = vec3.fromValues(0.0, 1.0, 0.0);
-      var rightVec = vec3.fromValues(1.0, 0.0, 0.0);
+      xStride = w_lightFrustum/this._xSlices;
+      yStride = h_lightFrustum/this._ySlices;
 
-      //________________________startX___________________________
-      for(let i=0; i<this._xSlices; i++)
-      {
-        pointOnPlane[0] = xStrideStart + xStride*i;
-        
-        var planeNor = this.calcPlaneNormal(pointOnPlane, upVec);
-        var plane = this.createPlane(planeNor, pointOnPlane);
-        this.normalizePlane(plane);
-        var minSD = this.distanceToPoint(plane, lightPos);
+      zStartIndex = this.clamp(Math.floor(lightAABB.min[2]/this.zStride), 0, this._zSlices);
+      zEndIndex = this.clamp(Math.floor(lightAABB.max[2]/this.zStride), 0, this._zSlices);
 
-        if(minSD<lightRadius)
+      yStartIndex = this.clamp(Math.floor((lightAABB.min[1] + h_lightFrustum*0.5)/yStride), 0, this._ySlices);
+      yEndIndex = this.clamp(Math.floor((lightAABB.max[1] + h_lightFrustum*0.5)/yStride), 0, this._ySlices);
+
+      xStartIndex = this.clamp(Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
+      xEndIndex = this.clamp(Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
+
+      //Z//
+      // zStartIndex = this._zSlices;
+      // let lightZStart = lightPos[2] - lightRadius;
+      // for(let iter = 0; iter <= this._zSlices; ++iter) {
+      //     if(camera.near + iter*this.zStride > lightAABB.min[2]) {
+      //         zStartIndex = Math.max(0, iter-1);
+      //         break;
+      //     }
+      // }
+    
+      // zEndIndex = this._zSlices;
+      // let lightZStop = lightPos[2] + lightRadius;
+      // for(let iter = zStartIndex+1; iter<=this.zSlices; ++iter) {
+      //     if(camera.near + iter*this.zStride > lightAABB.max[2]) {
+      //         zEndIndex = Math.max(0,iter-1);
+      //         break;
+      //     }
+      // }
+
+      // console.log("x: ", xStartIndex, xEndIndex);
+      // console.log("y: ", yStartIndex, yEndIndex);
+      //console.log("z: ", zStartIndex, zEndIndex);
+
+      for (let z = zStartIndex; z < zEndIndex; ++z)
+      {        
+        for (let y = yStartIndex; y < yEndIndex; ++y)
         {
-          xStartIndex = Math.max(0, i-1); //i-1 because if it the plane is inside the radial 
-          //extent of the light then the light also has an effect beyond that plane
-          break;
-        }
-      }
-
-      //________________________endX_____________________________
-      for(let i=xStartIndex; i<this._xSlices; i++)
-      {
-        pointOnPlane[0] = xStrideStart + xStride*i;
-        
-        var planeNor = this.calcPlaneNormal(pointOnPlane, upVec);
-        var plane = this.createPlane(planeNor, pointOnPlane);
-        this.normalizePlane(plane);
-        var minSD = this.distanceToPoint(plane, lightPos);
-
-        if(minSD<-lightRadius) //-ve light radius because the signed Distance is defined along the normal of the plane
-        {
-          xEndIndex = Math.max(xStartIndex, i-1);; //i-1 because if it the plane is inside the radial 
-          //extent of the light then the light also has an effect beyond that plane
-          break;
-        }
-      }
-
-      //debugger;
-      pointOnPlane[0] = 0;
-      //________________________startY___________________________
-      for(let i=0; i<this._ySlices; i++)
-      {
-        pointOnPlane[1] = yStrideStart + yStride*i;
-        
-        var planeNor = this.calcPlaneNormal(pointOnPlane, rightVec);
-        var plane = this.createPlane(planeNor, pointOnPlane);
-        this.normalizePlane(plane);
-        var minSD = this.distanceToPoint(plane, lightPos);
-
-        if(minSD<lightRadius)
-        {
-          yStartIndex = Math.max(0, i-1); //i-1 because if it the plane is inside the radial 
-          //extent of the light then the light also has an effect beyond that plane
-          break;
-        }
-      }
-      
-      //________________________endY_____________________________
-      for(let i=yStartIndex; i<this._ySlices; i++)
-      {
-        pointOnPlane[1] = yStrideStart + yStride*i;
-        
-        var planeNor = this.calcPlaneNormal(pointOnPlane, rightVec);
-        var plane = this.createPlane(planeNor, pointOnPlane);
-        this.normalizePlane(plane);
-        var minSD = this.distanceToPoint(plane, lightPos);
-
-        if(minSD<-lightRadius) //-ve light radius because the signed Distance is defined along the normal of the plane
-        {
-          yEndIndex = Math.max(yStartIndex, i-1); //i-1 because if it the plane is inside the radial 
-          //extent of the light then the light also has an effect beyond that plane
-          break;
-        }
-      }
-      
-      //________________________startZ___________________________
-      let lightZnear = lightPos[2] - lightRadius;
-      for(let i=0; i<this._zSlices; i++)
-      {
-          if(camera.near + i*zStride > lightZnear)
+          for (let x = xStartIndex; x < xEndIndex; ++x) 
           {
-              zStartIndex = Math.max(0, i-1);
-              break;
-          }
-      }
-      
-      //________________________endZ_____________________________
-      let lightZfar = lightPos[2] + lightRadius;
-      for(let i=zStartIndex; i<this._zSlices; i++)
-      {
-        if(camera.near + i*zStride > lightZfar)
-        {
-            zEndIndex = Math.max(0, i-1);
-            break;
-        }
-      }
-      //_____________________________________________________
-      //_____________________________________________________
-
-      for (let z = zStartIndex; z <= zEndIndex; ++z)
-      {
-        for (let y = yStartIndex; y <= yEndIndex; ++y)
-        {
-          for (let x = xStartIndex; x <= xEndIndex; ++x) 
-          {
-            let j = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+            let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster
-            clusterLightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0) + 0];
+            var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
+            clusterLightCount = this._clusterTexture.buffer[lightCountIndex];
 
-            if(clusterLightCount < this._MaxLightsPerCluster+1)
+            if((clusterLightCount+1) <= this._MaxLightsPerCluster)
             {
-              //console.log("updating cluster" + j);
-              clusterLightCount++;
-              let clusterLightIndex = Math.floor(clusterLightCount/4);
-              let clusterLightSubIndex = clusterLightCount%4;
+              this._clusterTexture.buffer[lightCountIndex] = clusterLightCount+1;
+
+              let texel = Math.floor((clusterLightCount+1)/4);
+              let texelIndex = this._clusterTexture.bufferIndex(clusterID, texel);
+              let texelSubIndex = (clusterLightCount+1) - texel*4; //texel%4;
 
               // Update the light index for the particular cluster in the light buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, clusterLightIndex) + clusterLightSubIndex] = i;
+              this._clusterTexture.buffer[texelIndex + texelSubIndex] = i;
+
+              // var updatedClusterLightCount = this._clusterTexture.buffer[lightCountIndex];
+              // var updatedClusterLightIndex = this._clusterTexture.buffer[texelIndex + texelSubIndex];              
             }
           }//x
         }//y
       }//z
     }//loop over lights
+
+    // //to print things per cluster
+    // for (let z = zStartIndex; z <= zEndIndex; ++z)
+    // {
+    //   for (let y = yStartIndex; y <= yEndIndex; ++y)
+    //   {
+    //     for (let x = xStartIndex; x <= xEndIndex; ++x) 
+    //     {
+    //       let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+
+    //       var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
+    //       console.log("clusterID: ", clusterID);
+    //       //console.log("cluster light ID: ");
+    //       console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
+    //     }
+    //   }
+    // }
 
     this._clusterTexture.update();
   }

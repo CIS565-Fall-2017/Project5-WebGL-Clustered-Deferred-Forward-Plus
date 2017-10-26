@@ -19,12 +19,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       numXSlices: xSlices,
       numYSlices: ySlices,
       numZSlices: zSlices,
-      numClusters: xSlices*ySlices*zSlices,
       maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 
-                 'u_vFoV', 'u_hFoV', 'u_xStride', 'u_yStride', 'u_zStride',
-                 'u_camRight', 'u_camDown',
+                 'u_screenHeight', 'u_screenWidth', 'u_zStride', 'u_camNear',
                  'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
@@ -42,13 +40,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
     // Update cluster texture which maps from cluster index to light list
-    var camRight = vec3.create();
-    var camDown = vec3.create();
-
-    vec3.set(camRight, this._viewMatrix[0], this._viewMatrix[1], this._viewMatrix[2]);
-    vec3.set(camDown, -this._viewMatrix[4], -this._viewMatrix[5], -this._viewMatrix[6]);
-
-    this.updateClusters(camera, this._viewMatrix, scene, camRight, camDown, NUM_LIGHTS);
+    this.updateClusters(camera, this._viewMatrix, scene, NUM_LIGHTS);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -89,15 +81,14 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
-    // Bind any other shader inputs
+    // Upload the view matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
-    gl.uniform1f (this._shaderProgram.u_vFoV, this.vertical_FoV);
-    gl.uniform1f (this._shaderProgram.u_hFoV, this.horizontal_FoV);
-    gl.uniform1f (this._shaderProgram.u_xStride, this.xStride);
-    gl.uniform1f (this._shaderProgram.u_yStride, this.yStride);
+    //upload the screen dimensions
+    gl.uniform1f (this._shaderProgram.u_screenWidth, canvas.width);
+    gl.uniform1f (this._shaderProgram.u_screenHeight, canvas.height);
+    //upload z_stride -- this is constant
     gl.uniform1f (this._shaderProgram.u_zStride, this.zStride);
-    gl.uniform3f (this._shaderProgram.u_camRight, camRight[0], camRight[1], camRight[2]);
-    gl.uniform3f (this._shaderProgram.u_camDown, camDown[0], camDown[1], camDown[2]);
+    gl.uniform1f (this._shaderProgram.u_camNear, camera.near);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
