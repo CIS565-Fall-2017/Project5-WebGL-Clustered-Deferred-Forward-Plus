@@ -15,15 +15,15 @@ ___
   
  | **Regular Shading** |
 |---|
-|<img src="./results/regular.gif" width="1200" height="600">|
+|<img src="./results/regular.gif" width="1200" height="500">|
 
 | **Blinn-Phong Shading**|
 |---|
-|<img src="./results/blinn_phong.gif" width="1200" height="600">|
+|<img src="./results/blinn_phong.gif" width="1200" height="500">|
 
 | **Toon Shading**|
 |---|
-|<img src="./results/toon.gif" width="1200" height="600">|
+|<img src="./results/toon.gif" width="1200" height="500">|
 
 ### Live Online
 
