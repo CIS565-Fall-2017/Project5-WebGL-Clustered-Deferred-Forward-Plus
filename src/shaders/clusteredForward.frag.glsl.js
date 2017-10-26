@@ -138,28 +138,17 @@ export default function(params) {
         lightIndex = int(clusterTexel[2]);
       else if (remainder == 3)
         lightIndex = int(clusterTexel[3]);
-      else     
-        continue;     
-      
-      
-      //from forward.frag.glsl.js
-      //assume that only point light will be used
-    
       Light thisLight = UnpackLight(lightIndex);
       float lightDistance = distance(thisLight.position, v_position);
       vec3 L = (thisLight.position - v_position) / lightDistance;
       
       float lightIntensity = cubicGaussian(2.0 * lightDistance / thisLight.radius);
-      float NoL = max(dot(L, normal), 0.0);
-      //Blinn-phong
-      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);
-      
+      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);      
       vec3 viewVec = normalize(cameraWorldPos.xyz - v_position);
       vec3 halfVec = normalize(L + viewVec);
-      float NoH = max(dot(halfVec, normal), 0.0);
       vec3 diffuseTerm = albedo;
-      float speculatTerm = pow(NoH, 100.0);      
-      fragColor += (diffuseTerm + vec3(speculatTerm)) * NoL * lightIntensity * thisLight.color;
+      float speculatTerm = pow(max(dot(halfVec, normal), 0.0), 100.0);      
+      fragColor += (diffuseTerm + vec3(speculatTerm)) * max(dot(L, normal), 0.0) * lightIntensity * thisLight.color;
     }
 //Original code for all lights
 

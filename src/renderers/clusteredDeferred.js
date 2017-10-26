@@ -9,8 +9,8 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 import { MAX_LIGHTS_PER_CLUSTER} from './clustered';
-export const NUM_GBUFFERS = 4;
-import { SPECIAL_NEARPLANE} from './clustered';
+export const NUM_GBUFFERS = 2;
+import { FIRSTZCLIP} from './clustered';
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
@@ -37,13 +37,13 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       ySliceCount : ySlices,
       zSliceCount : zSlices,
       num_maxLightsPerCluster : MAX_LIGHTS_PER_CLUSTER,
-      specialNearPlane : SPECIAL_NEARPLANE
+      specialNearPlane : FIRSTZCLIP
     }), {
       uniforms: [
       'u_gbuffers[0]', 
       'u_gbuffers[1]', 
-      'u_gbuffers[2]', 
-      'u_gbuffers[3]',
+      //'u_gbuffers[2]', 
+      //'u_gbuffers[3]',
       'u_good',
       'u_lightbuffer',
       'u_clusterbuffer',

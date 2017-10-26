@@ -3,7 +3,7 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
 export const MAX_LIGHTS_PER_CLUSTER = 1000;
-export const SPECIAL_NEARPLANE = 3.0;
+export const FIRSTZCLIP = 3.0;
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -29,16 +29,19 @@ export default class ClusteredRenderer {
 //Edit: Do not go through every cluster to find lights. Go through every lights to find clusters.
 
 
-    function getViewZ(z, zSlices)
+    function getZClipDistance(z, zSlices)
     {
+      // This function focus on the z value of the z-th slices.
+      // so there will be total this._zSlices + 1 clips
       if (z == 0)
         return camera.near;  
       if (z == 1)
-        return SPECIAL_NEARPLANE;
+        return FIRSTZCLIP;
       else
       {
-        const normalizedZ = (parseFloat(z) - 1.0) / (parseFloat(zSlices) - 1.0);
-        return Math.exp(normalizedZ * Math.log(camera.far - SPECIAL_NEARPLANE + 1.0)) + SPECIAL_NEARPLANE - 1.0;
+        return Math.exp(
+          (parseFloat(z) - 1.0) / (parseFloat(zSlices) - 1.0)
+         * Math.log(camera.far - FIRSTZCLIP + 1.0)) + FIRSTZCLIP - 1.0;
       }            
     }
     for(let i = 0; i< NUM_LIGHTS; i++)
@@ -50,11 +53,8 @@ export default class ClusteredRenderer {
           scene.lights[i].position[2], 
           1.0
           );
-         //World to View
          let LightCameraSpace = vec4.create();
          vec4.transformMat4(LightCameraSpace, LightWorldSpce, viewMatrix);
-
-         //Negative z to Positive z
          let Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0);
          let width_SliceY = Width_Y / parseFloat(this._ySlices);
          let Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
@@ -64,13 +64,13 @@ export default class ClusteredRenderer {
 
          let lightRadius = scene.lights[i].radius;
 
-         let begin_Z;  let end_Z;
          let distance;
 
 
 // for x and y can do it simple. But not for z.
 //edit: not simple!
 //edit: directly find beginx and endx has failed. Try to use something from CIS560
+//use similar triangle to find. see my notes.
 //y i cannot directly do it on the clip?
 /*
          let begin_X = parseInt((((LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)) > 0)?
@@ -91,20 +91,20 @@ export default class ClusteredRenderer {
          / parseFloat(width_SliceY)
          ) + 10;
         */// distance between light point and sliceX plane (ignore Y value)
-        function distanceX(distance, width, lightPos)
+        function xDistanceInCameraSpace(distance, width, lightPos)
         {
           distance = (lightPos[0] - width*lightPos[2]) / Math.sqrt(1.0 + width * width);
           return distance;
         }
         let begin_X;
         for(begin_X = 0; begin_X <= this._xSlices; begin_X++){
-          if( distanceX(distance, width_SliceX * (begin_X + 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
+          if( xDistanceInCameraSpace(distance, width_SliceX * (begin_X + 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
             break;
           }
         }
         let end_X;
         for(end_X = this._xSlices; end_X >= begin_X; end_X--){
-          if( -distanceX(distance, width_SliceX * (end_X - 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
+          if( -xDistanceInCameraSpace(distance, width_SliceX * (end_X - 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
             end_X--;
             break;
           }
@@ -127,16 +127,17 @@ export default class ClusteredRenderer {
             break;
           }
         }
-        const minZValue = LightCameraSpace[2] - lightRadius;
+        let begin_Z;  let end_Z;
+        let minZValue = LightCameraSpace[2] - lightRadius;
         for(begin_Z = parseInt(0); begin_Z <= this._zSlices; begin_Z++){
-          if( (getViewZ(begin_Z + 1, this._zSlices) >= minZValue)){
+          if( (getZClipDistance(begin_Z + 1, this._zSlices) >= minZValue)){
             break;
           }
         }
         console
-        const maxZValue = LightCameraSpace[2] + lightRadius;
+        let maxZValue = LightCameraSpace[2] + lightRadius;
         for(end_Z = parseInt(this._zSlices); end_Z >= begin_Z; end_Z--){
-          if((getViewZ(end_Z, this._zSlices) <= maxZValue)){
+          if((getZClipDistance(end_Z, this._zSlices) <= maxZValue)){
             end_Z += 1;
             end_Z = Math.min(end_Z,this._zSlices);
             break;

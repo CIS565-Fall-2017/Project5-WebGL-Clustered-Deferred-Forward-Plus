@@ -82,11 +82,17 @@ export default function(params) {
 //    vec3 normal = applyNormalMap(v_normal, normap);
     vec4 g1 = texture2D(u_gbuffers[0], v_uv);
     vec4 g2 = texture2D(u_gbuffers[1], v_uv);
-    vec4 g3 = texture2D(u_gbuffers[2], v_uv);
+//  vec4 g3 = texture2D(u_gbuffers[2], v_uv);
     vec3 albedo = g1.rgb;
     vec3 v_position = g2.xyz;
-    vec3 normal = g3.xyz;
-    
+//    vec3 normal = g3.xyz;
+//Here we use compressed normal
+    vec2 enc = vec2(g1.w,g2.w);
+    vec4 nn  = vec4(enc * vec2(2,2),0,0) + vec4(-1,-1,1,-1);
+    float l = dot(nn.xyz,-nn.xyw);
+    nn.z = l;
+    nn.xy *= sqrt(l);
+    vec3 normal = nn.xyz * 2.0 + vec3(0,0,-1); 
     vec3 fragColor = vec3(0.0);
 //Determine the cluster for a fragment
 //hard code near and far
@@ -100,6 +106,7 @@ export default function(params) {
     int num_ySlices = ${params.ySliceCount};
     int num_zSlices = ${params.zSliceCount};
     /*
+    // well, gl_FragCoord.z is missing. 
     vec4 viewCoords = vec4(gl_FragCoord.xyz,1);
     viewCoords = u_invProjectionMatrix * viewCoords;
     viewCoords /= viewCoords.w;
@@ -162,31 +169,22 @@ export default function(params) {
       vec3 L = (thisLight.position - v_position) / lightDistance;
       
       float lightIntensity = cubicGaussian(2.0 * lightDistance / thisLight.radius);
-      float NoL = max(dot(L, normal), 0.0);
       //Blinn-phong
-      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);
-      
+      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);      
       vec3 viewVec = normalize(cameraWorldPos.xyz - v_position);
       vec3 halfVec = normalize(L + viewVec);
-      float NoH = max(dot(halfVec, normal), 0.0);
       vec3 diffuseTerm = albedo;
-      float speculatTerm = pow(NoH, 100.0);      
-      fragColor += (diffuseTerm + vec3(speculatTerm)) * NoL * lightIntensity * thisLight.color;
+      float speculatTerm = pow(max(dot(halfVec, normal), 0.0), 100.0);      
+      fragColor += (diffuseTerm + vec3(speculatTerm)) * max(dot(L, normal), 0.0) * lightIntensity * thisLight.color;
     }
 //Original code for all lights
+
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    /*
-    gl_FragColor = vec4(
-    viewZ,//float(xid) / 14.0,
-    viewZ,//float(yid) / 14.0,
-    viewZ,
-    1
-    );
-    */
+//    gl_FragColor = vec4(normal,1);
     //Test code.
     //gl_FragColor = vec4(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0, 0, 1);
   }
