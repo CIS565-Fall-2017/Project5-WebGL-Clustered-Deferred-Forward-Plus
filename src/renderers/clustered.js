@@ -45,8 +45,14 @@ export default class ClusteredRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+//Dumb Method:
     // construct planes of the slices
+    // this._xPlanes = [];
+    // this._yPlanes = [];
+    // this._zPlanes = [];
   }
+
+//Dumb Method:
 
 // init_Planes(camera){
 //     camera.updateMatrixWorld();
@@ -130,6 +136,8 @@ export default class ClusteredRenderer {
       }
     }
     //
+
+//Dumb Method:
     //this.init_Planes(camera);
     
     //camera.updateMatrixWorld();
@@ -160,7 +168,47 @@ export default class ClusteredRenderer {
       //vec4.scale(lightPos_camera, 1/lightPos_camera[3]);
       //console.log(lightPos_camera);
       //examine X slices (16+1)
+      //find minX
 
+//Dumb Method:
+      // let minX = this._xSlices;
+      // for(let x = 0; x < this._xSlices + 1; ++x){
+      //   let dist = computesignedDistance_Point_Plane(lightPos_camera, this._xPlanes[x]);    
+      //   if(dist < r){
+      //     minX = Math.max(x-1, 0); 
+      //     break;
+      //   }
+      // }
+      // //find maxX
+      // let maxX = this._xSlices;
+      // for(let x = minX + 1; x < this._xSlices + 1; ++x){
+      //   let dist = computesignedDistance_Point_Plane(lightPos_camera, this._xPlanes[x]);    
+      //   if(dist < -r){
+      //     maxX = Math.max(0, x);
+      //     break;
+      //   }
+      // }
+
+      // //find minY
+      // let minY = this._ySlices;
+      // for(let y = 0; y < this._ySlices + 1; ++y) {
+      //   let dist = computesignedDistance_Point_Plane(lightPos_camera, this._yPlanes[y]);
+      //   if(dist < r){
+      //     minY = Math.max(0, y-1);
+      //     break;
+      //   }
+      // }
+      
+      // //find maxY
+      // let maxY = this._ySlices;
+      // for(let y = minY+1; y < this.ySlices + 1; ++y) {
+      //   let dist = computesignedDistance_Point_Plane(lightPos_camera, this._yPlanes[y]);
+      //   if(dist < -r) {
+      //     maxY = Math.max(0, y);
+      //     break;
+      //   }
+      // }
+//Better Method:
       //find minX
       let minX = this._xSlices;
       for(let x = 0; x < this._xSlices + 1; ++x){

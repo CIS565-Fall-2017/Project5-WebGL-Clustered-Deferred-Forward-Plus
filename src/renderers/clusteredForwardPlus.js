@@ -22,14 +22,15 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       num_zSlices: zSlices, 
       num_maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_cameraInfo', 'u_inverseProjection'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+      'u_cameraInfo', 'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
-    this._inverseProjectionMatrix = mat4.create();
+    //this._inverseProjectionMatrix = mat4.create();
   }
 
   render(camera, scene) {
@@ -38,7 +39,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
-    mat4.invert(this._inverseProjectionMatrix, this._projectionMatrix);
+    //mat4.invert(this._inverseProjectionMatrix, this._projectionMatrix);
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
     
@@ -70,7 +71,8 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
-    gl.uniformMatrix4fv(this._shaderProgram.u_inverseProjection, false, this._inverseProjectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    //console.log(this._viewMatrix);
     // Upload the camera info
     gl.uniform4f(this._shaderProgram.u_cameraInfo, canvas.width, canvas.height, camera.near, camera.far);
 

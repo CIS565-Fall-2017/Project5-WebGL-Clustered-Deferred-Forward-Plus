@@ -36,7 +36,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_clusterbuffer', 
       'u_lightbuffer', 'u_depthBuffer', 'u_cameraInfo', 'u_viewMatrix'],
-      attribs: ['a_uv'],
+      attribs: ['a_position','a_uv'],
     });
 
     this._projectionMatrix = mat4.create();

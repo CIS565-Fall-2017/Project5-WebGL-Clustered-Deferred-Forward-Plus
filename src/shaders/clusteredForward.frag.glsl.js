@@ -136,18 +136,57 @@ export default function(params) {
       Light light = UnpackLight(light_index);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
+      
+// Regular
+      // float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+      // float lambertTerm = max(dot(L, normal), 0.0);
+      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+// //Blinn-Phong
+//       vec3 specColor = vec3(1.0);
+
+//       vec3 viewDir = normalize(-vec3(view_Coords));
+//       vec3 halfDir = normalize(L + viewDir);
+
+//       float specAngle = max(dot(halfDir, normal), 0.0);
+//       float specularTerm = pow(specAngle, 32.0);
+      
+
+//       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+//       float lambertTerm = max(dot(L, normal), 0.0);
+      
+//       //fragColor += specColor * specularTerm * light.color * vec3(lightIntensity);
+//       fragColor += (albedo * lambertTerm + specColor * specularTerm) * light.color * vec3(lightIntensity);
+
+//Toon Shading
+      float steps = 2.5;
+      float toonEffect = 0.8;
+      //----lambert
+      //vec3 I = normalize() L
       float lambertTerm = max(dot(L, normal), 0.0);
+      float toon = floor(lambertTerm * steps) / steps;
+      lambertTerm = lambertTerm * (1.0 - toonEffect) + toon * toonEffect;
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);     
+      //----specular
+      vec3 specColor = vec3(1.0);
+      vec3 viewDir = normalize(-vec3(view_Coords));
+      vec3 halfDir = normalize(L + viewDir);
+      float specAngle = max(dot(halfDir, normal), 0.0);
+      float specularTerm = pow(specAngle, 32.0);
+      float toonSpec = floor(specularTerm * 2.0) / 2.0;
+      specularTerm = specularTerm * (1.0 - toonEffect) + toon * toonEffect;
+      
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+
+      // Compute final color
+      fragColor += (albedo * lambertTerm + specColor * specularTerm) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
     
     gl_FragColor = vec4(fragColor, 1.0);
-    //gl_FragColor = vec4(normal, 1.0);
+    //gl_FragColor = vec4(vec3(view_Coords), 1.0);
 
     // int k = maxLights;
     // float t = float(light_count)/float(k);
