@@ -26,6 +26,7 @@ export default class ForwardRenderer {
     // Configure RTT shder program
     this._shaderProgramRTT = loadShaderProgram(vsSource, fsSourceRTT({
       numLights: NUM_LIGHTS,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
@@ -336,9 +337,10 @@ export default class ForwardRenderer {
   // ***********************************************************************
 
 
-  constructor(isBloom) {
+  constructor(isBloom, isToonShading) {
 
     this.isBloomPostProcess = isBloom;
+    this.isToonShadingPostProcess = isToonShading;
 
     if(this.isBloomPostProcess){
         this._brightnessFilterDownScale = 2.0;
@@ -354,6 +356,7 @@ export default class ForwardRenderer {
     // Initialize a shader program. The fragment shader source is compiled based on the number of lights
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],

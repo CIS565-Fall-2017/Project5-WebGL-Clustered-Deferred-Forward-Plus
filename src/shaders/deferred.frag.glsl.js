@@ -24,6 +24,13 @@ export default function(params) {
     vec3 color;
   };
 
+  int getCulsterDepthIndex(float viewSpaceDepth, float nearClip) {
+      //2.15 is calculated based on near and far clip
+      //near Clip : 0.1
+      //far  Clip : 1000.0
+      return int(floor(2.15 * log(viewSpaceDepth - nearClip + 1.0)));
+  }
+
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
     float u = float(index + 1) / float(textureWidth + 1);
     int pixel = component / 4;
@@ -112,7 +119,8 @@ export default function(params) {
     // determine which cluster this fragment is in
     int cluster_Idx_x = int(gl_FragCoord.x / u_cluster_tile_size.x);
     int cluster_Idx_y = int(gl_FragCoord.y / u_cluster_tile_size.y);
-    int cluster_Idx_z = int((-viewSpaceDepth - u_nearClip) / u_cluster_depth_stride);
+    //int cluster_Idx_z = int((-viewSpaceDepth - u_nearClip) / u_cluster_depth_stride);
+    int cluster_Idx_z = getCulsterDepthIndex(-viewSpaceDepth, u_nearClip);
 
     // clusterTexture Size
     const int clusterTexutreWidth  = int(${params.numXSlices}) * int(${params.numYSlices}) * int(${params.numZSlices});
@@ -164,7 +172,22 @@ export default function(params) {
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+      //float lambertTerm = max(dot(L, normal), 0.0);
+
+      float lambertTerm;
+
+      if(${params.isToonShading}){
+        // ramp shading
+        float rampUnitLength =  0.25;
+        float rampUnitValue = 0.33;
+        // float rampCoord = dot(L, normal) * 0.5 + 0.5; // map from -1 -> 1 to 0 -> 1
+        float rampCoord = max(dot(L, normal), 0.0);
+        int rampLevel = int(rampCoord / rampUnitLength);
+        lambertTerm = float(rampLevel) * rampUnitValue;
+      }
+      else{
+        lambertTerm = max(dot(L, normal), 0.0);
+      }
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
 

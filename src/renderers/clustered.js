@@ -13,7 +13,7 @@ export const MAX_LIGHTS_PER_CLUSTER = 100;
 
 // Used in cluster update, 1 offset (in X, Y) is acceptable to eliminate some erros arised by accuracy
 const cluster_adjustment_x_y = 2;
-const cluster_adjustment_z   = 1;
+const cluster_adjustment_z   = 0;
 
 // Adapted from paper Clusterd Defferred and Forwar Shading by Olsson
 //function getCulsterIndexK(z_EyeSpace, nearClip, fovby2, ySlices) {
@@ -26,6 +26,19 @@ const cluster_adjustment_z   = 1;
 
   //return 0.0;
 //}
+
+// Slice view depth in a log way
+function getCulsterDepthIndex(viewSpaceDepth, nearClip) {
+  if(viewSpaceDepth < nearClip){
+    return -1.0;
+  }
+  else{
+      //2.15 is calculated based on near and far clip
+      //near Clip : 0.1
+      //far  Clip : 1000.0
+      return Math.floor(2.15 * Math.log(viewSpaceDepth - nearClip + 1.0));
+  }
+}
 
 function clamp(n, min, max){
   return Math.max(min, Math.min(n, max));
@@ -60,7 +73,6 @@ export default class ClusteredRenderer {
   }
 
 
-
   updateClusters(camera, viewMatrix, scene, viewProjectionMatrix) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
@@ -76,7 +88,7 @@ export default class ClusteredRenderer {
     }
 
     // Just evenly divide cluster in view space(frustrum) here
-    var cluster_depth_array_stride = (camera.far - camera.near) / this._zSlices;
+    //var cluster_depth_array_stride = (camera.far - camera.near) / this._zSlices;
 
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -99,8 +111,10 @@ export default class ClusteredRenderer {
       var cluster_StartIdx_z_threshold = -lightPos[2] - pointLightRadius;
       var cluster_EndIdx_z_threshold   = -lightPos[2] + pointLightRadius;
 
-      var cluster_StartIdx_z = Math.floor((cluster_StartIdx_z_threshold - camera.near) / cluster_depth_array_stride);
-      var cluster_EndIdx_z   = Math.floor((cluster_EndIdx_z_threshold   - camera.near) / cluster_depth_array_stride);
+      //var cluster_StartIdx_z = Math.floor((cluster_StartIdx_z_threshold - camera.near) / cluster_depth_array_stride);
+      //var cluster_EndIdx_z   = Math.floor((cluster_EndIdx_z_threshold   - camera.near) / cluster_depth_array_stride);
+      var cluster_StartIdx_z = getCulsterDepthIndex(cluster_StartIdx_z_threshold, camera.near);
+      var cluster_EndIdx_z   = getCulsterDepthIndex(cluster_EndIdx_z_threshold,   camera.near);
 
 
       if(cluster_StartIdx_z > this._zSlices + cluster_adjustment_z || cluster_EndIdx_z < -cluster_adjustment_z){ continue; } // culling

@@ -33,6 +33,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       numXSlices: this._xSlices,
       numYSlices: this._ySlices,
       numZSlices: this._zSlices,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
@@ -44,20 +45,24 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       attribs:  ['a_uv'],
     });
 
+
     this._progHorizontalBlurRTT = loadShaderProgram(vsSourceHorizontalBlurRTT, fsSourceBlurRTT, {
       uniforms: ['u_targetWidth', 'u_texture'],
       attribs:  ['a_uv'],
     });
+
 
     this._progVerticalBlurRTT = loadShaderProgram(vsSourceVerticalBlurRTT, fsSourceBlurRTT, {
       uniforms: ['u_targetHeight', 'u_texture'],
       attribs:  ['a_uv'],
     });
 
+
     this._progCombine = loadShaderProgram(QuadVertSource, fsSourceCombine, {
       uniforms: ['u_colorTexture', 'u_hightlightTexture'],
       attribs:  ['a_uv'],
     });
+
   }
 
 
@@ -357,14 +362,15 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
 
 
-  constructor(xSlices, ySlices, zSlices, isBloom) {
+  constructor(xSlices, ySlices, zSlices, isBloom, isToonShading) {
     super(xSlices, ySlices, zSlices);
 
     this.isBloomPostProcess = isBloom;
+    this.isToonShadingPostProcess = isToonShading;
 
     if(this.isBloomPostProcess){
         this._brightnessFilterDownScale = 2.0;
-        this._blurDownScale = 6.0;
+        this._blurDownScale = 5.0;
 
         this.setupBloomDrawBuffers(canvas.width, canvas.height);
     }
@@ -378,6 +384,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       numXSlices: xSlices,
       numYSlices: ySlices,
       numZSlices: zSlices,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride'],
       attribs: ['a_position', 'a_normal', 'a_uv'],

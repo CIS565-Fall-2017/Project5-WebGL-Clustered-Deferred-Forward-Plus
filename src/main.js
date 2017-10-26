@@ -20,13 +20,13 @@ setRenderer(params.renderer);
 function setRenderer(renderer) {
   switch(renderer) {
     case FORWARD:
-      params._renderer = new ForwardRenderer(params.Bloom);
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
   }
 }
@@ -34,24 +34,28 @@ function setRenderer(renderer) {
 function setBloom(){
   switch(params.renderer) {
     case FORWARD:
-      params._renderer = new ForwardRenderer(params.Bloom);
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
   }
 }
 
 function setToonShading(){
-  //params.isBloom = !params.isBloom;
-  if(params.ToonShading){
-    console.log("Now ToonShading is true~!");
-  }
-  else{
-    console.log("Now ToonShading is false~!");
+  switch(params.renderer) {
+    case FORWARD:
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_FORWARD_PLUS:
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_DEFFERED:
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
   }
 }
 

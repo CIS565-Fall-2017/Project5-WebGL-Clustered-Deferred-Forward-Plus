@@ -39,6 +39,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numXSlices: this._xSlices,
       numYSlices: this._ySlices,
       numZSlices: this._zSlices,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride', 'u_viewMatrix', 'u_clusterbuffer', 'u_invViewProjMatrix', 'u_invViewMatrix'],
       attribs:  ['a_uv'],
@@ -359,10 +360,11 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
 
 
-  constructor(xSlices, ySlices, zSlices, isBloom) {
+  constructor(xSlices, ySlices, zSlices, isBloom, isToonShading) {
     super(xSlices, ySlices, zSlices);
 
     this.isBloomPostProcess = isBloom;
+    this.isToonShadingPostProcess = isToonShading;
 
     if(this.isBloomPostProcess){
         this._brightnessFilterDownScale = 2.0;
@@ -387,6 +389,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numXSlices: xSlices,
       numYSlices: ySlices,
       numZSlices: zSlices,
+      isToonShading: this.isToonShadingPostProcess,
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_nearClip', 'u_cluster_tile_size', 'u_cluster_depth_stride', 'u_viewMatrix', 'u_clusterbuffer', 'u_invViewProjMatrix', 'u_invViewMatrix'],
       attribs:  ['a_uv'],
