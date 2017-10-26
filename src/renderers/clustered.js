@@ -29,7 +29,9 @@ export default class ClusteredRenderer {
 
     // console.log(this._zSlices, this._ySlices, this._xSlices)
 
-    var zinterval = (camera.far - camera.near)/this._zSlices;
+    //var zinterval = (camera.far - camera.near)/this._zSlices;
+    //For better cluster result, set the z length of each cluster to be n, such that n^_zSlices = zRange
+    var zinterval = Math.exp(Math.log(camera.far - camera.near)/this._zSlices);
     var nearPlaneZ = camera.near;
     var farPlaneZ = camera.far;
     var frustrumMaxY = farPlaneZ* Math.tan((camera.fov/2)*Math.PI/180)*2;
@@ -158,7 +160,8 @@ export default class ClusteredRenderer {
      //Test against ZPlanes
      for(let zPlaneIdx=0; zPlaneIdx<this._zSlices; zPlaneIdx++){
       if(!minZFound || !maxZFound){
-        let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + zPlaneIdx*zinterval);
+        //let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + zPlaneIdx*zinterval);
+        let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + Math.pow(zinterval,zPlaneIdx));
         if(lightDistanceToPlane>0){
           if(lightDistanceToPlane < lightRadius && !minZFound){
             if(zPlaneIdx>=1){

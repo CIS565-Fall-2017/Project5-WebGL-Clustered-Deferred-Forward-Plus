@@ -119,8 +119,10 @@ export default function(params) {
     //*********Find which cluster is this fragment in**********//
     vec3 v_position_eye = vec3(u_viewMatrix * vec4(position, 1.0));
     float z = -v_position_eye.z;
-    float zInterval = (u_zFar - u_zNear) / float(u_zSliceNum);
-    int zIdx = int((z-u_zNear)/zInterval);
+    //float zInterval = (u_zFar - u_zNear) / float(u_zSliceNum);
+    //int zIdx = int((z-u_zNear)/zInterval);
+    float zInterval = exp(log(u_zFar - u_zNear)/float(u_zSliceNum));
+    int zIdx = int(log(z-u_zNear)/log(zInterval));
 
     float yClusterLength = z*tan(u_fov/float(2))*float(2);
     float yInterval = yClusterLength/float(u_ySliceNum);

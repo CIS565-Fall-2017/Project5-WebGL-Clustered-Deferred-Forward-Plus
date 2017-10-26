@@ -114,10 +114,13 @@ export default function(params) {
     int u_ySliceNum = int(v_lightInfo.y);
     int u_zSliceNum = int(v_lightInfo.z);
     int u_maxlightsPerCluster = int(v_lightInfo.w);
-    float zInterval = (u_zFar - u_zNear) / float(u_zSliceNum);
-    int zIdx = int((z-u_zNear)/zInterval);
+    //float zInterval = (u_zFar - u_zNear) / float(u_zSliceNum);
+    //int zIdx = int((z-u_zNear)/zInterval);
+    
+    float zInterval = exp(log(u_zFar - u_zNear)/float(u_zSliceNum));
+    int zIdx = int(log(z-u_zNear)/log(zInterval));
     float yClusterLength = z*tan(u_fov/float(2))*float(2);
-    float yInterval = yClusterLength/float(15);
+    float yInterval = yClusterLength/float(u_ySliceNum);
     int yIdx = int((v_position_eye.y + yClusterLength / float(2)) / yInterval);
     float xClusterLength = yClusterLength*u_aspectRatio;
     float xInterval = xClusterLength/float(u_xSliceNum);
@@ -131,10 +134,11 @@ export default function(params) {
 
     int col = xIdx + yIdx * u_xSliceNum + zIdx * u_xSliceNum* u_ySliceNum;
     vec3 fragColor = vec3(0.0);
+    //fragColor+=vec3(float(zIdx+1)/float(u_zSliceNum));
     if(!outOfCluster){
-      //int clusterTextureWidth = u_xSliceNum*u_ySliceNum*u_zSliceNum;
+      int clusterTextureWidth = u_xSliceNum*u_ySliceNum*u_zSliceNum;
       //int clusterTextureHeight = u_maxlightsPerCluster+1; //change later
-      int clusterTextureWidth = 15*15*15;
+      //int clusterTextureWidth = 15*15*15;
       int clusterTextureHeight = (${params.maxLightsPerCluster} + 1) / 4 + 1; //change later
   
       float uv_u = float(col+1)/float(clusterTextureWidth+1);
