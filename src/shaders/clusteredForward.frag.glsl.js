@@ -16,14 +16,12 @@ export default function(params) {
   uniform int u_ySlice;
   uniform int u_zSlice;
 
-  uniform float u_xSliceF;
-  uniform float u_ySliceF;
-  uniform float u_zSliceF;
-
   uniform float u_far;
   uniform float u_near;
   uniform float u_fov;
   uniform float u_aspect;
+
+  uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -98,23 +96,26 @@ export default function(params) {
     float farHeight = 2.0 * ( u_far * tan((u_fov*0.5*3.1415926)/180.0));
     float farWidth = farHeight*u_aspect;
 
-    float xSliceLength = farWidth/u_xSliceF;
-    float ySliceLength = farHeight/u_ySliceF;
-    float zSliceLength = abs(u_far-u_near)/u_zSliceF;
+    float xSliceLength = farWidth/float(u_xSlice);
+    float ySliceLength = farHeight/float(u_ySlice);
+    float zSliceLength = abs(u_far-u_near)/float(u_zSlice);
 
-    float xInitial = -1.0*farWidth/2.0;
+    float xInitial = -farWidth/2.0;
     float yInitial = farHeight/2.0;
 
-    int zSliceCoord = int(abs(v_position[2]-u_near)/u_zSliceF);
-    int xSliceCoord = int((v_position[0]-xInitial)/u_xSliceF);
-    int ySliceCoord = int((yInitial-v_position[1])/u_ySliceF);
+    vec4 worldPos = vec4(v_position[0],v_position[1],v_position[2],1.0);
+    vec4 cameraPos = u_viewMatrix * worldPos;
+
+    int zSliceCoord = int((cameraPos[2]-u_near)/zSliceLength);
+    int xSliceCoord = int(abs(cameraPos[0]-xInitial)/xSliceLength);
+    int ySliceCoord = int((yInitial-cameraPos[1])/ySliceLength);
 
     int index = xSliceCoord + ySliceCoord * u_xSlice + zSliceCoord * u_xSlice * u_ySlice;
   
     float uRatio = float(index)/float(u_xSlice*u_ySlice*u_zSlice);
     int lightCount = int(texture2D(u_clusterbuffer,vec2(uRatio,0.0))[0]);
-
-    for(int i = 1 ;i < ${params.numLights};++i)
+ 
+    for(int i = 0 ;i < ${params.numLights};++i)
     {
       if(i>=lightCount)
       {
@@ -150,22 +151,9 @@ export default function(params) {
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
-    // for (int i = 0; i < ${params.numLights}; ++i) {
-    //   Light light = UnpackLight(i);
-    //   float lightDistance = distance(light.position, v_position);
-    //   vec3 L = (light.position - v_position) / lightDistance;
-
-    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-    //   float lambertTerm = max(dot(L, normal), 0.0);
-
-    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    // }
-
-    const vec3 ambientLight = vec3(0.025);
+    const vec3 ambientLight = vec3(0.01);
     fragColor += albedo * ambientLight;
 
-    //fragColor += vec3(1.0,0.4,0.8);
-    //fragColor = vec3(lightCount);
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

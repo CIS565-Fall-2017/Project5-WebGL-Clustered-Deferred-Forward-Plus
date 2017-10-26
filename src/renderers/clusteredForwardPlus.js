@@ -17,7 +17,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
+    'u_xSlice','u_ySlice','u_zSlice','u_far','u_near','u_fov','u_aspect',
+  'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -35,6 +37,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Update cluster texture which maps from cluster index to light list
     this.updateClusters(camera, this._viewMatrix, scene);
+    //this.updateClustersTile(camera,this._viewMatrix,this._projectionMatrix,scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -80,14 +83,12 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_ySlice,this._ySlices);
     gl.uniform1i(this._shaderProgram.u_zSlice,this._zSlices);
 
-    gl.uniform1f(this._shaderProgram.u_xSliceF,this._xSlices);
-    gl.uniform1f(this._shaderProgram.u_ySliceF,this._ySlices);
-    gl.uniform1f(this._shaderProgram.u_zSliceF,this._zSlices);
-
     gl.uniform1f(this._shaderProgram.u_far,camera.far);
     gl.uniform1f(this._shaderProgram.u_near,camera.near);
     gl.uniform1f(this._shaderProgram.u_fov,camera.fov);
     gl.uniform1f(this._shaderProgram.u_aspect,camera.aspect);
+
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix,false,this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

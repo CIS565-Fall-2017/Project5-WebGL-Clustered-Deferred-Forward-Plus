@@ -1,4 +1,4 @@
-import { mat4, vec4, vec3 } from 'gl-matrix';
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
@@ -29,24 +29,34 @@ export default class ClusteredRenderer {
     var zClusterDis = (camera.far - camera.near)/this._zSlices;
     var _cameraAspect = camera.aspect;
     var _cameraFovTan = Math.tan(((camera.fov/2)*Math.PI)/180);
-    var farHeight = 2.0*(camera.far*_cameraFovTan);
-    var farWidth = farHeight*_cameraAspect;
-    var nearNormal = [0,0,1];
-    var farNormal = [0,0,-1];
+    var _cameraFar = camera.far;
+    const farHeight = _cameraFar*_cameraFovTan*2;
+    const farWidth = farHeight*_cameraAspect;
+    const zSliceMax = 3;
+    // var nearNormal = [0,0,camera.near];
+    // var farNormal = [0,0,-camera.far];
     var totalLight = scene.lights.length;
+
     for (let z = 0; z < this._zSlices; ++z) {
+      // if(z>=1)
+      // {
+      //   break;
+      // }
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-                    // if (z == 12) {
-                    //   debugger;
-                    // }
+          // if(z==1)
+          // {
+          //   debugger;
+          // }
+
           let zPosNear = -(z*zClusterDis + camera.near);
+          let zPosFar = -((z+1)*zClusterDis + camera.near);
           let yHeightFull = 2*Math.abs(zPosNear)*_cameraFovTan;
           let xWidthFull = yHeightFull*_cameraAspect;
-          
+
           let clusterWidth = xWidthFull/this._xSlices;
           let clusterHeight = yHeightFull/this._ySlices;
           
@@ -77,23 +87,22 @@ export default class ClusteredRenderer {
           for(let iTemp = 0;iTemp<totalLight;++iTemp)
           {            
             let judgeInOut = true; 
-            let lightPos4 = vec4.create();    
             let lightPos4World = vec4.create();
             lightPos4World[0] = scene.lights[iTemp].position[0];
             lightPos4World[1] = scene.lights[iTemp].position[1];
             lightPos4World[2] = scene.lights[iTemp].position[2];
             lightPos4World[3] = 1;
-            vec4.transformMat4(lightPos4,lightPos4World,viewMatrix);
+            vec4.transformMat4(lightPos4World,lightPos4World,viewMatrix);
             
             let lightPos = vec3.create();
-            lightPos[0] = lightPos4[0];
-            lightPos[1] = lightPos4[1];
-            lightPos[2] = lightPos4[2];
+            lightPos[0] = lightPos4World[0];
+            lightPos[1] = lightPos4World[1];
+            lightPos[2] = lightPos4World[2];
             let lightRadius = scene.lights[iTemp].radius;
 
             //left
-            let leftProjection = vec3.dot(lightPos,leftNormal);
-            if(leftProjection>0)
+            let leftProjection = vec3.dot(lightPos,leftNormal)/vec3.length(leftNormal);
+            if((leftProjection>0)&&(judgeInOut))
             {
               if(lightRadius<Math.abs(leftProjection)){
                 judgeInOut = false;
@@ -101,8 +110,8 @@ export default class ClusteredRenderer {
             }
 
             //right
-            let rightProjection = vec3.dot(lightPos,rightNormal);
-            if(rightProjection>0)
+            let rightProjection = vec3.dot(lightPos,rightNormal)/vec3.length(rightNormal);
+            if((rightProjection>0)&&(judgeInOut))
             {
               if(lightRadius<Math.abs(rightProjection))
               {
@@ -111,8 +120,8 @@ export default class ClusteredRenderer {
             }
 
             //up
-            let upProjection = vec3.dot(lightPos,upNormal);
-            if(upProjection>0)
+            let upProjection = vec3.dot(lightPos,upNormal)/vec3.length(upNormal);
+            if((upProjection>0)&&(judgeInOut))
             {
               if(lightRadius<Math.abs(upProjection))
               {
@@ -121,8 +130,8 @@ export default class ClusteredRenderer {
             }
 
             //down
-            let downProjection = vec3.dot(lightPos,downNormal);
-            if(downProjection>0)
+            let downProjection = vec3.dot(lightPos,downNormal)/vec3.length(downNormal);
+            if((downProjection>0)&&(judgeInOut))
             {
               if(lightRadius<Math.abs(downProjection))
               {
@@ -131,37 +140,41 @@ export default class ClusteredRenderer {
             }
 
             //near
-            let nearProjection = vec3.dot(lightPos,nearNormal);
-            if(nearProjection>0)
+            // let nearProjection = vec3.dot(lightPos,nearNormal)/vec3.length(nearNormal);
+            // if(nearProjection>0)
+            // {
+            //   if(lightRadius<Math.abs(nearProjection))
+            //   {
+            //     judgeInOut = false;
+            //   }           
+            // }
+            if((lightPos[2]-lightRadius)>zPosNear)
             {
-              if(lightRadius<Math.abs(nearProjection))
-              {
-                judgeInOut = false;
-              }           
+              judgeInOut = false;
             }
 
             //far
-            let farProjection = vec3.dot(lightPos,farNormal);
-            if(farProjection>0)
+            // let farProjection = vec3.dot(lightPos,farNormal)/vec3.length(farNormal);
+            // if(farProjection>0)
+            // {
+            //   if(lightRadius<Math.abs(farProjection))
+            //   {
+            //     judgeInOut = false;
+            //   }           
+            // }
+            if((lightPos[2]+lightRadius)<zPosFar)
             {
-              if(lightRadius<Math.abs(farProjection))
-              {
-                judgeInOut = false;
-              }           
+              judgeInOut = false;
             }
-           debugger;
 
             //judgeInOut has to be true to make the light inside the special 
-            //cluster 
-            // console.log(lightCount);
+
             if(judgeInOut)
             {
-              debugger;
               lightCount = lightCount+1;              
               let lightRowNumer = Math.floor(lightCount/4);
               let lightColumnNumber = lightCount - lightRowNumer*4;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, lightRowNumer)+lightColumnNumber] = iTemp;
-              //debugger;
             }
           }
           this._clusterTexture._buffer[this._clusterTexture.bufferIndex(i,0)]=lightCount;
@@ -214,12 +227,13 @@ export default class ClusteredRenderer {
     var yFarHeight = 2*(camera.far*Math.tan((camera.fov/2)*Math.PI/180));
     var xFarWidth = yFarHeight*camera.aspect;
     var farClip = camera.far;
+    var totalLight = scene.lights.length;
 
     var xSliceLength = xFarWidth/this._xSlices;
     var ySliceLength = yFarHeight/this._ySlices;
 
     var xInitial = xFarWidth/2;
-    var yInitial = yFarWidth/2;
+    var yInitial = yFarHeight/2;
     for (let y = 0; y < this._ySlices; ++y) {
       for (let x = 0; x < this._xSlices; ++x) {
 
@@ -275,7 +289,7 @@ export default class ClusteredRenderer {
         
         let lightCount = 0;
 
-        for(let lTemp=0;lTemp<scene.NUM_LIGHTS;++lTemp)
+        for(let lTemp=0;lTemp<totalLight;++lTemp)
         {
           let lightPos4 = vec4.create();    
           let lightPos4World = vec4.create();
@@ -291,17 +305,19 @@ export default class ClusteredRenderer {
           lightPos[1] = lightPos4[1];
           let lightRadius = scene.lights[lTemp].radius;
 
-          let disLT = lightPos.distance(pixelLeftTop);
-          let disLB = lightPos.distance(pixelLeftBottom);
-          let disRT = lightPos.distance(pixelRightTop);
-          let disRB = lightPos.distance(pixelRightBottom);
+          let disLT = (lightPos-pixelLeftTop).distance;
+          let disLB = (lightPos-pixelLeftBottom).distance;
+          let disRT = (lightPos-pixelRightTop).distance;
+          let disRB = (lightPos-pixelRightBottom).distance;
 
           let minDis = Math.min(disLT, disLB,disRT,disRB);
+          //debugger;
           if(minDis<lightRadius)
           {
-            lightCount = lightCount+1;
-            let lightRowNumer = Math.floor((lightCount+1)/4);
-            let lightColumnNumber = lightCount+1 - lightRowNumer*4;
+            debugger;
+            lightCount = lightCount+1;              
+            let lightRowNumer = Math.floor(lightCount/4);
+            let lightColumnNumber = lightCount - lightRowNumer*4;
             this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, lightRowNumer)+lightColumnNumber] = lTemp;
           }
         }
