@@ -1,6 +1,5 @@
-export default function(params) {
+export default function (params) {
   return `
-
   /* 
     TODO:
     - Determine the cluster for a fragment
@@ -24,15 +23,15 @@ export default function(params) {
   // More uniforms 
   uniform float u_screenHeight;
   uniform float u_screenWidth;
-  uniform vec3 u_cameraFar;
-  uniform vec3 u_cameraNear;
+  uniform float u_cameraFar;
+  uniform float u_cameraNear;
   uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
 
-  // ====================================================================
+  // ==========================================================================
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -42,7 +41,7 @@ export default function(params) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
   }
 
-  // -------------------------------------
+  // --------------------------------------------------------------------------
   
   struct Light {
     vec3 position;
@@ -50,7 +49,7 @@ export default function(params) {
     vec3 color;
   };
 
-  // -------------------------------------
+  // --------------------------------------------------------------------------
 
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
     float u = float(index + 1) / float(textureWidth + 1);
@@ -69,7 +68,7 @@ export default function(params) {
     }
   }
 
-  // -------------------------------------
+  // --------------------------------------------------------------------------
 
   Light UnpackLight(int index) {
     Light light;
@@ -87,7 +86,7 @@ export default function(params) {
     return light;
   }
 
-  // -------------------------------------
+  // --------------------------------------------------------------------------
 
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
@@ -99,103 +98,87 @@ export default function(params) {
       return 0.0;
     }
   }
-
-  // -------------------------------------
-
-  struct Cluster {
-    int idx;
-    float numLights;
-    int lightsList[${params.maxLightsPerCluster}];
-  };
-
-  // -------------------------------------
-
-  // texWidth = numClusters 
-  // texHeight = ceil((maxLightsPerCluster + 1)/ 4)
-  float UnpackCluster(sampler2D clusterTexture, float u, int lightIdx) 
-  {
-    Cluster cluster;
-    cluster.idx = u;
-
-
-    float totalNumRowsPerCluster = floor((${params.maxLightsPerCluster} + 1) / 4);
-
-    // vec4 comp 0 to totalNumRowsPerCluster - 1 = texture2D(u_clusterbuffer, vec2(u, 0 to totalNumRowsPerCluster));
-
-
-    // index along height of texture
-    int pixel = floor((lightIdx + 1) / 4);
-    float v = float(pixel + 1) / float(${params.maxLightsPerCluster} + 1);
-
-    vec4 texel = texture2D(texture, vec2(u, v));
-
-    // WHICH ONE IS IT????
-    int pixelComponent = (lightIdx + 1) % 4;
-    int pixelComponent = pixel * 4 - (lightIdx + 1);
-
-
-
-    if (pixelComponent == 0) {
-      return texel[0];
-    } else if (pixelComponent == 1) {
-      return texel[1];
-    } else if (pixelComponent == 2) {
-      return texel[2];
-    } else if (pixelComponent == 3) {
-      return texel[3];
-    }
-  }
   
-  // -------------------------------------  
+  // --------------------------------------------------------------------------
 
   void main() 
   {
-    vec4 _fragPos = viewMatrix * vec4(v_position, 1.0);
-    vec3 fragPos = vec3(_fragPos); 
+    vec4 _fragPos = u_viewMatrix * vec4(v_position, 1.0);
+    vec3 fragPos = vec3(_fragPos[0], _fragPos[1], _fragPos[2]); 
 
-    float z_stride = (u_cameraFar - u_cameraNear) / ${params.z_slices};
-    float y_stride = u_screenHeight / ${params.y_slices};
-    float x_stride = u_screenWidth / ${params.x_slices};
+    float z_stride = (u_cameraFar - u_cameraNear) / float(${params.z_slices});
+    float y_stride = u_screenHeight / float(${params.y_slices});
+    float x_stride = u_screenWidth / float(${params.x_slices});
 
     // gl_FragCoord.xy are in pixel/screen space, .z is in [0, 1]
     // DO WE NEED TO MULTIPLY Z BY -1? SINCE LOOKING DOWN -Z?
-    int z_cluster_idx = floor(-fragPos.z / z_stride);
-    int y_cluster_idx = floor((gl_FragCoord.y + (u_screenHeight / 2.0)) / y_stride);
-    int x_cluster_idx = floor((gl_FragCoord.x + (u_screenWidth / 2.0)) / x_stride);
+    int z_cluster_idx = int(floor(-fragPos[2] / z_stride));
+    int y_cluster_idx = int(floor((gl_FragCoord.y + (u_screenHeight / 2.0)) / y_stride));
+    int x_cluster_idx = int(floor((gl_FragCoord.x + (u_screenWidth / 2.0)) / x_stride));
 
     // Calculate u index into cluster texture
     int u = x_cluster_idx + 
             (y_cluster_idx * ${params.x_slices}) + 
             (z_cluster_idx * ${params.x_slices} * ${params.y_slices});
 
-    // Get the light count and list of lights from cluster texture
+    // Get the light count from cluster texture, iterate through that
+    vec4 firstVComponent = texture2D(u_clusterbuffer, vec2(u, 0));
+    int numLightsInCluster = int(firstVComponent[0]);
+
+
+    // [BUG] WHY IS numLightsInCluster 0?!?!?!?!?
 
 
 
-
+    // ========================= CURRENT CODE =========================    
     // Light Calculation
-
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-
     vec3 fragColor = vec3(0.0);
+    
+    // for (int i = 0; i < numLightsInCluster; ++i) 
+    // {
+    //   int v = (i + 1) / 4;    //shouldn't need to floor since all ints, but double check
+    //   int pixelIdx = mod(i + 1, 4);
+    //   vec4 pixelComponent = texture2D(u_clusterbuffer, vec2(u, v));
+    //   int lightIdxInTexture = pixelComponent[pixelIdx];
+      
+    //   Light light = UnpackLight(lightIdxInTexture);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    }
+    // const vec3 ambientLight = vec3(0.025);
+    // fragColor += albedo * ambientLight;
+    // gl_FragColor = vec4(fragColor, 1.0);
 
-    const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
+    // ========================= OLD CODE =========================
+    // vec3 albedo = texture2D(u_colmap, v_uv).rgb;
+    // vec3 normap = texture2D(u_normap, v_uv).xyz;
+    // vec3 normal = applyNormalMap(v_normal, normap);
+    // vec3 fragColor = vec3(0.0);
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    // for (int i = 0; i < ${params.numLights}; ++i) {
+    //   Light light = UnpackLight(i);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
+
+    // const vec3 ambientLight = vec3(0.025);
+    // fragColor += albedo * ambientLight;
+    // gl_FragColor = vec4(fragColor, 1.0);
+
   }
   `;
 
@@ -265,13 +248,11 @@ export default function(params) {
       need to pass in screen width and height
       divide x and y by 15 (or whatever your cluster logic is), then floor or ceil it
 
-
       find index value into cluster texture using x, y, z
       get uv coord
       get light info
       iterate through those lights for that current cluster
-
-
-
   */
+
+
 }//end export default function

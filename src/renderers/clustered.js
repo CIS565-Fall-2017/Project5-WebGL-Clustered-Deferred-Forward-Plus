@@ -70,12 +70,12 @@ export default class ClusteredRenderer {
 
       // Divide height and width by 2 because we have 0,0 in the middle
       // Note: Make sure to clamp b/c you might get a light that's outside of frustum, hence index out of bounds
-      var z_min = clamp(Math.floor(minBB[2] / z_stride), 0, this._zSlices);
-      var z_max = clamp(Math.floor(maxBB[2] / z_stride), 0, this._zSlices);
-      var y_min = clamp(Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
-      var y_max = clamp(Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
-      var x_min = clamp(Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
-      var x_max = clamp(Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
+      var z_min = this.clamp(Math.floor(minBB[2] / z_stride), 0, this._zSlices);
+      var z_max = this.clamp(Math.floor(maxBB[2] / z_stride), 0, this._zSlices);
+      var y_min = this.clamp(Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
+      var y_max = this.clamp(Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride), 0, this._ySlices);
+      var x_min = this.clamp(Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
+      var x_max = this.clamp(Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride), 0, this._xSlices);
 
       for (let _z = z_min; _z < z_max; ++_z) {
         for (let _y = y_min; _y < y_max; ++_y) {
