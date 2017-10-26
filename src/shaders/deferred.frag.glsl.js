@@ -80,32 +80,42 @@ export default function(params) {
 //    vec3 albedo = texture2D(u_colmap, v_uv).rgb;
 //    vec3 normap = texture2D(u_normap, v_uv).xyz;
 //    vec3 normal = applyNormalMap(v_normal, normap);
-    vec4 buf0val = texture2D(u_gbuffers[0], v_uv);
-    vec4 buf1val = texture2D(u_gbuffers[1], v_uv);
-    vec4 buf2val = texture2D(u_gbuffers[2], v_uv);
-    vec3 albedo = buf0val.rgb;
-    vec3 normal = buf2val.xyz;
-    vec3 v_position = buf1val.xyz;
+    vec4 g1 = texture2D(u_gbuffers[0], v_uv);
+    vec4 g2 = texture2D(u_gbuffers[1], v_uv);
+    vec4 g3 = texture2D(u_gbuffers[2], v_uv);
+    vec3 albedo = g1.rgb;
+    vec3 v_position = g2.xyz;
+    vec3 normal = g3.xyz;
     
     vec3 fragColor = vec3(0.0);
 //Determine the cluster for a fragment
 //hard code near and far
-    const int num_xSlices = ${params.xSliceCount};
-    const int num_ySlices = ${params.ySliceCount};
-    const int num_zSlices = ${params.zSliceCount};
+//not anymore.
+//only hardcode near plane.
+//Determine the cluster for a fragment
+//hard code near and far
+//not anymore.
+//only hardcode near plane.
+    int num_xSlices = ${params.xSliceCount};
+    int num_ySlices = ${params.ySliceCount};
+    int num_zSlices = ${params.zSliceCount};
+    /*
     vec4 viewCoords = vec4(gl_FragCoord.xyz,1);
     viewCoords = u_invProjectionMatrix * viewCoords;
-    const int numClusters = num_xSlices * num_ySlices * num_zSlices;
-    float nearPlane = u_farPlane;
-    float farPlane  = u_nearPlane;
-    float specialNearPlane = 3.0;
+    viewCoords /= viewCoords.w;
+    */
+    vec4 viewCoords = u_viewMatrix * vec4(v_position,1);
+    viewCoords /= viewCoords .w;
+    int numClusters = num_xSlices * num_ySlices * num_zSlices;
+    float nearPlane = u_nearPlane;
+    float farPlane  = u_farPlane;
+    float specialNearPlane = float(${params.specialNearPlane});
     float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
     float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
-    vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
-    int xid = int(gl_FragCoord.x / xSliceWidth);
-    int yid = int(gl_FragCoord.y / ySliceWidth);
-    float viewZ = viewCoords.z;
-    int zid = 0;    
+    int xid = int(floor(gl_FragCoord.x / xSliceWidth));
+    int yid = int(floor(gl_FragCoord.y / ySliceWidth));
+    float viewZ =  -1.0 * viewCoords.z;
+    int zid = 0;
     //special near depth slice    
     if(viewZ >= specialNearPlane)
     {
@@ -115,9 +125,9 @@ export default function(params) {
     } 
     int clusterIndex = xid + yid * num_xSlices + zid * num_xSlices * num_ySlices;
     float clusterUcoord = float(clusterIndex + 1) / float(numClusters + 1);
-    //Read in the lights in that cluster from the populated data
     int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterUcoord, 0.0))[0]);   
     const int maxNumLights = int(min(float(${params.numLights}), float(${params.num_maxLightsPerCluster})));
+    
     //Do shading for just those lights
     for (int i = 1; i <= maxNumLights; i++)
     {
@@ -130,15 +140,15 @@ export default function(params) {
      
       vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(clusterUcoord, clustersLightVcoord));
       int lightIndex;
-      int reminder = i - 4 * clusterTexelIndex;
+      int remainder = i - 4 * clusterTexelIndex;
       //fetch
-      if (reminder == 0)      
+      if (remainder == 0)      
         lightIndex = int(clusterTexel[0]);      
-      else if (reminder == 1)     
+      else if (remainder == 1)     
         lightIndex = int(clusterTexel[1]);      
-      else if (reminder == 2)      
+      else if (remainder == 2)      
         lightIndex = int(clusterTexel[2]);
-      else if (reminder == 3)
+      else if (remainder == 3)
         lightIndex = int(clusterTexel[3]);
       else     
         continue;     
@@ -169,7 +179,14 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    //gl_FragCoord
+    /*
+    gl_FragColor = vec4(
+    viewZ,//float(xid) / 14.0,
+    viewZ,//float(yid) / 14.0,
+    viewZ,
+    1
+    );
+    */
     //Test code.
     //gl_FragColor = vec4(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0, 0, 1);
   }

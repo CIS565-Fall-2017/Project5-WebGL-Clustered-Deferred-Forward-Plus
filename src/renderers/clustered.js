@@ -2,8 +2,8 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
-export const SPECIAL_NEARPLANE = 5.0;
+export const MAX_LIGHTS_PER_CLUSTER = 1000;
+export const SPECIAL_NEARPLANE = 3.0;
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -31,9 +31,9 @@ export default class ClusteredRenderer {
 
     function getViewZ(z, zSlices)
     {
-      if (z <= 0)
+      if (z == 0)
         return camera.near;  
-      else  if (z == 1)
+      if (z == 1)
         return SPECIAL_NEARPLANE;
       else
       {
@@ -43,7 +43,6 @@ export default class ClusteredRenderer {
     }
     for(let i = 0; i< NUM_LIGHTS; i++)
     {
-
          let LightWorldSpce = vec4.create();
          vec4.set(LightWorldSpce, 
           scene.lights[i].position[0], 
@@ -61,10 +60,9 @@ export default class ClusteredRenderer {
          let Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
          let width_SliceX = Width_X / parseFloat(this._xSlices);
 
-
          LightCameraSpace[2] *= -1.0;
 
-         let lightRadius = scene.lights[i].radius + 3.0;
+         let lightRadius = scene.lights[i].radius;
 
          let begin_Z;  let end_Z;
          let distance;
@@ -129,17 +127,18 @@ export default class ClusteredRenderer {
             break;
           }
         }
-
-        const minRadiusDistanceZ = LightCameraSpace[2] - lightRadius;
-        for(begin_Z = 0; begin_Z <= this._zSlices; begin_Z++){
-          if( (getViewZ(begin_Z + 1, this._zSlices) > minRadiusDistanceZ)){
+        const minZValue = LightCameraSpace[2] - lightRadius;
+        for(begin_Z = parseInt(0); begin_Z <= this._zSlices; begin_Z++){
+          if( (getViewZ(begin_Z + 1, this._zSlices) >= minZValue)){
             break;
           }
         }
-        const maxRadiusDistanceZ = LightCameraSpace[2] + lightRadius;
-        for(end_Z = this._zSlices; end_Z >= begin_Z; end_Z--){
-          if((getViewZ(end_Z-1, this._zSlices) <= maxRadiusDistanceZ)){
-            end_Z += 2;
+        console
+        const maxZValue = LightCameraSpace[2] + lightRadius;
+        for(end_Z = parseInt(this._zSlices); end_Z >= begin_Z; end_Z--){
+          if((getViewZ(end_Z, this._zSlices) <= maxZValue)){
+            end_Z += 1;
+            end_Z = Math.min(end_Z,this._zSlices);
             break;
           }
         }
@@ -147,18 +146,17 @@ export default class ClusteredRenderer {
           for(let y = begin_Y; y <= end_Y; y++){
             for(let z = begin_Z; z <= end_Z; z++){
               let Index = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-              let countIndex = this._clusterTexture.bufferIndex(Index, 0);
-              let lightCount = this._clusterTexture.buffer[countIndex];
+                 //Bug record: remember to parseInt
+              let countIndex = parseInt(this._clusterTexture.bufferIndex(Index, 0));
+              let lightCount = parseInt(this._clusterTexture.buffer[countIndex]);
               lightCount++;
-
               if (lightCount < MAX_LIGHTS_PER_CLUSTER)
               {
                  this._clusterTexture.buffer[countIndex] = lightCount;
-                 let thisLightTexel = Math.floor(lightCount * 0.25);
-                 let thisLightTexelIndex = this._clusterTexture.bufferIndex(Index, thisLightTexel);
-                 let reminder = lightCount - thisLightTexel * 4;                
-                 
-                 this._clusterTexture.buffer[thisLightTexelIndex + reminder] = i;
+                 let rowVector4       =  parseInt(Math.floor(lightCount * 0.25));
+                 let rowVector4Index  =  parseInt(this._clusterTexture.bufferIndex(Index, rowVector4));
+                 let remainder = lightCount - rowVector4 * 4;                
+                 this._clusterTexture.buffer[rowVector4Index + remainder] = i;
               }
             }
           }

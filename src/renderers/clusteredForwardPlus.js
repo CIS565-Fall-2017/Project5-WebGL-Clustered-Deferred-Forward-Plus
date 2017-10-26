@@ -6,7 +6,8 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-
+import { MAX_LIGHTS_PER_CLUSTER} from './clustered'
+import { SPECIAL_NEARPLANE} from './clustered'
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
@@ -21,7 +22,8 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       xSliceCount : xSlices,
       ySliceCount : ySlices,
       zSliceCount : zSlices,
-      num_maxLightsPerCluster : 100,
+      num_maxLightsPerCluster : MAX_LIGHTS_PER_CLUSTER,
+      specialNearPlane : SPECIAL_NEARPLANE
     }), {
       //Modified here. Added u_viewMatrix
       uniforms: ['u_viewProjectionMatrix', 

@@ -87,22 +87,23 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 //Determine the cluster for a fragment
 //hard code near and far
-    const int num_xSlices = ${params.xSliceCount};
-    const int num_ySlices = ${params.ySliceCount};
-    const int num_zSlices = ${params.zSliceCount};
-    vec4 viewCoords = vec4(gl_FragCoord.xyz,1);
-    viewCoords = u_invProjectionMatrix * viewCoords;
-    const int numClusters = num_xSlices * num_ySlices * num_zSlices;
-    float nearPlane = u_farPlane;
-    float farPlane  = u_nearPlane;
-    float specialNearPlane = 5.0;
+//not anymore.
+//only hardcode near plane.
+    int num_xSlices = ${params.xSliceCount};
+    int num_ySlices = ${params.ySliceCount};
+    int num_zSlices = ${params.zSliceCount};
+    vec4 viewCoords = u_viewMatrix * vec4(v_position,1);
+    viewCoords /= viewCoords .w;
+    int numClusters = num_xSlices * num_ySlices * num_zSlices;
+    float nearPlane = u_nearPlane;
+    float farPlane  = u_farPlane;
+    float specialNearPlane = float(${params.specialNearPlane});
     float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
     float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
-    vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
-    int xid = int(gl_FragCoord.x / xSliceWidth);
-    int yid = int(gl_FragCoord.y / ySliceWidth);
-    float viewZ =  1.0 * viewCoords.z;
-    int zid = 0;    
+    int xid = int(floor(gl_FragCoord.x / xSliceWidth));
+    int yid = int(floor(gl_FragCoord.y / ySliceWidth));
+    float viewZ =  -1.0 * viewCoords.z;
+    int zid = 0;
     //special near depth slice    
     if(viewZ >= specialNearPlane)
     {
@@ -112,9 +113,9 @@ export default function(params) {
     } 
     int clusterIndex = xid + yid * num_xSlices + zid * num_xSlices * num_ySlices;
     float clusterUcoord = float(clusterIndex + 1) / float(numClusters + 1);
-    //Read in the lights in that cluster from the populated data
     int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterUcoord, 0.0))[0]);   
     const int maxNumLights = int(min(float(${params.numLights}), float(${params.num_maxLightsPerCluster})));
+    
     //Do shading for just those lights
     for (int i = 1; i <= maxNumLights; i++)
     {
@@ -166,7 +167,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    //gl_FragCoord
+    //gl_FragColor = vec4(,1.0);
     //Test code.
     //gl_FragColor = vec4(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0, 0, 1);
   }
