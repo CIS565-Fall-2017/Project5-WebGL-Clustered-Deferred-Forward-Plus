@@ -10,10 +10,10 @@ export default function(params) {
   uniform sampler2D u_lightbuffer;
   uniform mat4 u_invProjectionMatrix;
   uniform mat4 u_invViewMatrix;
-  uniform sampler2D u_clusterbuffer;
   uniform vec4 u_screenbuffer;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
+  uniform sampler2D u_clusterbuffer;
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;

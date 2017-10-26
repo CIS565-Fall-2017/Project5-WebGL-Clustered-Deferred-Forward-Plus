@@ -8,7 +8,7 @@ export const LIGHT_RADIUS = 3.0;
 export const LIGHT_DT = -0.03;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 1500;
+export const NUM_LIGHTS = 1000;
 
 class Scene {
   constructor() {

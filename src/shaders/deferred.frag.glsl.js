@@ -79,8 +79,8 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 albedo = texture2D(u_gbuffers[0], v_uv); // r : albedo.r   g : albedo.g   b : albedo.b   a : depth
     vec4 normal = texture2D(u_gbuffers[1], v_uv); // r : normal.x   g : normal.y   b : empty   a : empty
-    
-    // Depth
+
+    // Reconstructing world space position
     float depthMap = texture2D(u_depthBuffer, v_uv).x;
     vec4 screenPos;
     if(depthMap == 1.0) {
@@ -100,11 +100,11 @@ export default function(params) {
     int ySlice = int(v_uv.y * float(num_ySlices));
     int zSlice = 0;
 
-    float nearPlane = u_screenbuffer.z;
-    float farPlane = u_screenbuffer.w;
+    float near = u_screenbuffer.z;
+    float far = u_screenbuffer.w;
 
-    if(-view.z >= nearPlane) {
-      float n = log(-view.z - nearPlane + 1.0) / log(farPlane - nearPlane + 1.0);
+    if(-view.z >= near) {
+      float n = log(-view.z - near + 1.0) / log(far - near + 1.0);
       zSlice =  int(n * float(num_zSlices - 1))  + 1;
     }
 
