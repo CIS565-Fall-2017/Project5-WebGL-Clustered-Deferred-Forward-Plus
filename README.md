@@ -44,6 +44,7 @@ Based on benchmark, the fastest implementation is Clustered Deferred under most 
 #### Optimized G-Buffer (2 G-Buffer)
 
 Compact 2 G-Buffer
+
 | G-Buffer | R          | G          | B          | A        |
 |:--------:|------------|------------|------------|----------|
 |     1    |    Depth   |    0.0     |     0.0    | Normal.X |
@@ -51,12 +52,14 @@ Compact 2 G-Buffer
 
 
 Normal 2 G-Buffer
+
 | G-Buffer | R          | G          | B          | A        |
 |:--------:|------------|------------|------------|----------|
 |     1    | Position.X | Position.Y | Position.Z | Normal.X |
 |     2    | Albedo.R   | Albedo.G   | Albedo.B   | Normal.Y |
 
 3 G-Buffer
+
 | G-Buffer | R          | G          | B          | A        |
 |:--------:|------------|------------|------------|----------|
 |     1    | Position.X | Position.Y | Position.Z | 0.0 |
