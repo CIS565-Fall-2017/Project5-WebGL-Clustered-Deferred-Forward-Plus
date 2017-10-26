@@ -5,10 +5,10 @@ import { gl } from './init';
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
 export const LIGHT_RADIUS = 5.0;
-export const LIGHT_DT = -0.03;
+export const LIGHT_DT = 0.03;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 100;
+export const NUM_LIGHTS = 250;
 
 class Scene {
   constructor() {

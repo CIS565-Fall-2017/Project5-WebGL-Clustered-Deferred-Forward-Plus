@@ -72,7 +72,7 @@ export default function(params) {
     vec4 gbuff1 = texture2D(u_gbuffers[1], v_uv);
     vec3 v_position = gbuff0.xyz;
     vec3 albedo = gbuff1.rgb;
-    vec3 normal = vec3(gbuff0.a, gbuff1.a, sqrt(1.0 - gbuff0.a * gbuff0.a - gbuff1.a * gbuff1.a));   
+    vec3 normal = normalize(vec3(gbuff0.a, gbuff1.a, sqrt(1.0 - gbuff0.a * gbuff0.a - gbuff1.a * gbuff1.a)));   
     if ((v_position - u_camerapos).z < 0.0) normal.z *= -1.0;
 
     // determine cluster for fragment
