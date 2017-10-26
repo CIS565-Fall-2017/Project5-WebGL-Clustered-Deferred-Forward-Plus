@@ -6,6 +6,17 @@ WebGL Clustered Deferred and Forward+ Shading
 * Jiawei Wang
 * Tested on: **Google Chrome 62.0.3202.75 (Official Build) (64-bit)** on
   Windows 10, i7-6700 @ 2.60GHz 16.0GB, GTX 970M 3072MB (Personal)
+___
+### Overview
+  * Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
+  * Deferred Shading: https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3
+  * Cluster Shading: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
+  * The following are the results of **Clustered-Deferred Shading** with different shaders:
+  
+ | **Regular Shading** | **Blinn-Phong Shading**| **Toon Shading**|
+|---|---|---|
+|<img src="./results/regular.gif" width="410" height="230">|<img src="./results/blinn_phong.gif" width="410" height="230">|<img src="./results/toon.gif" width="410" height="230">|
+
 
 ### Live Online
 
