@@ -104,30 +104,12 @@ export default class ClusteredRenderer
 
       zStartIndex = Math.floor(lightAABB.min[2]/this.zStride) - 1;
       zEndIndex = Math.floor(lightAABB.max[2]/this.zStride) + 1;
-
-      var shiftedYmin = lightAABB.min[1] + h_lightFrustum*0.5;
-      var shiftedYmax = lightAABB.max[1] + h_lightFrustum*0.5;
-      yStartIndex = Math.floor((shiftedYmin)/yStride);
-      yEndIndex = Math.floor((shiftedYmax)/yStride);
+      
+      yStartIndex = Math.floor((lightAABB.min[1] + h_lightFrustum*0.5)/yStride);
+      yEndIndex = Math.floor((lightAABB.max[1] + h_lightFrustum*0.5)/yStride);
 
       xStartIndex = Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride);
       xEndIndex = Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride);
-
-      // if(zStartIndex > zEndIndex)
-      // {
-      //   console.log("Z   fuuuu");
-      //   console.log("z: ", zStartIndex, zEndIndex);
-      // }
-      // if(yStartIndex > yEndIndex)
-      // {
-      //   console.log("Y   fuuuu");
-      //   console.log("y: ", yStartIndex, yEndIndex);
-      // }
-      // if(xStartIndex > xEndIndex)
-      // {
-      //   console.log("X   fuuuu");
-      //   console.log("x: ", xStartIndex, xEndIndex);
-      // }
 
       //Culling
       if((zStartIndex < 0 && zEndIndex < 0) ||
@@ -157,40 +139,20 @@ export default class ClusteredRenderer
       xStartIndex = this.clamp(xStartIndex, 0, this._xSlices-1);
       xEndIndex = this.clamp(xEndIndex, 0, this._xSlices-1);
 
-      // if(zStartIndex > zEndIndex)
-      // {
-      //   console.log("Z   fuuuu");
-      //   console.log("z: ", zStartIndex, zEndIndex);
-      // }
-      // if(yStartIndex > yEndIndex)
-      // {
-      //   console.log("Y   fuuuu");
-      //   console.log("y: ", yStartIndex, yEndIndex);
-      // }
-      // if(xStartIndex > xEndIndex)
-      // {
-      //   console.log("X   fuuuu");
-      //   console.log("x: ", xStartIndex, xEndIndex);
-      // }
+      // zStartIndex = 0;
+      // zEndIndex = 14;
 
-      // console.log("x: ", xStartIndex, xEndIndex);
-      // console.log("y: ", yStartIndex, yEndIndex);
-      // console.log("z: ", zStartIndex, zEndIndex);
+      // yStartIndex = 0;
+      // yEndIndex = 14;
 
-      zStartIndex = 0;
-      zEndIndex = 15;
+      // xStartIndex = 0;
+      // xEndIndex = 14;
 
-      yStartIndex = 0;
-      yEndIndex = 15;
-
-      xStartIndex = 0;
-      xEndIndex = 15;
-
-      for (let z = zStartIndex; z < zEndIndex; ++z)
+      for (let z = zStartIndex; z <= zEndIndex; ++z)
       {        
-        for (let y = yStartIndex; y < yEndIndex; ++y)
+        for (let y = yStartIndex; y <= yEndIndex; ++y)
         {
-          for (let x = xStartIndex; x < xEndIndex; ++x) 
+          for (let x = xStartIndex; x <= xEndIndex; ++x) 
           {
             let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
             // Update the light count for every cluster
