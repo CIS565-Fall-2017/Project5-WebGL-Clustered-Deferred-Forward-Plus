@@ -8,6 +8,7 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  uniform sampler2D u_good;
   uniform mat4 u_viewMatrix;
   uniform mat4 u_invViewMatrix;
   uniform mat4 u_invProjectionMatrix;

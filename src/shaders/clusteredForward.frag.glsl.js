@@ -95,7 +95,7 @@ export default function(params) {
     const int numClusters = num_xSlices * num_ySlices * num_zSlices;
     float nearPlane = u_farPlane;
     float farPlane  = u_nearPlane;
-    float specialNearPlane = 3.0;
+    float specialNearPlane = 5.0;
     float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
     float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
     vec4 CameraCoordinate = vec4(v_position,1) * u_viewMatrix;
@@ -127,15 +127,15 @@ export default function(params) {
      
       vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(clusterUcoord, clustersLightVcoord));
       int lightIndex;
-      int reminder = i - 4 * clusterTexelIndex;
+      int remainder = i - 4 * clusterTexelIndex;
       //fetch
-      if (reminder == 0)      
+      if (remainder == 0)      
         lightIndex = int(clusterTexel[0]);      
-      else if (reminder == 1)     
+      else if (remainder == 1)     
         lightIndex = int(clusterTexel[1]);      
-      else if (reminder == 2)      
+      else if (remainder == 2)      
         lightIndex = int(clusterTexel[2]);
-      else if (reminder == 3)
+      else if (remainder == 3)
         lightIndex = int(clusterTexel[3]);
       else     
         continue;     

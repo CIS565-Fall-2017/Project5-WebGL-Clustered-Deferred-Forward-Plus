@@ -3,7 +3,7 @@ import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
-export const SPECIAL_NEARPLANE = 50.0;
+export const SPECIAL_NEARPLANE = 5.0;
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -56,21 +56,24 @@ export default class ClusteredRenderer {
          vec4.transformMat4(LightCameraSpace, LightWorldSpce, viewMatrix);
 
          //Negative z to Positive z
-         const Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0);
-         const width_SliceY = Width_Y / parseFloat(this._ySlices);
-         const Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
-         const width_SliceX = Width_X / parseFloat(this._xSlices);
+         let Width_Y = 2.0 * Math.tan(camera.fov * 0.5 *  Math.PI / 180.0);
+         let width_SliceY = Width_Y / parseFloat(this._ySlices);
+         let Width_X= 2.0 * camera.aspect * Width_Y / 2.0;
+         let width_SliceX = Width_X / parseFloat(this._xSlices);
 
 
          LightCameraSpace[2] *= -1.0;
 
-         let lightRadius = scene.lights[i].radius;
+         let lightRadius = scene.lights[i].radius + 3.0;
 
          let begin_Z;  let end_Z;
          let distance;
 
 
 // for x and y can do it simple. But not for z.
+//edit: not simple!
+//edit: directly find beginx and endx has failed. Try to use something from CIS560
+//y i cannot directly do it on the clip?
 /*
          let begin_X = parseInt((((LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)) > 0)?
          (LightCameraSpace[0] - lightRadius - (-1.0 * Width_X / 2.0)):0) / parseFloat(width_SliceX)) - 1;
@@ -95,13 +98,6 @@ export default class ClusteredRenderer {
           distance = (lightPos[0] - width*lightPos[2]) / Math.sqrt(1.0 + width * width);
           return distance;
         }
-
-        // distance between light point and sliceY plane (ignore X value)
-        function distanceY(distance, height, lightPos)
-        {
-          distance = (lightPos[1] - height*lightPos[2]) / Math.sqrt(1.0 + height * height);
-          return distance;
-        }
         let begin_X;
         for(begin_X = 0; begin_X <= this._xSlices; begin_X++){
           if( distanceX(distance, width_SliceX * (begin_X + 1 - this._xSlices * 0.5), LightCameraSpace) <=  lightRadius){
@@ -114,6 +110,11 @@ export default class ClusteredRenderer {
             end_X--;
             break;
           }
+        }
+        function distanceY(distance, height, lightPos)
+        {
+          distance = (lightPos[1] - height*lightPos[2]) / Math.sqrt(1.0 + height * height);
+          return distance;
         }
         let begin_Y;
         for(begin_Y = 0; begin_Y <= this._ySlices; begin_Y++){
@@ -153,7 +154,6 @@ export default class ClusteredRenderer {
               if (lightCount < MAX_LIGHTS_PER_CLUSTER)
               {
                  this._clusterTexture.buffer[countIndex] = lightCount;
-
                  let thisLightTexel = Math.floor(lightCount * 0.25);
                  let thisLightTexelIndex = this._clusterTexture.bufferIndex(Index, thisLightTexel);
                  let reminder = lightCount - thisLightTexel * 4;                
