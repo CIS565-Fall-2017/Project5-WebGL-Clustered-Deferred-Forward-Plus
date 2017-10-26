@@ -11,10 +11,6 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
-### Demo Video/GIF
-
-[![](img/video.png)](TODO)
-
 # Features
 
 ## 1. Clustered Forward+
@@ -22,7 +18,7 @@ WebGL Clustered Deferred and Forward+ Shading
 * Render the scene using only the lights that overlap a given cluster.
 
 <p align="center">
-  <img src="imgs/fplus.png">
+  <img src="imgs/fplus.gif">
 </p>
 
 Parameters:
@@ -37,7 +33,7 @@ LIGHT_RADIUS = 3.0;
 * Read g-buffer in a shader to produce final output
 
 <p align="center">
-  <img src="imgs/fplus.png">
+  <img src="imgs/fplus.gif">
 </p>
 
 Parameters:
