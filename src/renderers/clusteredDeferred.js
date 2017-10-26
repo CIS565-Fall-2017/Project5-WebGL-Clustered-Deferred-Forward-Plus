@@ -155,10 +155,10 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture.update();
 
     // Update the clusters for the frame
-    let t0 = performance.now();
+//    let t0 = performance.now();
     this.updateClusters(camera, this._viewMatrix, this._projectionMatrix, scene);
-    let t1 = performance.now();
-    console.log("updateClusters took " + (t1-t0) + " ms.");
+//    let t1 = performance.now();
+//    console.log("updateClusters took " + (t1-t0) + " ms.");
 
 
     // Bind the default null framebuffer which is the screen

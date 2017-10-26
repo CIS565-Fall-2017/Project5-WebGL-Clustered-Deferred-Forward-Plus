@@ -69,10 +69,11 @@ export default class ClusteredRenderer {
     //then rotate this square(2 points, ll, ur) in model space about y then x (euler order yx) to have it face the viewer,
     //(orthogonal to the ray from the eye to the center of the light sphere) translate to world light position, 
     //then transform to ndc using viewprojection, do perspective divide. divide ndc into slices and step until you find the bounds.
+//    one side of the triangle is the view vector (0,0,1) and the other is the length to the top frust plane
+//    mult by 2 to get total vertical length then chop this length up
 
 
-    //one side of the triangle is the view vector (0,0,1) and the other is the length to the top frust plane
-    //mult by 2 to get total vertical length then chop this length up
+
     const yhalflength = Math.tan((camera.fov*0.5) * (Math.PI/180.0));
     const yPlaneStride = (yhalflength * 2.0 / this._ySlices);
     const xPlaneStride = (yhalflength * 2.0 / this._xSlices) * camera.aspect;
@@ -132,24 +133,34 @@ export default class ClusteredRenderer {
             }
         }
 
+//        //Z//
+//        let zStartIdx = this._zSlices;
+//        let lightZStart = lightPos[2] - radius;
+//        for(let iter = 0; iter <= this._zSlices; ++iter) {
+//            if(camera.near + iter*zPlaneStride > lightZStart) {
+//                zStartIdx = Math.max(0, iter-1);
+//                break;
+//            }
+//        }
+//      
+//        let zStopIdx = this._zSlices;
+//        let lightZStop = lightPos[2] + radius;
+//        for(let iter = zStartIdx+1; iter<=this.zSlices; ++iter) {
+//            if(camera.near + iter*zPlaneStride > lightZStop) {
+//                zStopIdx = Math.max(0,iter-1);
+//                break;
+//            }
+//        }
+
         //Z//
-        let zStartIdx = this._zSlices;
-        let lightZStart = lightPos[2] - radius;
-        for(let iter = 0; iter <= this._zSlices; ++iter) {
-            if(camera.near + iter*zPlaneStride > lightZStart) {
-                zStartIdx = Math.max(0, iter-1);
-                break;
-            }
-        }
-      
-        let zStopIdx = this._zSlices;
-        let lightZStop = lightPos[2] + radius;
-        for(let iter = zStartIdx+1; iter<=this.zSlices; ++iter) {
-            if(camera.near + iter*zPlaneStride > lightZStop) {
-                zStopIdx = Math.max(0,iter-1);
-                break;
-            }
-        }
+        let lightPosNewZ = lightPos[2] - camera.near;
+        let lightStartZ = lightPosNewZ - radius;
+        let lightStopZ = lightPosNewZ + radius; 
+        let zStartIdx  = Math.floor(lightStartZ / zPlaneStride); 
+        let zStopIdx   = Math.floor(lightStopZ  / zPlaneStride)+1; 
+        if(zStartIdx > this._zSlices-1 || zStopIdx < 0) { continue; }
+        zStartIdx = Math.max(0, zStartIdx);
+        zStopIdx = Math.min(this._zSlices, zStopIdx);
 
 
         //update count, make sure we're not going over the max lights
@@ -172,9 +183,9 @@ export default class ClusteredRenderer {
             }//y 
         }//z
 
+
+
     }//end light loop
-
-
 
     this._clusterTexture.update();
   }//end updateClusters
@@ -182,9 +193,87 @@ export default class ClusteredRenderer {
 
 
 
-
-
-
+//
+//    const yhalflength = Math.tan((camera.fov*0.5) * (Math.PI/180.0));
+//    const ylength = 2*yhalflength;
+//    const xhalflength = yhalflength * camera.aspect;
+//    const xlength = 2*xhalflength;
+//    const zPlaneSegLength = (camera.far - camera.near) / this._zSlices;
+//
+//    //https://www.npmjs.com/package/gl-vec4
+//    //plato's response: http://mathhelpforum.com/calculus/46006-shortest-distance-plane-sphere-difficult.html
+//    //the signed distance from a point A to a plane containing a point P and a normal n is: dot(A-P, n)
+//    //https://mathbitsnotebook.com/Geometry/Similarity/SMProofs.html
+//    for(let i = 0; i < NUM_LIGHTS; ++i) {
+//        let radius = scene.lights[i].radius;
+//        let lightPos = vec4.fromValues(scene.lights[i].position[0], 
+//                                       scene.lights[i].position[1], 
+//                                       scene.lights[i].position[2], 1.0);
+//        vec4.transformMat4(lightPos, lightPos, viewMatrix);
+//        lightPos[2] *= -1.0;//cam looks down neg Z, make z positive
+//        
+//        //Y// and //X//
+//        let yPlaneHalfLength = yhalflength*lightPos[2];        
+//        let xPlaneHalfLength = xhalflength*lightPos[2];
+//        let yPlaneLength = yPlaneHalfLength*2.0;
+//        let xPlaneLength = xPlaneHalfLength*2.0;
+//        let yPlaneSegLength = yPlaneLength / this._ySlices;
+//        let xPlaneSegLength = xPlaneLength / this._xSlices;
+//        let lightPosNewY = yPlaneHalfLength + lightPos[1];
+//        let lightPosNewX = xPlaneHalfLength + lightPos[0];
+//        let lightStartY = lightPosNewY - radius;
+//        let lightStopY = lightPosNewY + radius;
+//        let lightStartX = lightPosNewX - radius;
+//        let lightStopX = lightPosNewX + radius;
+//
+//        let yStartIdx  = Math.floor(lightStartY / yPlaneSegLength); 
+//        let yStopIdx   = Math.floor(lightStopY  / yPlaneSegLength); 
+//        let xStartIdx  = Math.floor(lightStartX / xPlaneSegLength); 
+//        let xStopIdx   = Math.floor(lightStopX  / xPlaneSegLength); 
+//        if(yStartIdx > this._ySlices-1 || yStopIdx < 0) { continue; }
+//        if(xStartIdx > this._xSlices-1 || xStopIdx < 0) { continue; }
+//        yStartIdx = Math.max(0, yStartIdx);
+//        xStartIdx = Math.max(0, xStartIdx);
+//        yStopIdx = Math.min(this._ySlices, yStopIdx);
+//        xStopIdx = Math.min(this._xSlices, xStopIdx);
+//
+//        //Z//
+//        let lightPosNewZ = lightPos[2] - camera.near;
+//        let lightStartZ = lightPosNewZ - radius;
+//        let lightStopZ = lightPosNewZ + radius; 
+//        let zStartIdx  = Math.floor(lightStartZ / zPlaneSegLength); 
+//        let zStopIdx   = Math.floor(lightStopZ  / zPlaneSegLength)+1;
+//        if(zStartIdx > this._zSlices-1 || zStopIdx < 0) { continue; }
+//        zStartIdx = Math.max(0, zStartIdx);
+//        zStopIdx = Math.min(this._zSlices, zStopIdx);
+//
+////        console.log("xStartIdx: " + xStartIdx);
+////        console.log("xStopdx: "   + xStopIdx);
+////        console.log("yStartIdx: " + yStartIdx);
+////        console.log("yStopdx: "   + yStopIdx);
+////        console.log("zStartIdx: " + zStartIdx);
+////        console.log("zStopdx: "   + zStopIdx);
+//
+//        //update count, make sure we're not going over the max lights
+//        //put i in the correct component of the correct pixel
+//        for(let z = zStartIdx; z < zStopIdx; ++z) {
+//            for(let y = yStartIdx; y < yStopIdx; ++y) {
+//                for(let x = xStartIdx; x < xStopIdx; ++x) {
+//                    let clusterIdx = x + y*this._xSlices + z*this._xSlices*this._ySlices;
+//                    let lightCountIdx = this._clusterTexture.bufferIndex(clusterIdx, 0);
+//                    let lightCount = 1 + this._clusterTexture.buffer[lightCountIdx];
+//
+//                    if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
+//                        this._clusterTexture.buffer[lightCountIdx] = lightCount;
+//                        let texel = Math.floor(lightCount*0.25);
+//                        let texelIdx = this._clusterTexture.bufferIndex(clusterIdx, texel);
+//                        let componentIdx = lightCount - texel*4;
+//                        this._clusterTexture.buffer[texelIdx+componentIdx] = i;
+//                    }
+//                }//x
+//            }//y 
+//        }//z
+//
 
 //    //one side of the triangle is the view vector (0,0,1) and the other is the length to the top frust plane
 //    //mult by 2 to get total vertical length then chop this length up

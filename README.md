@@ -41,6 +41,9 @@ The outter light loop overhead vs the current method is 6 divides, 2 sqrts, 12 m
 This new method would also scale much better with more clusters. You might say the bounds for this other method are looser so we would see its advantages eaten up when we go to calcuate fragment lighting(more lights to test against that don't actually affect it). However, the first method was finding the 6 bounding cluster planes around a sphere and here we are finding the 6 bounding cluster planes around a the sphere's camera ray oriented bounding box (you'll still end up with the same 6 bounding planes).
 <br />
 <br />
+Another approach is solving all plane tests as 1D problems. All plane test boil down to solving which segment of a line the point falls on. This method was the fastest involving no inner loops and having a per light cost of 8 divides, 20 mults, 21 adds.
+<br />
+<br />
 
 **Renderer: Clustered Deferred**<br />
 ![](img/jif.gif)
