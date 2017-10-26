@@ -2,7 +2,7 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 300;
 
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -39,7 +39,7 @@ export default class ClusteredRenderer {
     //debugger;
     for (let lightIndex = 0; lightIndex < NUM_LIGHTS; ++lightIndex) {
       
-      var minX=0, maxX=14, minY=0, maxY=14, minZ=0, maxZ=14;
+      var minX=0, maxX=this._xSlices-1, minY=0, maxY=this._ySlices-1, minZ=0, maxZ=this._zSlices-1;
       //get the vector from camera origin to light center
       let lightPosVec4 = vec4.create();
       lightPosVec4[0]=scene.lights[lightIndex].position[0];
@@ -70,19 +70,19 @@ export default class ClusteredRenderer {
           //debugger;
           let xFaceVec1 = vec3.create();
           xFaceVec1[0]=-frustrumMaxX/2 + xPlaneIdx*xIntervalMax;
-          xFaceVec1[1]=-frustrumMaxY/2;
+          xFaceVec1[1]=frustrumMaxY/2;
           xFaceVec1[2]=farPlaneZ;
           let xFaceVec2 = vec3.create();
           xFaceVec2[0]=-frustrumMaxX/2 + xPlaneIdx*xIntervalMax;
-          xFaceVec2[1]=frustrumMaxY/2;
+          xFaceVec2[1]=-frustrumMaxY/2;
           xFaceVec2[2]=farPlaneZ;
-          vec3.cross(faceNormal, xFaceVec2,xFaceVec1);
+          vec3.cross(faceNormal, xFaceVec1,xFaceVec2);
           vec3.normalize(faceNormal,faceNormal);
           let lightDistanceToPlane=vec3.dot(lightPos,faceNormal);
           //debugger;
           if(lightDistanceToPlane>0){
-            if(lightDistanceToPlane < lightRadius && !minXFound){
-              if(xPlaneIdx>1){
+            if((lightDistanceToPlane < lightRadius) && (!minXFound)){
+              if(xPlaneIdx>=1){
                 minX = xPlaneIdx-1;
               }
              
@@ -90,7 +90,7 @@ export default class ClusteredRenderer {
             }
           }else{
             if(!minXFound){
-              if(xPlaneIdx>1){
+              if(xPlaneIdx>=1){
                 minX = xPlaneIdx-1;
               }              
               minXFound = true;
@@ -105,38 +105,43 @@ export default class ClusteredRenderer {
           break;
         }
       }
+      if(!minXFound){
+        minX = this._xSlices-1;
+      }
+
+
       //debugger;
       //Test against YPlanes
       for(let yPlaneIdx=0; yPlaneIdx<this._ySlices; yPlaneIdx++){
         if(!minYFound || !maxYFound){
           let faceNormal = vec3.create();
-          let xFaceVec1 = vec3.create();
-          xFaceVec1[0]=frustrumMaxX/2;
-          xFaceVec1[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
-          xFaceVec1[2]=farPlaneZ;
-          let xFaceVec2 = vec3.create();
-          xFaceVec2[0]=-frustrumMaxX/2;
-          xFaceVec2[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
-          xFaceVec2[2]=yPlaneIdx*yIntervalMax,farPlaneZ;
-          vec3.cross(faceNormal, xFaceVec2,xFaceVec1);
+          let yFaceVec1 = vec3.create();
+          yFaceVec1[0]=-frustrumMaxX/2;
+          yFaceVec1[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
+          yFaceVec1[2]=farPlaneZ;
+          let yFaceVec2 = vec3.create();
+          yFaceVec2[0]=frustrumMaxX/2;
+          yFaceVec2[1]=-frustrumMaxY/2 + yPlaneIdx*yIntervalMax;
+          yFaceVec2[2]=farPlaneZ;
+          vec3.cross(faceNormal, yFaceVec1,yFaceVec2);
           vec3.normalize(faceNormal,faceNormal);
           let lightDistanceToPlane=vec3.dot(lightPos,faceNormal);
           if(lightDistanceToPlane>0){
             if(lightDistanceToPlane < lightRadius && !minYFound){
-              if(yPlaneIdx>1){
+              if(yPlaneIdx>=1){
                 minY = yPlaneIdx-1;
               }
               minYFound = true;
             }
           }else{
             if(!minYFound){
-              if(yPlaneIdx>1){
+              if(yPlaneIdx>=1){
                 minY = yPlaneIdx-1;
               }
               minYFound = true;
             }
             if(-lightDistanceToPlane > lightRadius && !maxYFound){
-              maxX = yPlaneIdx;
+              maxY = yPlaneIdx;
               maxYFound = true;
             }
           }
@@ -146,6 +151,9 @@ export default class ClusteredRenderer {
         }
       }
     
+      if(!minYFound){
+        minY = this._ySlices-1;
+      }
 
      //Test against ZPlanes
      for(let zPlaneIdx=0; zPlaneIdx<this._zSlices; zPlaneIdx++){
@@ -153,14 +161,14 @@ export default class ClusteredRenderer {
         let lightDistanceToPlane = lightPos[2] - (nearPlaneZ + zPlaneIdx*zinterval);
         if(lightDistanceToPlane>0){
           if(lightDistanceToPlane < lightRadius && !minZFound){
-            if(zPlaneIdx>1){
+            if(zPlaneIdx>=1){
               minZ = zPlaneIdx-1;
             }    
             minZFound = true;
           }
         }else{
           if(!minZFound){
-            if(zPlaneIdx>1){
+            if(zPlaneIdx>=1){
               minZ = zPlaneIdx-1;
             }            
             minZFound = true;
@@ -175,14 +183,18 @@ export default class ClusteredRenderer {
         break;
       }
     }
+
+    if(!minZFound){
+      minZ = this._zSlices-1;
+    }
     //debugger;
     var rowShift = 0;
     var pixelShift = 0;
     var lightCount = 0;
     //debugger;
-    for (let zBufferIdx = minZ; zBufferIdx < maxZ; ++zBufferIdx) {
-      for (let yBufferIdx = minY; yBufferIdx < maxY; ++yBufferIdx) {
-        for (let xBufferIdx = minX; xBufferIdx < maxX; ++xBufferIdx) {
+    for (let zBufferIdx = minZ; zBufferIdx <= maxZ; ++zBufferIdx) {
+      for (let yBufferIdx = minY; yBufferIdx <= maxY; ++yBufferIdx) {
+        for (let xBufferIdx = minX; xBufferIdx <= maxX; ++xBufferIdx) {
           let i = xBufferIdx + yBufferIdx * this._xSlices + zBufferIdx * this._xSlices * this._ySlices;         
           lightCount =   this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0) + 0];
           lightCount++;     

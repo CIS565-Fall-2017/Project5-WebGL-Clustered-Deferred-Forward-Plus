@@ -3,9 +3,8 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Yuxin Hu
+* Tested on: Windows 10, i7-6700HQ @ 2.60GHz 8GB, GTX 960M 4096MB (Personal Laptop)
 
 ### Live Online
 
@@ -13,15 +12,26 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/RenderResultSame.gif)]
 
-### (TODO: Your README)
+### Yuxin Hu
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+### Performance Analysis
+## Performance Comparason between Clustered Forward+ and Clustered Deferred shading
+![Performance Comparason between Clustered Forward+ and Clustered Deferred shading](/img/Performance1.PNG)
+<p align="center"><b>Performance Comparason between Clustered Forward+ and Clustered Deferred shading</b></p>
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+![Performance Comparason between Clustered Forward+ and Clustered Deferred shading](/img/Performance2.PNG)
+<p align="center"><b>Performance Comparason between Clustered Forward+ and Clustered Deferred shading</b></p>
+
+Clustered Deferred shading is more than 2 times faster than Clustered Forward+ when the rendering is taken place inside castle. However, when the rendering is taken palce outside of the whole castle, the performance of Clustered Forward+ starts to get better than clustered deferred. Both shading methods use the same clustered lights calculations, so the performance difference arises from the calculation of which cluster does the fragment belong to. In clustered forward+, we loop over all vertex of geometries, calculate their clusteres, and find lights in those clusteres, no matter they will be rendered out in the final image or not. A lots of geometry vertice are out of screen space, or are being occluded, when the camera is inside the castle, which result in many calculations wasted. While clustered deferred shading has avoided this problem by filtering out the vertices that are occluded or out of screen in the first pass.
+
+![Performance Comparason between Clustered Forward+ and Clustered Deferred shading](/img/Performance3.PNG)
+<p align="center"><b>Performance Comparason between Clustered Forward+ and Clustered Deferred shading</b></p> 
+
+As light number increases, the performance clustered deferred shading becomes much better than forward plus. While forward plus takes more time to do light calculation of geometry vertices that do not contribute to final rendering result, clustered deferred shading avoids the problem by first pass.
+
+
 
 
 ### Credits
