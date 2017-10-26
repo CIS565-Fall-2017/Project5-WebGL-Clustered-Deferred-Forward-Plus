@@ -11,11 +11,15 @@ This project implements Clustered Deferred and Forward+ Shading using WebGL.
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+- Num of Lights: 1500
+- Light Radius: 3.0
+
+[![](img/live.PNG)]
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/videoScreenshot.PNG)]
+[![](https://www.youtube.com/watch?v=vU8VylBNE9A&feature=youtu.be)]
 
 ### Features
 - Clustered Forward+
@@ -23,58 +27,36 @@ This project implements Clustered Deferred and Forward+ Shading using WebGL.
 - Blinn-Phong shading
 - Optimizations of g-buffers
 
+Clustered Shading groups samples from a view into clusters. For shading, each cluster is assigned lights that affect the cluster. This provides for better worse case performance with large depth discontinuities. Clustered Forward+ is forward shading with light culling for screen-space tiles using clustered shading. It has a high compute-to-memory ratio. Clustered Deferred consists of two passes: G-buffer pass and lighting pass. All the shading occurs during the lighting pass using clustered shading. The primary advantage of deferred shading is the decoupling of scene geometry from lighting. Only one geometry pass is required and each light is only computed for those pixels that it actually affects. This gives the ability to render many lights in a scene without a significant performance-hit.
+
 ### Performance Analysis
 
-- Clustered Shading
-  - TODO: Overview
-  - Per-cluster light backface culling
-  - Better worse case performance with large depth discontinuities
-
-- Clustered Forward+
-  - TODO: Overview
-  - Forward shading with light culling for screen-space tiles
-  - Designed for today’s GPUs
-  - High compute-to-memory ratio
-
-- Clustered Deferred
-  - TODO: Overview
-  - Performance depends more on screen resolution than scene complexity.
-
 Testing number of lights
-  - Number of Lights : 500, 1000, 1500
   - Light's radius	: 3.0
   - Resolution	: 1920 x 1080
   - Cluster Dimension : 16 x 16 x 16
   
-Testing light radius
-  - Number of Lights : 500, 1000, 1500
-  - Light's radius	: 1.0, 3.0, 5.0
-  - Resolution	: 1920 x 1080
-  - Cluster Dimension : 16 x 16 x 16
+[![](img/numLightsGraph.PNG)]
+
+Deferred shading is better for large number of lights. Deferred shading grabs its shading informationg from the closest fragment (from g-buffers), it is faster than Forward+. This advantage comes from deferred only having to shade one fragment per pixel rather than all the fragments associated to each pixel.
 
 Testing resolution
-  - Number of Lights : 500, 1000, 1500
+  - Number of Lights : 1000 
   - Light's radius	: 3.0
-  - Resolution	: 800 X 600, 1280 x 1084, 1920 x 1080
   - Cluster Dimension : 16 x 16 x 16
+
+[![](img/resolutionGraph.PNG)]
+
+Deferred shading's performance depends more on screen resolution than scene complexity. Here you can see that its efficiency increases as the resolution increases in a scene with 1000 lights.
   
-Testing cluster sizes
-  - Number of Lights : 1000
-  - Light's radius	: 3.0
-  - Resolution	: 1920 x 1080
-  - Cluster Dimension : 1 X 1 X 1, 4 x 4 x 4, 16 x 16 x 16,
-  
-- TODO: Add analysis
-  
-Blinn Phone Shading Model:
-  - TODO: Add graph comparing times of labert and blinn phong on Forward+ and Deferred with 500, 1000, 1500 lights
+Blinn Phong Shading Model:
+  - TODO: Add graph comparing times of lambert and blinn phong on Forward+ and Deferred with 500, 1000, 1500 lights
   - TODO: Add analysis
   
 Optimized g-buffer format:
-  - TODO: Overview
   - Used two rather than four g-buffers
     - Use 2-component normals
-    - Reduce number of properties passed via g-buffer by reconstructing world space position using camera matrices and X/Y/depth
+    - Reduce number of properties passed via g-buffer by reconstructing world space position
       - G-buffer01: {color.r, color.g, color.b, depth}
       - G-buffer02: {normal.x, normal.y, - , - }
   - TODO: Add graph comparing times of 2 versus 4 g-buffers on Forward+ and Deferred with 500, 1000, 1500 lights
