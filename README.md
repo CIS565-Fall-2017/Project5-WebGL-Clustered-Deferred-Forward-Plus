@@ -9,19 +9,23 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](img/final.png)](http://sarahforcier.github.io/Project5B-WebGL-Deferred-Shading)
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/final.gif)](TODO)
 
-### (TODO: Your README)
+### Clustered Forward +
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+| X Clusters | Y Clusters | Z Clusters | Number of Lights per Cluster |
+| ----------- | ----------- | ----------- | ----------- |
+| ![](img/clusterX.png) | ![](img/clusterY.png) | ![](img/clusterZ.png) | ![](img/numLights.png) |
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Clustered Deferred
+
+| Albedo | Normal | Position |
+| ----------- | ----------- | ----------- |
+| ![](img/albedo.png) | ![](img/normal.png) | ![](img/position.png) |
 
 
 ### Credits
