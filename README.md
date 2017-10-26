@@ -22,6 +22,15 @@ project, and we will not be able to grade you without a good README.
 This assignment has a considerable amount of performance analysis compared
 to implementation work. Complete the implementation early to leave time!
 
+## 1. Clustered Forward+
+
+## 2. Deferred Shading With Clusters
+
+## 3. Blinn-Phong Shading 
+
+## 4. G-Buffer Optimization 
+
+## 5. Performance Analysis 
 
 ### Credits
 
