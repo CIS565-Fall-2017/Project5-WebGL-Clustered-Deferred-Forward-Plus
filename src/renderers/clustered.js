@@ -21,8 +21,8 @@ export default class ClusteredRenderer
     //find bounding x and y values of the camera frustum    
     this.vertical_FoV = camera.fov;
     this.tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
-    this.tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
-    this.horizontal_FoV = 2 * Math.atan(this.tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
+    // this.tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
+    // this.horizontal_FoV = 2 * Math.atan(this.tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
 
     this.zStride = (camera.far-camera.near)/this._zSlices;
 
@@ -71,7 +71,7 @@ export default class ClusteredRenderer
     }
 
     //instead of using the farclip plane as the arbitrary plane to base all our calculations and division splitting off of
-    var xStride, yStride, zStride;
+    var xStride, yStride;
     var xStartIndex, yStartIndex, zStartIndex;
     var xEndIndex, yEndIndex, zEndIndex;
 
@@ -96,24 +96,95 @@ export default class ClusteredRenderer
       var lightAABB = new AABB();
       lightAABB.calcAABB_PointLight(lightPos, lightRadius);
 
-      h_lightFrustum = this.tan_Vertical_FoV_by_2*lightPos[2]*2;
-      w_lightFrustum = camera.aspect*h_lightFrustum;
+      h_lightFrustum = Math.abs(this.tan_Vertical_FoV_by_2*Math.abs(lightPos[2])*2);
+      w_lightFrustum = Math.abs(camera.aspect*h_lightFrustum);
 
       xStride = w_lightFrustum/this._xSlices;
       yStride = h_lightFrustum/this._ySlices;
 
-      zStartIndex = this.clamp(Math.floor(lightAABB.min[2]/this.zStride), 0, this._zSlices);
-      zEndIndex = this.clamp(Math.floor(lightAABB.max[2]/this.zStride), 0, this._zSlices);
+      zStartIndex = Math.floor(lightAABB.min[2]/this.zStride) - 1;
+      zEndIndex = Math.floor(lightAABB.max[2]/this.zStride) + 1;
 
-      yStartIndex = this.clamp(Math.floor((lightAABB.min[1] + h_lightFrustum*0.5)/yStride), 0, this._ySlices);
-      yEndIndex = this.clamp(Math.floor((lightAABB.max[1] + h_lightFrustum*0.5)/yStride), 0, this._ySlices);
+      var shiftedYmin = lightAABB.min[1] + h_lightFrustum*0.5;
+      var shiftedYmax = lightAABB.max[1] + h_lightFrustum*0.5;
+      yStartIndex = Math.floor((shiftedYmin)/yStride);
+      yEndIndex = Math.floor((shiftedYmax)/yStride);
 
-      xStartIndex = this.clamp(Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
-      xEndIndex = this.clamp(Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
+      xStartIndex = Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride);
+      xEndIndex = Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride);
+
+      // if(zStartIndex > zEndIndex)
+      // {
+      //   console.log("Z   fuuuu");
+      //   console.log("z: ", zStartIndex, zEndIndex);
+      // }
+      // if(yStartIndex > yEndIndex)
+      // {
+      //   console.log("Y   fuuuu");
+      //   console.log("y: ", yStartIndex, yEndIndex);
+      // }
+      // if(xStartIndex > xEndIndex)
+      // {
+      //   console.log("X   fuuuu");
+      //   console.log("x: ", xStartIndex, xEndIndex);
+      // }
+
+      //Culling
+      if((zStartIndex < 0 && zEndIndex < 0) ||
+         (zStartIndex >= this._zSlices && zEndIndex >= this._zSlices))
+      {
+        continue; //light wont fall into any cluster
+      }
+
+      if((yStartIndex < 0 && yEndIndex < 0) ||
+         (yStartIndex >= this._ySlices && yEndIndex >= this._ySlices))
+      {
+        continue; //light wont fall into any cluster
+      }
+
+      if((xStartIndex < 0 && xEndIndex < 0) ||
+         (xStartIndex >= this._xSlices && xEndIndex >= this._xSlices))
+      {
+        continue; //light wont fall into any cluster
+      }
+
+      zStartIndex = this.clamp(zStartIndex, 0, this._zSlices-1);
+      zEndIndex = this.clamp(zEndIndex, 0, this._zSlices-1);
+
+      yStartIndex = this.clamp(yStartIndex, 0, this._ySlices-1);
+      yEndIndex = this.clamp(yEndIndex, 0, this._ySlices-1);
+
+      xStartIndex = this.clamp(xStartIndex, 0, this._xSlices-1);
+      xEndIndex = this.clamp(xEndIndex, 0, this._xSlices-1);
+
+      // if(zStartIndex > zEndIndex)
+      // {
+      //   console.log("Z   fuuuu");
+      //   console.log("z: ", zStartIndex, zEndIndex);
+      // }
+      // if(yStartIndex > yEndIndex)
+      // {
+      //   console.log("Y   fuuuu");
+      //   console.log("y: ", yStartIndex, yEndIndex);
+      // }
+      // if(xStartIndex > xEndIndex)
+      // {
+      //   console.log("X   fuuuu");
+      //   console.log("x: ", xStartIndex, xEndIndex);
+      // }
 
       // console.log("x: ", xStartIndex, xEndIndex);
       // console.log("y: ", yStartIndex, yEndIndex);
-      //console.log("z: ", zStartIndex, zEndIndex);
+      // console.log("z: ", zStartIndex, zEndIndex);
+
+      zStartIndex = 0;
+      zEndIndex = 15;
+
+      yStartIndex = 0;
+      yEndIndex = 15;
+
+      xStartIndex = 0;
+      xEndIndex = 15;
 
       for (let z = zStartIndex; z < zEndIndex; ++z)
       {        
@@ -136,9 +207,6 @@ export default class ClusteredRenderer
 
               // Update the light index for the particular cluster in the light buffer
               this._clusterTexture.buffer[texelIndex + texelSubIndex] = i;
-
-              // var updatedClusterLightCount = this._clusterTexture.buffer[lightCountIndex];
-              // var updatedClusterLightIndex = this._clusterTexture.buffer[texelIndex + texelSubIndex];              
             }
           }//x
         }//y
@@ -146,22 +214,22 @@ export default class ClusteredRenderer
     }//loop over lights
 
     //to print things per cluster
-    for (let z = zStartIndex; z <= zEndIndex; ++z)
-    {
-      for (let y = yStartIndex; y <= yEndIndex; ++y)
-      {
-        for (let x = xStartIndex; x <= xEndIndex; ++x) 
-        {
-          let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+    // for (let z = zStartIndex; z <= zEndIndex; ++z)
+    // {
+    //   for (let y = yStartIndex; y <= yEndIndex; ++y)
+    //   {
+    //     for (let x = xStartIndex; x <= xEndIndex; ++x) 
+    //     {
+    //       let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
 
-          var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
-          // console.log("clusterID: ", clusterID);
-          // //console.log("cluster light ID: ");
-          // console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
-          this._clusterTexture.buffer[lightCountIndex] = Math.floor(Math.random()*1000); 
-        }
-      }
-    }
+    //       var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
+    //       // console.log("clusterID: ", clusterID);
+    //       // //console.log("cluster light ID: ");
+    //       // console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
+    //       this._clusterTexture.buffer[lightCountIndex] = Math.floor(Math.random()*1000); 
+    //     }
+    //   }
+    // }
 
     this._clusterTexture.update();
   }
