@@ -93,28 +93,37 @@ void main()
 
     vec3 fragColor = vec3(0.0);
 
-    // Find which cluster the current fragment lies in
+    // GLSL type inconsistencies
+    // https://stackoverflow.com/questions/33579110/glsl-type-inconsistencies
+    float x = gl_FragCoord.x;
+    float y = gl_FragCoord.y;
+
+
+    // Get the position in camera space    
+    vec4 v_posCamera = u_viewMatrix * vec4(v_position, 1.0);
 
     // Use gl_FragCoord to get xyz values
     // http://www.txutxi.com/?p=182
     // Essentially have to divide the gl_FragCoord by the stride
-    float x = gl_FragCoord.x;
-    float y = gl_FragCoord.x;
-    float z = gl_FragCoord.x;
-
-    // GLSL type inconsistencies
-    // https://stackoverflow.com/questions/33579110/glsl-type-inconsistencies
     int xCluster = int(x) / (u_width / u_xSlices);
     int yCluster = int(y) / (u_height / u_ySlices);
-    int zCluster = int(z) / (int(u_farZ - u_nearZ) / u_zSlices);
-
+    int zCluster = int(-v_posCamera.z - u_nearZ) / (int(u_farZ - u_nearZ) / u_zSlices);
+    
+    // Find which cluster the current fragment lies in
     // Cluster index
     int index = xCluster + (yCluster * u_xSlices) + (zCluster * u_ySlices * u_zSlices);
+
+    int totalClusters = u_xSlices * u_ySlices * u_zSlices;
+    float u = float(index + 1) / float(totalClusters + 1);
+
+    int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
 
     for (int i = 0; i < ${params.numLights}; ++i) {
         Light light = UnpackLight(i);
         float lightDistance = distance(light.position, v_position);
         vec3 L = (light.position - v_position) / lightDistance;
+
+        vec3 lightPos = light.position;
 
         float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
         float lambertTerm = max(dot(L, normal), 0.0);

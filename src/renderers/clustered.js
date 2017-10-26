@@ -5,6 +5,44 @@ import AABB from '../aabb'
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
+function clamp(num, min, max)
+{
+  let flooredNum = Math.floor(num);
+
+  if(num < min) {
+    return min;
+  }
+  else if(num > max) {
+    return max;
+  }
+  else {
+    return flooredNum;
+  }
+}
+
+function printClusterBounds(minX, maxX, minY, maxY, minZ, maxZ)
+{
+  console.log("xMin: " + minX);
+  console.log("xMax: " + maxX);
+  // if(minX > maxX) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("yMin: " + minY);
+  console.log("yMax: " + maxY);
+  // if(minY > maxY) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("zMin: " + minZ);
+  console.log("zMax: " + maxZ);
+  // if(minZ > maxZ) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("--------------");
+}
+
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -12,6 +50,65 @@ export default class ClusteredRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+  }
+
+  updateBuffer(lightIndex, minX, maxX, minY, maxY, minZ, maxZ)
+  {
+    let tooManyLights = false;
+    for(let z = minZ; z <= maxZ; z++) {
+      for(let y = minY; y <= maxY; y++) {
+        for(let x = minX; x <= maxX; x++) {
+          // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+          // component0 |count|lid0|lid1|lid2 || count|lid0|lid1|lid2 || count|lid0|lid1|lid2
+          // component1 |lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6
+          // component2 |lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10
+          // (v)
+
+          // Cluster index (u)
+          // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+          let clusterIndex = x + (y * this._xSlices) + (z * this._xSlices * this._ySlices);
+  
+          // Index of where count lies in each cluster
+          let numLightsIndex = this._clusterTexture.bufferIndex(clusterIndex, 0);
+
+          // Get the number of lights
+          let numLights = this._clusterTexture.buffer[numLightsIndex];
+          // Increment light count since this light is in the cluster
+          numLights++;
+  
+          // Safety check to make sure we don't exceed max lights
+          if(numLights < MAX_LIGHTS_PER_CLUSTER) {
+            // Update the light count in the texture buffer
+            this._clusterTexture.buffer[numLightsIndex] = numLights;
+            
+            // Find the component (v)
+            // component0 
+            let component = Math.floor((numLights + 1) / 4);
+
+            // Get the light id in the cluster (lid0, lid1, etc.)
+            // |count|lid0|lid1|lid2
+            let lightClusterID = (numLights + 1) % 4;
+  
+            // Update the pixel to include the current light index
+            let texelIndex = this._clusterTexture.bufferIndex(clusterIndex, component);
+            let componentIndex = (numLights + 1) - (component * 4);
+            this._clusterTexture.buffer[texelIndex + componentIndex] = lightIndex;
+          }
+          else {
+            tooManyLights = true;
+            break;
+          }
+        } // End x loop
+  
+        if(tooManyLights) {
+          break;
+        }
+      } // End y loop
+      
+      if(tooManyLights) {
+        break;
+      }
+    } // End z loop
   }
 
   updateClusters(camera, viewMatrix, scene) {
@@ -28,250 +125,50 @@ export default class ClusteredRenderer {
       }
     }
 
-    // http://www.lighthouse3d.com/tutorials/view-frustum-culling/view-frustums-shape/
-    var fov     = camera.fov * (Math.PI / 180);
-    var height  = 2 * Math.tan(fov / 2);
-    var width   = camera.aspect * height;
-    var farZ    = camera.far;
-    var nearZ   = camera.near; 
+    // Convert fov from degrees to radians
+    var fov = camera.fov * (Math.PI / 180);
 
-    var farHeight = farZ * height;
-    var farWidth = farZ * width;
-    var farHeightHalf = farHeight / 2;
-    var farWidthHalf = farWidth / 2;
+    // Far plane components
+    var screenHeight = 2 * Math.tan(fov / 2);
+    var screenWidth = screenHeight * camera.aspect; 
+    var nearZ = camera.near;
+    var farZ = camera.far;    
 
-    // Get strides
-    var xStride = farWidth / this._xSlices;
-    var yStride = farHeight / this._ySlices;
+    // Strides
+    // var xStride = screenWidth / this._xSlices;
+    // var yStride = screenHeight / this._ySlices;
     var zStride = (farZ - nearZ) / this._zSlices;
 
-    var minX = 0;
-    var minY = 0;
-    var minZ = 0;
-    var maxX = this._xSlices - 1;
-    var maxY = this._ySlices - 1;
-    var maxZ = this._zSlices - 1;
-
-    // Loop through lights and determine which cluster it lies in
+    // Loop through each light to find the cluster it lies in
     for(let i = 0; i < NUM_LIGHTS; i++) {
-      // Light position is in world space
-      let lightPos = scene.lights[i].position;
-      // Take the light and bring it into camera space
+      let light = scene.lights[i];
+      let lightRad = light.radius;
+      // World space
+      let lightPos = light.position;
+      // Take lightPos to camera space
       vec3.transformMat4(lightPos, lightPos, viewMatrix);
+      lightPos[2] *= -1;
+            
+      // Get AABB for light to make the search relatively easier
+      let lightBB = new AABB(lightPos, lightRad);
 
-      // Get the bounding box for the light
-      let lightBB = new AABB(lightPos, scene.lights[i].radius);
+      // x and y strides change based on the position of the light
+      let xStride = lightPos[2] * screenWidth / this._xSlices;
+      let yStride = lightPos[2] * screenHeight / this._ySlices;
 
-      // Loop through the YZ plane to find the minX value
-      for(let xSlice = 0; xSlice < this._xSlices; xSlice++) {
-        let x = (xSlice * xStride) - farWidthHalf;
-        let y = -farHeightHalf;
-        let z = farZ;
+      // Offset the min/max values by the slices since the clusters will be indexed [0, slices - 1]
+      let minX = clamp((lightBB.min[0] + this._xSlices) / xStride, 0, this._xSlices - 1);
+      let maxX = clamp((lightBB.max[0] + this._xSlices) / xStride, 0, this._xSlices - 1);
 
-        let v1 = vec3.fromValues(x, y, z);
-        // console.log("Slice " + xSlice + ": " + v1);
-        let v2 = vec3.fromValues(x, -y, z);
+      let minY = clamp((lightBB.min[1] + this._ySlices) / yStride, 0, this._ySlices - 1);
+      let maxY = clamp((lightBB.max[1] + this._ySlices) / yStride, 0, this._ySlices - 1);
 
-        // Since we have two vectors towards the far plane,
-        // we can use that to find the normal.
-        // https://www.3dgep.com/forward-plus/
-        let n = vec3.create();
-        vec3.cross(n, v2, v1);
-        vec3.normalize(n, n);
+      let minZ = clamp(lightBB.min[2] / zStride, 0, this._zSlices - 1);
+      let maxZ = clamp(lightBB.max[2] / zStride, 0, this._zSlices- 1);
+      
+      printClusterBounds(minX, maxX, minY, maxY, minZ, maxZ);
 
-        // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.min, n);
-        // console.log("d: " + d);       
-        
-        // Light is on the right side of the plane
-        if(d > 0) {
-          minX = xSlice;
-          break; 
-        }
-      }
-
-      // Loop through the YZ plane to find the maxX value
-      for(let xSlice = this._xSlices - 1; xSlice >= 0; xSlice--) {
-        let x = (xSlice * xStride) - farWidthHalf;
-        let y = -farHeightHalf;
-        let z = farZ;
-
-        let v1 = vec3.fromValues(x, y, z);
-        // console.log("Slice " + xSlice + ": " + v1);
-        let v2 = vec3.fromValues(x, -y, z);
-
-        // Since we have two vectors towards the far plane,
-        // we can use that to find the normal.
-        // https://www.3dgep.com/forward-plus/
-        let n = vec3.create();
-        vec3.cross(n, v2, v1);
-        vec3.normalize(n, n);
-
-        // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.min, n);
-        // console.log("d: " + d);       
-        
-        // Light is on the right side of the plane
-        if(d < 0) {
-          maxX = xSlice;
-          break; 
-        }
-      }
-
-      if(minX > maxX) {
-        let tmp = maxX;
-        maxX = minX;
-        minX = tmp;
-      }
-
-      // Loop through the XZ plane to find the minY value
-      for(let ySlice = 0; ySlice < this._ySlices; ySlice++) {
-        let x = -farWidthHalf;
-        let y = (ySlice * yStride) - farHeightHalf;
-        let z = farZ;
-
-        let v1 = vec3.fromValues(x, y, z);
-        // console.log("Slice " + xSlice + ": " + v1);
-        let v2 = vec3.fromValues(-x, y, z);
-
-        // Since we have two vectors towards the far plane,
-        // we can use that to find the normal.
-        // https://www.3dgep.com/forward-plus/
-        let n = vec3.create();
-        vec3.cross(n, v2, v1);
-        vec3.normalize(n, n);
-
-        // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.min, n);
-        // console.log("d: " + d);       
-        
-        // Light is above the plane
-        if(d > 0) {
-          minY = ySlice;
-          break; 
-        }
-      }
-
-      // Loop through the YZ plane to find the maxY value
-      for(let ySlice = this._ySlices - 1; ySlice >= 0; ySlice--) {
-        let x = -farWidthHalf;
-        let y = (ySlice * yStride) - farHeightHalf;
-        let z = farZ;
-
-        let v1 = vec3.fromValues(x, y, z);
-        // console.log("Slice " + xSlice + ": " + v1);
-        let v2 = vec3.fromValues(-x, y, z);
-
-        // Since we have two vectors towards the far plane,
-        // we can use that to find the normal.
-        // https://www.3dgep.com/forward-plus/
-        let n = vec3.create();
-        vec3.cross(n, v2, v1);
-        vec3.normalize(n, n);
-
-        // Get signed distance from the light to the plane
-        let d = vec3.dot(lightBB.min, n);
-        // console.log("d: " + d);       
-        
-        // Light is below the plane
-        if(d < 0) {
-          maxY = ySlice;
-          break; 
-        }
-      }
-
-      if(minY > maxY) {
-        let tmp = maxY;
-        maxY = minY;
-        minY = tmp;
-      }
-
-      for(let zSlice = 0; zSlice < this._zSlices; zSlice++) {
-        let z = (zSlice * zStride) + nearZ;
-
-        let d = lightBB.min[2] - z;
-
-        if(d > 0) {
-          minZ = zSlice;
-          break;
-        }
-      }
-
-      for(let zSlice = 0; zSlice < this._zSlices; zSlice++) {
-        let z = (zSlice * zStride) + nearZ;
-
-        let d = lightBB.min[2] - z;
-
-        if(d < 0) {
-          maxZ = zSlice;
-          break;
-        }
-      }
-
-      if(minZ > maxZ) {
-        let tmp = maxZ;
-        maxZ = minZ;
-        minY = tmp;
-      }
-
-      // minZ = lightBB.min[2] / zStride;
-      // maxZ = lightBB.max[2] / zStride;
-
-      // console.log("minX: " + minX);
-      // console.log("maxX: " + maxX);
-      // console.log("minY: " + minY);
-      // console.log("maxY: " + maxY);
-      // console.log("minZ: " + minZ);
-      // console.log("maxZ: " + maxZ);
-
-      let tooManyLights = false;
-      let lightCount = 0;
-      for(let z = minZ; z < maxZ; z++) {
-        for(let y = minY; y < maxY; y++) {
-          for(let x = minX; x < maxX; x++) {
-            // Cluster index
-            let index = x + (y * this._xSlices) + (z * this._xSlices * this._ySlices);
-
-            // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
-            // component0 |count|lid0|lid1|lid2 || count|lid0|lid1|lid2 || count|lid0|lid1|lid2
-            // component1 |lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6
-            // component2 |lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10
-            // (v)
-
-            // Gets the light count for each cluster
-            lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)];
-            // Increment light count since this light is in the cluster
-            lightCount++;
-
-            if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
-              // Update the light count in the texture buffer
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0)] = lightCount;
-              
-              // component0 |count|lid0|lid1|lid2
-              let lightInPixel = (lightCount + 1) % 4;
-              let component = Math.floor((lightCount + 1) / 4);
-
-              // Update the pixel to include the current light index
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(lightInPixel, component)] = i;
-            }
-            else {
-              tooManyLights = true;
-              break;
-            }
-          } // End x loop
-
-          if(tooManyLights) {
-            break;
-          }
-        } // End y loop
-        
-        if(tooManyLights) {
-          break;
-        }
-      } // End z loop
-
-    console.log("Number of Lights: " + lightCount)
-    console.log("-----------------");
+      this.updateBuffer(i, minX, maxX, minY, maxY, minZ, maxZ);
     } // End light loop
     
     this._clusterTexture.update();
