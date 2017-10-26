@@ -8,10 +8,10 @@ WebGL Clustered Deferred and Forward+ Shading
   Windows 10, i7-6700 @ 2.60GHz 16.0GB, GTX 970M 3072MB (Personal)
 ___
 ### Overview
-  * Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
-  * Deferred Shading: https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3
-  * Cluster Shading: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
-  * The following are the results of **Clustered-Deferred Shading** with different shaders:
+* Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
+  * **Deferred Shading**: https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3
+  * **Cluster Shading**: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
+* The following are the results of **Clustered-Deferred Shading** with different shaders:
   
  | **Regular Shading (200 lights)** |
 |---|
@@ -34,7 +34,7 @@ ___
 * **Clustered Deferred**:
   * For each frame: *Render to Texture Pass(Writting to the G-Buffers)* --> *Update Cluster Buffer* --> *Update Light Buffer* --> *Shading Pass*
   * During the Shading Pass: *Read the G-Buffers of this fragment(color, normal, v_position)* --> *Compute which cluster the current fragment is in* --> *Examine the Cluster Buffer* --> *Iterate the lights in that CLuster and do the shading*
-* The main *Difference* between these 2 methods are: in *Clustered Deferred*, we only need to compute the light shading once for each fragment, while in the other method we have to compute the shading multiple times for each fragment and then find the nearest shading result. 
+* The main **Difference** between these 2 methods are: in *Clustered Deferred*, we only need to compute the light shading once for each fragment, while in the other method we have to compute the shading multiple times for each fragment and then find the nearest shading result. 
 
 ___
 ### Method Highlight
