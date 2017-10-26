@@ -114,14 +114,14 @@ export default function(params) {
     float uRatio = float(index)/float(u_xSlice*u_ySlice*u_zSlice);
     int lightCount = int(texture2D(u_clusterbuffer,vec2(uRatio,0.0))[0]);
 
-    for(int i = 0 ;i < ${params.numLights};++i)
+    for(int i = 1 ;i < ${params.numLights};++i)
     {
       if(i>=lightCount)
       {
         break;
       }
-      int rowIndex = int((i+1)/4);
-      int colIndex = i+1 - rowIndex*4;
+      int rowIndex = i/4;
+      int colIndex = i - rowIndex*4;
       float tempRowRatio = float(rowIndex)/float((${params.numLights}+1)/4+1);
       int tempLightIndex; 
       if(colIndex == 0)
