@@ -1,23 +1,21 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
 
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
-
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer;
-  uniform vec3 u_slices;
 
-  uniform float u_numclusters;
+  uniform mat4 u_viewMatrix;
+  uniform vec3 u_slices;
+  uniform vec2 u_res;
+  uniform float u_cameranear;
+  uniform float u_camerafar;
+  uniform vec3 u_camerapos;
 
   varying vec2 v_uv;
-
-  int mod(int x, float y) {
-    return x - int(y * floor(float(x) / y));
-  }
 
   struct Light {
     vec3 position;
@@ -72,24 +70,31 @@ export default function(params) {
   void main() {
     vec4 gbuff0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gbuff1 = texture2D(u_gbuffers[1], v_uv);
-    vec4 gbuff2 = texture2D(u_gbuffers[2], v_uv); 
     vec3 v_position = gbuff0.xyz;
     vec3 albedo = gbuff1.rgb;
-    vec3 normal = vec3(gbuff0.a, gbuff1.a, sqrt(1.0 - gbuff0.a * gbuff0.a - gbuff1.a * gbuff1.a));
+    vec3 normal = vec3(gbuff0.a, gbuff1.a, sqrt(1.0 - gbuff0.a * gbuff0.a - gbuff1.a * gbuff1.a));   
+    if ((v_position - u_camerapos).z < 0.0) normal.z *= -1.0;
+
+    // determine cluster for fragment
+    float x = floor(gl_FragCoord.x * u_slices.x  / u_res.x);
+    float y = floor(gl_FragCoord.y * u_slices.y / u_res.y); 
+
+    vec4 fragViewSpace = u_viewMatrix * vec4(v_position, 1.0);
+    float z = floor((-fragViewSpace.z - u_cameranear) * u_slices.z / (u_camerafar - u_cameranear));
 
     vec3 fragColor = vec3(0.0);
 
-    float cluster_idx = gbuff2.x + gbuff2.y * u_slices.x + gbuff2.z * u_slices.x * u_slices.y;
-    float u = cluster_idx / u_numclusters;
+    float cluster_idx = x + y * u_slices.x + z * u_slices.x * u_slices.y;
+    float numclusters = u_slices.x * u_slices.y * u_slices.z;
+    float u = (cluster_idx + 1.0) / (numclusters + 1.0);
     int count = int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0]);
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      
+    for (int i = 0; i < ${params.numLightsPerCluster}; ++i) {  
       if (i >= count) {
         break;
       }
-      int v = (i + 1)/4;
-      int j = int(texture2D(u_clusterbuffer, vec2(u, float(v)))[mod(i + 1, 4.0)]);
-      Light light = UnpackLight(j);
+
+      float j = ExtractFloat(u_clusterbuffer, int(numclusters), ${Math.floor((params.numLightsPerCluster + 1) / 4)}, int(cluster_idx), i + 1);
+      Light light = UnpackLight(int(j));
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 

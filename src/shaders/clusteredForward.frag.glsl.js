@@ -15,7 +15,7 @@ export default function(params) {
   uniform vec2 u_res;
   uniform float u_cameranear;
   uniform float u_camerafar;
-  uniform float u_numclusters;
+  uniform vec3 u_camerapos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -27,10 +27,6 @@ export default function(params) {
     vec3 surftan = normalize(cross(geomnor, up));
     vec3 surfbinor = cross(geomnor, surftan);
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
-  }
-
-  int mod(int x, float y) {
-    return x - int(y * floor(float(x) / y));
   }
 
   struct Light {
@@ -89,7 +85,7 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);    
 
     // determine cluster for fragment
-    float x = floor(gl_FragCoord.x * u_slices.x / u_res.x);
+    float x = floor(gl_FragCoord.x * u_slices.x  / u_res.x);
     float y = floor(gl_FragCoord.y * u_slices.y / u_res.y); 
 
     vec4 fragViewSpace = u_viewMatrix * vec4(v_position, 1.0);
@@ -98,16 +94,16 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     float cluster_idx = x + y * u_slices.x + z * u_slices.x * u_slices.y;
-    float u = cluster_idx / u_numclusters;
+    float numclusters = u_slices.x * u_slices.y * u_slices.z;
+    float u = (cluster_idx + 1.0) / (numclusters + 1.0);
     int count = int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0]);
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      
+    for (int i = 0; i < ${params.numLightsPerCluster}; ++i) {  
       if (i >= count) {
         break;
       }
-      int v = (i + 1)/4;
-      int j = int(texture2D(u_clusterbuffer, vec2(u, float(v)))[mod(i + 1, 4.0)]);
-      Light light = UnpackLight(j);
+
+      float j = ExtractFloat(u_clusterbuffer, int(numclusters), ${Math.floor((params.numLightsPerCluster + 1) / 4)}, int(cluster_idx), i + 1);
+      Light light = UnpackLight(int(j));
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -115,12 +111,17 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      // vec3 lightDir = light.position - v_position;
+      // vec3 viewDir = u_camerapos - v_position;
+      // vec3 halfVec = normalize(lightDir + viewDir);
+      // float specularTerm = pow(dot(normal, halfVec), 1.0);
+      // fragColor = specularTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    // gl_FragColor = vec4(vec3(UnpackLight(int(texture2D(u_clusterbuffer, vec2(u, 0.0))[1])).color), 1.0);
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

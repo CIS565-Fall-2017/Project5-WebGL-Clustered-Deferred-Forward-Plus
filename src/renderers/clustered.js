@@ -179,15 +179,16 @@ export default class ClusteredRenderer {
             // num, i0, i1, i2 | num, i0, i1, i2 | num, i0, i1, i2
             // i3, i4, i5, i6  | i3, i4, i5, i6  | i3, i4, i5, i6
             //        ...      |       ...       |     ... 
-            var numLights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)];
+            let lightCountIndex = this._clusterTexture.bufferIndex(j, 0);
+            let numLights = this._clusterTexture.buffer[lightCountIndex];
+            let nextLightIndex = numLights;
             numLights++;
             if (numLights <= MAX_LIGHTS_PER_CLUSTER) {
-              var pixelRow = Math.floor(numLights * 0.25);
-              var pixelComponent = numLights - 4 * pixelRow;
+              var pixelRow = Math.floor((nextLightIndex + 1) * 0.25);
+              var pixelComponent = (nextLightIndex + 1) - 4 * pixelRow;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, pixelRow) + pixelComponent] = li;
-              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(j, 0)] = numLights;
+              this._clusterTexture.buffer[lightCountIndex] = numLights;
             }
-            
           }
         }
       }

@@ -8,7 +8,7 @@ export const LIGHT_RADIUS = 5.0;
 export const LIGHT_DT = -0.03;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 1;
+export const NUM_LIGHTS = 100;
 
 class Scene {
   constructor() {
@@ -18,9 +18,9 @@ class Scene {
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this.lights.push({
         position: new Float32Array([
-          0.0 * (LIGHT_MAX[0] - LIGHT_MIN[0]) + LIGHT_MIN[0],
-          0.5 * (LIGHT_MAX[1] - LIGHT_MIN[1]) + LIGHT_MIN[1],
-          0.5 * (LIGHT_MAX[2] - LIGHT_MIN[2]) + LIGHT_MIN[2],
+          Math.random() * (LIGHT_MAX[0] - LIGHT_MIN[0]) + LIGHT_MIN[0],
+          Math.random() * (LIGHT_MAX[1] - LIGHT_MIN[1]) + LIGHT_MIN[1],
+          Math.random() * (LIGHT_MAX[2] - LIGHT_MIN[2]) + LIGHT_MIN[2],
         ]),
         color: new Float32Array([
           0.5 + 0.5 * Math.random(),

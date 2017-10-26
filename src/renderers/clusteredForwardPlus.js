@@ -6,7 +6,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import ClusteredRenderer from './clustered';
+import ClusteredRenderer, {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -17,8 +17,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      numLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_slices', 'u_numclusters', 'u_cameranear', 'u_camerafar', 'u_res'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_slices', 'u_cameranear', 'u_camerafar', 'u_camerapos', 'u_camerapos', 'u_res'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -81,6 +82,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1f(this._shaderProgram.u_numclusters, this._xSlices * this._ySlices * this._zSlices); 
     gl.uniform1f(this._shaderProgram.u_cameranear, camera.near); 
     gl.uniform1f(this._shaderProgram.u_camerafar, camera.far);
+    gl.uniform3f(this._shaderProgram.u_camerapos, camera.position[0], camera.position[1], camera.position[2]);
     gl.uniform2f(this._shaderProgram.u_res, canvas.width, canvas.height); 
     gl.uniform3f(this._shaderProgram.u_slices, this._xSlices, this._ySlices, this._zSlices);
 
