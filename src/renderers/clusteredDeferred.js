@@ -29,7 +29,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer'],
       attribs: ['a_uv']
     });
 
