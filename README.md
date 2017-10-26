@@ -22,6 +22,18 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Yuxin Hu
 
+### Overview
+* This is a WebGL based project. There are three rendering methods implemented for performance comparason.
+* Forward Rendering: For each geometry, loop over all lights in the scene.
+* Forward Plus Clustered Rendering: Divide frustrum into 15*15*15 clusters. For each geometry, only loop over lights within the same cluster.
+* Deferred Clustered Rendering: Generate gBuffer maps by 1st pass of scene. Each gBuffer stores the information of fragment that is going to be rendered on screen: such as normal, color, and position. In the second pass, for each fragment in gBuffer, applies the light in the same cluster.
+* Cluster will improve the performance when the number of lights in scene increase. A preprocess to build the light cluster structure will increase the render speed. Deferred clustered rendering filters out the fragments that are occluded or outof screen in the first pass, and it saves computation over lights for these fragment in second pass, thus in general it is faster than forward plus rendering. However, deferred clustered does not handle transparent objects in scene.
+
+### Features implemented:
+* Create light cluster map storing light count and light index in each cluster. The clusters are divided by logarithmic in z direction, and equally divided in x and y directions. For each light, I checked its 6 bounding planes in x, y and z directions, and adding this light to the clusteres within these 6 bounding planes.
+* Clustered deferred rendering. I reuse the light cluster map created for forward plus rendering, and create gBuffers to store fragment information, and then I pass the gBuffers to another fragment shader for light shading.
+* Blinn-Phong shading model in clustered deferred rendering.
+
 ### Performance Analysis
 ## Performance Comparason between Clustered Forward+ and Clustered Deferred shading
 ![Performance Comparason between Clustered Forward+ and Clustered Deferred shading](/img/Performance1.PNG)
@@ -50,9 +62,7 @@ As light number increases, the performance clustered deferred shading becomes mu
 ![Log Z Slice Method](/img/LogZ.PNG)
 <p align="center"><b>Log Z Slice Method</b></p> 
 
-Z interval is the length between far plane and near plane, which is a large range. If we divide the Z direction equally, then almost everything in the scene is going to be clustered in the first Z direction clusters. By changing the division method from equally dividing to logarithmic, so that intervalLenth^(_zSliceNum) equals total range along z direction, we can get more clusters along z direction to cover the geometries in scene. There will be fewer lights in each cluster, and the rendering of each fragment will be faster.
-
-
+Z interval is the length between far plane and near plane, which is a large range. If we divide the Z direction equally, then almost everything in the scene is going to be clustered in the first cluster along Z direction. By changing the division method from equally division to logarithmic division, so that intervalLenth^(_zSliceNum) equals total range along z direction, we can get more clusters along z direction to cover the geometries in scene. There will be fewer lights in each cluster, and the rendering of each fragment will be faster.
 
 
 ### Credits
