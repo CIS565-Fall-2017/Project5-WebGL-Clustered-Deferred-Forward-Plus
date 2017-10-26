@@ -71,7 +71,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
 
     //upload the width and height ratios
-    let heightRatio = Math.tan(camera.fov / 2) * 2;
+    let heightRatio = Math.tan(camera.fov * Math.PI/180 / 2) * 2;
     let widthRatio = camera.aspect * heightRatio;
     gl.uniform2f(this._shaderProgram.u_frustrumRatios, widthRatio, heightRatio);
 

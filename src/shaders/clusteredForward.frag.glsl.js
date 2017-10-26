@@ -5,13 +5,13 @@ export default function(params) {
   #version 100
   precision highp float;
 
-  uniform mat4 u_viewMatrix;
-  uniform vec2 u_frustrumRatios;
-  uniform vec2 u_nearFar;
-
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+
+  uniform vec2 u_frustrumRatios;
+  uniform mat4 u_viewMatrix;
+  uniform vec2 u_nearFar;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -83,19 +83,25 @@ export default function(params) {
     //fragment is, and then find the 
     float frustrumWidth = u_frustrumRatios.x * abs(position.z);
     float frustrumHeight = u_frustrumRatios.y * abs(position.z);
-    int clusterXID = int(floor((.5 * frustrumWidth + position.x)/frustrumWidth * ${params.xSlices}));
-    int clusterYID = int(floor((.5 * frustrumHeight + position.y)/frustrumHeight * ${params.ySlices}));
-    int clusterZID = int(floor((abs(position.z) - u_nearFar.x) / (u_nearFar.y - u_nearFar.x)) * ${params.zSlices});
-    return clusterXID + clusterYID * ${params.xSlices} + clusterZID * ${params.xSlices} * ${params.ySlices};
+    vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
+    int clusterXID = int(floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x));
+    int clusterYID = int(floor((0.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y));
+    int clusterZID = int(floor((abs(position.z) - u_nearFar.x) / (u_nearFar.y - u_nearFar.x) * sliceDimensions.z));
+    return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.z);
   }
 
   vec3 getClusterColor(vec3 position) {
     float frustrumWidth = u_frustrumRatios.x * abs(position.z);
     float frustrumHeight = u_frustrumRatios.y * abs(position.z);
-    float clusterXID = floor((.5 * frustrumWidth + position.x)/frustrumWidth * ${params.xSlices});
-    float clusterYID = floor((.5 * frustrumHeight + position.y)/frustrumHeight * ${params.ySlices});
-    float clusterZID = floor((abs(position.z) - u_nearFar.x) / (u_nearFar.y - u_nearFar.x) * ${params.zSlices});
-    return vec3(clusterXID / ${params.xSlices}, clusterYID / ${params.ySlices}, clusterZID / ${params.zSlices});
+    vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
+    float clusterXID = floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x);
+    float clusterYID = floor((.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y);
+    float clusterZID = (abs(position.z) - u_nearFar.x) / (20.0 - u_nearFar.x) * sliceDimensions.z;
+    if (clusterXID < 0.0 || clusterXID > 14.5) clusterXID = 0.0;
+    if (clusterYID < 0.0 || clusterYID > 14.5) clusterYID = 0.0;
+    if (clusterZID < 0.0 || clusterZID > 14.5) clusterZID = 0.0;
+    
+    return vec3(clusterXID / sliceDimensions.x, clusterYID / sliceDimensions.y, clusterZID / sliceDimensions.z);
   }
 
   void main() {
@@ -104,11 +110,6 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-
-    //I'm going to need the view matrix for the camera, 
-    //Identify the cluster coordinates using passed in params.xSliceNum etc. and frag v_position
-    //calculate cluster index
-    //for loop through the clusterlights texture for the cluster index
 
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
@@ -124,7 +125,7 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragColor = vec4(getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0))), 1.0);
   }
   `;
 }

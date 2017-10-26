@@ -17,6 +17,7 @@ export default class ClusteredRenderer {
   getTanDeg(deg) {
     var rad = deg * Math.PI/180;
     return Math.tan(rad);
+
   }
   /*
   Options parameter includes: 
@@ -59,7 +60,7 @@ export default class ClusteredRenderer {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
-    var tanTheta = getTanDeg(camera.fov / 2);
+    var tanTheta = this.getTanDeg(camera.fov / 2);
     var vDimension = tanTheta;
     var hDimension = vDimension * camera.aspect;
     var clusterWidth = hDimension / this._xSlices;
@@ -79,16 +80,16 @@ export default class ClusteredRenderer {
     var lightPositionScratch = vec3.create();
 
     for (let z = 0; z < this._zSlices; ++z) {
-      z1OriginScratch.z = z * ((camera.far - camera.near) / this._zSlices); 
-      z2OriginScratch.z = (z + 1) * ((camera.far - camera.near) / this._zSlices); 
+      z1OriginScratch.z = 5 + z * ((camera.far - camera.near) / this._zSlices); 
+      z2OriginScratch.z = 5 + (z + 1) * ((camera.far - camera.near) / this._zSlices); 
       for (let y = 0; y < this._ySlices; ++y) {
-        calculatePlaneNormal({
+        this.calculatePlaneNormal({
           stride : clusterHeight,
           strideMultiple : y - this._ySlices / 2,
           axis : 'vertical',
           output : y1NormalScratch,
         });
-        calculatePlaneNormal({
+        this.calculatePlaneNormal({
           stride : clusterHeight,
           strideMultiple : (y - this._ySlices / 2) + 1,
           axis : 'vertical',
@@ -99,28 +100,31 @@ export default class ClusteredRenderer {
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
           //Calculate normals for planes
-          calculatePlaneNormal({
+          this.calculatePlaneNormal({
             stride : clusterWidth,
             strideMultiple : x - this._xSlices / 2,
             axis : 'horizontal',
             output : x1NormalScratch,
           });
-          calculatePlaneNormal({
+          this.calculatePlaneNormal({
             stride : clusterWidth,
             strideMultiple : (x - this._xSlices / 2) + 1,
             axis : 'horizontal',
             output : x2NormalScratch,
           });
 
-          //Loop through lights
+          // //Loop through lights
           let numLights = 0;
           for (let l = 0; l < scene.lights.length; ++l) {
             let light = scene.lights[l];
-            lightPositionScratch = light.position;
+            vec3.copy(lightPositionScratch, light.position)
             vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
-            if ((intersectsPlane(x1NormalScratch, origin, lightPositionScratch) || intersectsPlane(x2NormalScratch, origin, lightPositionScratch))
-                && (intersectsPlane(y1NormalScratch, origin, lightPositionScratch) || intersectsPlane(y2NormalScratch, origin, lightPositionScratch)) 
-                && (intersectsPlane(zNormal, z1OriginScratch, lightPositionScratch) || intersectsPlane(zNormal, z2OriginScratch, lightPositionScratch))) {
+            if ((this.intersectsPlane(x1NormalScratch, origin, lightPositionScratch) || 
+                 this.intersectsPlane(x2NormalScratch, origin, lightPositionScratch))
+                && (this.intersectsPlane(y1NormalScratch, origin, lightPositionScratch) || 
+                    this.intersectsPlane(y2NormalScratch, origin, lightPositionScratch)) 
+                && (this.intersectsPlane(zNormal, z1OriginScratch, lightPositionScratch) || 
+                    this.intersectsPlane(zNormal, z2OriginScratch, lightPositionScratch))) {
                   //This could be optimized with better frustrum culling by Austin Eng
                   ++numLights;
                   this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = numLights;
@@ -128,7 +132,7 @@ export default class ClusteredRenderer {
                   
                 }
           }
-          // loop through lights
+          // // loop through lights
           // convert light to view space - helper function
           // perform intersection test - helper function
           // if intersect with multiple planes, update light count
