@@ -111,25 +111,6 @@ export default class ClusteredRenderer
       xStartIndex = this.clamp(Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
       xEndIndex = this.clamp(Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride), 0, this._xSlices);
 
-      //Z//
-      // zStartIndex = this._zSlices;
-      // let lightZStart = lightPos[2] - lightRadius;
-      // for(let iter = 0; iter <= this._zSlices; ++iter) {
-      //     if(camera.near + iter*this.zStride > lightAABB.min[2]) {
-      //         zStartIndex = Math.max(0, iter-1);
-      //         break;
-      //     }
-      // }
-    
-      // zEndIndex = this._zSlices;
-      // let lightZStop = lightPos[2] + lightRadius;
-      // for(let iter = zStartIndex+1; iter<=this.zSlices; ++iter) {
-      //     if(camera.near + iter*this.zStride > lightAABB.max[2]) {
-      //         zEndIndex = Math.max(0,iter-1);
-      //         break;
-      //     }
-      // }
-
       // console.log("x: ", xStartIndex, xEndIndex);
       // console.log("y: ", yStartIndex, yEndIndex);
       //console.log("z: ", zStartIndex, zEndIndex);
@@ -164,22 +145,23 @@ export default class ClusteredRenderer
       }//z
     }//loop over lights
 
-    // //to print things per cluster
-    // for (let z = zStartIndex; z <= zEndIndex; ++z)
-    // {
-    //   for (let y = yStartIndex; y <= yEndIndex; ++y)
-    //   {
-    //     for (let x = xStartIndex; x <= xEndIndex; ++x) 
-    //     {
-    //       let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+    //to print things per cluster
+    for (let z = zStartIndex; z <= zEndIndex; ++z)
+    {
+      for (let y = yStartIndex; y <= yEndIndex; ++y)
+      {
+        for (let x = xStartIndex; x <= xEndIndex; ++x) 
+        {
+          let clusterID = x + y * this._xSlices + z * this._xSlices * this._ySlices;
 
-    //       var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
-    //       console.log("clusterID: ", clusterID);
-    //       //console.log("cluster light ID: ");
-    //       console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
-    //     }
-    //   }
-    // }
+          var lightCountIndex = this._clusterTexture.bufferIndex(clusterID, 0);
+          // console.log("clusterID: ", clusterID);
+          // //console.log("cluster light ID: ");
+          // console.log("cluster num Lights: ", this._clusterTexture.buffer[lightCountIndex]);
+          this._clusterTexture.buffer[lightCountIndex] = Math.floor(Math.random()*1000); 
+        }
+      }
+    }
 
     this._clusterTexture.update();
   }
