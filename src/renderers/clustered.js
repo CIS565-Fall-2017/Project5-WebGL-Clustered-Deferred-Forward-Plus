@@ -63,12 +63,13 @@ export default class ClusteredRenderer {
       var y_stride = light_frustum_height / this._ySlices;
       var x_stride = light_frustum_width / this._xSlices;
 
-      var z_min = minBB[2] / z_stride;
-      var z_max = maxBB[2] / z_stride;
-      var y_min = (minBB[1] + (light_frustum_height / 2.0)) / y_stride;
-      var y_max = (maxBB[1] + (light_frustum_height / 2.0)) / y_stride;
-      var x_min = (minBB[0] + (light_frustum_width / 2.0)) / x_stride;
-      var x_max = (maxBB[0] + (light_frustum_width / 2.0)) / x_stride;
+      // Note: DO I NEED TO CLAMP????
+      var z_min = Math.floor(minBB[2] / z_stride);
+      var z_max = Math.floor(maxBB[2] / z_stride);
+      var y_min = Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride);
+      var y_max = Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride);
+      var x_min = Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride);
+      var x_max = Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride);
 
       // totalNumLights++;
 

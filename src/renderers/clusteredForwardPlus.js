@@ -17,7 +17,8 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                'u_screenheight','u_screenwidth', 'u_clusterslices', 'u_viewmatrix', 'u_maxLightsPerCluster'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 

@@ -21,9 +21,22 @@ export default function(params) {
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
+
+  // More uniforms 
+  uniform float u_screenheight;
+  uniform float u_screenwidth;
+  uniform float u_clusterslices;
+  uniform mat4 u_viewmatrix;
+  uniform float u_maxLightsPerCluster;
+  uniform vec3 u_cameraFar;
+  uniform vec3 u_cameraNear;
+
+
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+
+  // ====================================================================
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -33,11 +46,15 @@ export default function(params) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
   }
 
+  // -------------------------------------
+  
   struct Light {
     vec3 position;
     float radius;
     vec3 color;
   };
+
+  // -------------------------------------
 
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
     float u = float(index + 1) / float(textureWidth + 1);
@@ -56,6 +73,8 @@ export default function(params) {
     }
   }
 
+  // -------------------------------------
+
   Light UnpackLight(int index) {
     Light light;
     float u = float(index + 1) / float(${params.numLights + 1});
@@ -72,6 +91,8 @@ export default function(params) {
     return light;
   }
 
+  // -------------------------------------
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -83,10 +104,91 @@ export default function(params) {
     }
   }
 
+  // -------------------------------------
+
+  struct Cluster {
+    float numLights;
+    float lightList[u_maxLightsPerCluster];
+  };
+
+  // -------------------------------------
+
+  float ExtractFromCluster(sampler2D clusterTexture, int textureWidth, int textureHeight, int lightIdx, int component) 
+  {
+
+    float v = (lightIdx + 1) / 4;
+    float pixelComponent = (lightIdx + 1) % 4;
+
+
+
+    float u = float(index + 1) / float(textureWidth + 1);
+
+    int pixel = component / 4;
+    float v = float(pixel + 1) / float(textureHeight + 1);
+    int pixelComponent = component - pixel * 4;
+    
+
+
+
+    vec4 texel = texture2D(texture, vec2(u, v));
+
+    if (pixelComponent == 0) 
+    {
+      return texel[0];
+    } 
+    else if (pixelComponent == 1) 
+    {
+      return texel[1];
+    } 
+    else if (pixelComponent == 2) 
+    {
+      return texel[2];
+    } 
+    else if (pixelComponent == 3) 
+    {
+      return texel[3];
+    }
+
+
+
+    v = (pixel + 1) / (max lights per cluter + 1 + 1)
+    texel  = texture2d(buffer, vec2(uv))
+    lightindex = texel[component]
+    if(compoenet == 0)
+    lightindex = texel[0]
+
+    if(compoenet == 1)
+    lightindex = texel[1]
+
+    if(compoenet == 2)
+    lightindex = texel[2]
+
+    if(compoenet == 3)
+    lightindex = texel[3]
+
+
+
+
+
+  }
+  
+  // -------------------------------------  
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
+
+    vec4 _fragPos = viewMatrix * vec4(v_position, 1.0);
+    vec3 fragPos = vec3(_fragPos);
+
+
+    // gl_FragCoord.xy are in pixel/screen space
+    // gl_FragCoord.z is in [0, 1]
+    float z_stride = (u_cameraFar - u_cameraNear) / u_clusterslices;
+    float z_cluster = fragPos.z / z_stride;
+    float y_cluster = gl_FragCoord.y / u_screenHeight;
+    float x_cluster = gl_FragCoord.x / u_screenWidth;
 
     vec3 fragColor = vec3(0.0);
 
@@ -172,6 +274,13 @@ export default function(params) {
 
       get the x and y value for the fragment with glFragCoord.xy. this is in pixel space
       need to pass in screen width and height
+      divide x and y by 15 (or whatever your cluster logic is), then floor or ceil it
+
+
+      find index value into cluster texture using x, y, z
+      get uv coord
+      get light info
+      iterate through those lights for that current cluster
 
 
 
