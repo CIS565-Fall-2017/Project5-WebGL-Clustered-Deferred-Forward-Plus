@@ -3,9 +3,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Jiahao Liu
+* Tested on: **Google Chrome 61.0.3163.100(64 bits)** on
+  Windows 10, i7-3920XM CPU @ 2.90GHz 3.10 GHz 16GB, GTX 980m SLI 8192MB (personal computer)
 
 ### Live Online
 
@@ -13,16 +13,52 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](gif/final.gif)]
 
-### (TODO: Your README)
+Project Introduction
+======================
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+This project bases on WebGL and JavaScript. The main idea for this project is to boost the render performance for rendering scene with a lot of lights effect.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+The main algorithm used in this project includes clustered forward+ rendering and clustered deferred rendering.
 
+Features Introduction
+======================
+
+### Clustered Forward+
+
+	* Divide the whole scene into clusters based on screen tile dividing and camera space z dividing.
+	* Build a data structure to keep track of how many lights are in each cluster and what their indices are
+	* Render the scene using only the lights that overlap a given cluster
+
+###	Clustered Deferred
+
+	* Reuse clustering logic from Clustered Forward+
+	* Store vertex attributes in g-buffer for later use.
+	* Only do lighting on the nearest fragments. 
+	* Read g-buffer in fragment shader and applying clustered based light to produce final output.
+
+###	Effects
+
+	* Implement deferred Blinn-Phong shading for point lights.
+
+###	Optimizations
+
+	* Pack normal vector into vec2 and stored in g-buffer. 
+	* Use 2 g-buffer instead of 4 g-buffer using proper compress technique.
+	
+Performance Analysis
+======================
+
+###	Different running time for different render techniques
+
+[![](charts/1.png)]
+
+Naive Forward rendering will go through all the lights in every fragment to calculate the render result.
+
+Clustered Forward+ rendering gives a much better performance than the naive methods. This difference becomes even more obvious when the lights reaches a huge amount.
+
+Comparing to Clustered Forward+, Cluster Deferred rendering will not apply light computation to those fragments that locates behind, but requires extra time to transfer the data using g-buffer. When the light is pretty complex, the performance of deferred rendering will becomes better then cluster forward+.
 
 ### Credits
 
