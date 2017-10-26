@@ -1,27 +1,69 @@
-WebGL Clustered Deferred and Forward+ Shading
+University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5 WebGL Clustered Deferred and Forward+ Shading
 ======================
 
-**University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
+* Ziyu Li
+* Tested on: Windows 7, Intel Core i7-3840QM @2.80GHz 16GB, Nvidia Quadro K4000M 4GB
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+## Features
+#### All Features
+ - Clustered Forward+
+ - Clustered Deferred
+ - Deferred Blinn-Phong Shading
+ - Optimized G-Buffer (2-Component Normals)
 
-### Live Online
+#### Forward
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+![](img/forward.gif)
 
-### Demo Video/GIF
+#### Forward Plus
+![](img/forward+.gif)
 
-[![](img/video.png)](TODO)
+#### Defered
 
-### (TODO: Your README)
+![](img/def.gif)
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+#### Shading
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+| Lambert | Blinn-Phong |
+| ----- | ----- |
+| ![lambert](img/diffuse.PNG) | ![blinn](img/blinn.PNG) |
+
+
+#### G-Buffer
+| Albedo | Normal | Position | Depth |
+| ----- | ----- | ----- | ----- |
+| ![lambert](img/a.png) | ![blinn](img/n.png) | ![lambert](img/p.png) | ![blinn](img/d.png) |
+
+
+## Performance Analysis
+#### Benchmark
+Based on benchmark, the fastest implementation is Clustered Deferred under most of conditions and all of those three methods can easily handle the scenairo which the camera is far from the scene. However, Forward Shading is slightly better the other two when the scene only contains one or two lights, and if the scene has more than 30 lights, the Deferred Shading and Forward Plus are much better than Forward one. The reason of that is the when the scene contains few lights, the Forward Shading does not involve too clusters calculation which save a lot of time, but after the number of the lights are greater than a certain amount, the clustered shading can really help to reduce the calculation where the areas which lights does not lit on. In some situations, when the camera is really close to the light, the Forward+ can barely improve the performance. Since the Deferred Shading using g-buffer which is different from Forward(+) approach, it could really boost the performance under such condition.
+
+![](img/ms.PNG)
+
+#### Optimized G-Buffer (2 G-Buffer)
+
+Compact 2 G-Buffer
+| G-Buffer | R          | G          | B          | A        |
+|:--------:|------------|------------|------------|----------|
+|     1    |    Depth   |    0.0     |     0.0    | Normal.X |
+|     2    | Albedo.R   | Albedo.G   | Albedo.B   | Normal.Y |
+
+
+Normal 2 G-Buffer
+| G-Buffer | R          | G          | B          | A        |
+|:--------:|------------|------------|------------|----------|
+|     1    | Position.X | Position.Y | Position.Z | Normal.X |
+|     2    | Albedo.R   | Albedo.G   | Albedo.B   | Normal.Y |
+
+3 G-Buffer
+| G-Buffer | R          | G          | B          | A        |
+|:--------:|------------|------------|------------|----------|
+|     1    | Position.X | Position.Y | Position.Z | 0.0 |
+|     2    | Albedo.R   | Albedo.G   | Albedo.B   | 0.0 |
+|     3    | Normal.X | Normal.Y | Normal.Z | 0.0 |
+
+Pack values together into vec4s, use 2-component normals and re-allocate the x and y component into spared texture memory can achieve optimized G-Buffer. Theoretically, there should be some performance increasement by reducing the allocation of textures in g-buffer. But actually, based on the benckmark in above section, optimized G-Buffer decrease the time approx. less than 10% which seems trivial on performance boost. The reason of cause this could be some unnecessary perperties passing or reduce the allocation size of albedo since it only contains three 8-bit channels.
 
 
 ### Credits

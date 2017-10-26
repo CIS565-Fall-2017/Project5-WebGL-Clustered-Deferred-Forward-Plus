@@ -74,8 +74,8 @@ export default function(params) {
     
     vec3 v_position = gb0.xyz;
     vec3 albedo = gb1.rgb;
-    //vec3 normal = UnpackNormal(gb0.w, gb1.a, u_invViewMatrix);
-    vec3 normal = gb2.xyz;
+    vec3 normal = UnpackNormal(gb0.w, gb1.a, u_invViewMatrix);
+    //vec3 normal = gb2.xyz;
     float depth = gb2.w;
     
     vec4 tp = u_invViewProjectionMatrix * vec4(2.0 * v_uv - vec2(1.0), depth, 1.0);
@@ -141,6 +141,7 @@ export default function(params) {
    const vec3 amb = vec3(0.025);
    fragColor += albedo * amb;
    gl_FragColor = vec4(fragColor, 1.0);
+      // gl_FragColor = vec4(normal, 1.0);
   }
   `;
 }

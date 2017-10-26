@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="750f3f77-9c18-4849-bb18-9de3c1b116dc" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/renderers/clustered.js" afterPath="$PROJECT_DIR$/src/renderers/clustered.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/renderers/clusteredDeferred.js" afterPath="$PROJECT_DIR$/src/renderers/clusteredDeferred.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/renderers/clusteredForwardPlus.js" afterPath="$PROJECT_DIR$/src/renderers/clusteredForwardPlus.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js" afterPath="$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js" afterPath="$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl" afterPath="$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl" />
     </list>
@@ -24,8 +23,8 @@
       <file leaf-file-name="deferredToTexture.frag.glsl" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="608">
-              <caret line="32" column="35" lean-forward="false" selection-start-line="32" selection-start-column="35" selection-end-line="32" selection-end-column="35" />
+            <state relative-caret-position="740">
+              <caret line="40" column="40" lean-forward="true" selection-start-line="40" selection-start-column="40" selection-end-line="40" selection-end-column="40" />
               <folding />
             </state>
           </provider>
@@ -34,8 +33,28 @@
       <file leaf-file-name="deferred.frag.glsl.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="237">
-              <caret line="121" column="33" lean-forward="true" selection-start-line="121" selection-start-column="33" selection-end-line="121" selection-end-column="33" />
+            <state relative-caret-position="654">
+              <caret line="141" column="29" lean-forward="true" selection-start-line="141" selection-start-column="29" selection-end-line="141" selection-end-column="29" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="init.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/init.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-647">
+              <caret line="27" column="49" lean-forward="true" selection-start-line="27" selection-start-column="49" selection-end-line="27" selection-end-column="49" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="scene.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/scene.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-2709">
+              <caret line="9" column="38" lean-forward="true" selection-start-line="9" selection-start-column="38" selection-end-line="9" selection-end-column="38" />
               <folding />
             </state>
           </provider>
@@ -44,8 +63,8 @@
       <file leaf-file-name="clusteredForward.frag.glsl.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="118" column="8" lean-forward="false" selection-start-line="118" selection-start-column="8" selection-end-line="120" selection-end-column="7" />
+            <state relative-caret-position="1311">
+              <caret line="133" column="4" lean-forward="false" selection-start-line="133" selection-start-column="4" selection-end-line="133" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -54,8 +73,8 @@
       <file leaf-file-name="clusteredDeferred.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/renderers/clusteredDeferred.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="40" column="201" lean-forward="false" selection-start-line="40" selection-start-column="176" selection-end-line="40" selection-end-column="201" />
+            <state relative-caret-position="1167">
+              <caret line="174" column="36" lean-forward="true" selection-start-line="174" selection-start-column="36" selection-end-line="174" selection-end-column="36" />
               <folding>
                 <element signature="e#0#57#0" expanded="true" />
               </folding>
@@ -98,12 +117,12 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/main.js" />
+        <option value="$PROJECT_DIR$/src/renderers/clusteredForwardPlus.js" />
+        <option value="$PROJECT_DIR$/src/renderers/clustered.js" />
         <option value="$PROJECT_DIR$/src/init.js" />
         <option value="$PROJECT_DIR$/src/scene.js" />
-        <option value="$PROJECT_DIR$/src/renderers/clusteredForwardPlus.js" />
-        <option value="$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js" />
-        <option value="$PROJECT_DIR$/src/renderers/clustered.js" />
         <option value="$PROJECT_DIR$/src/renderers/clusteredDeferred.js" />
+        <option value="$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js" />
         <option value="$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl" />
         <option value="$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js" />
       </list>
@@ -120,7 +139,7 @@
   <component name="NodeModulesDirectoryManager">
     <handled-path value="$PROJECT_DIR$/node_modules" />
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="960" />
     <option name="width" value="960" />
     <option name="height" value="1040" />
@@ -246,15 +265,15 @@
       <workItem from="1508705165803" duration="64660000" />
       <workItem from="1508971450407" duration="17443000" />
       <workItem from="1509042747563" duration="3529000" />
+      <workItem from="1509047283183" duration="5311000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="107706000" />
+    <option name="totallyTimeSpent" value="113017000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="960" y="0" width="960" height="1040" extended-state="0" />
-    <editor active="true" />
+    <frame x="960" y="0" width="960" height="1040" extended-state="1" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40148306" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -286,6 +305,40 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="608">
+          <caret line="32" column="35" lean-forward="false" selection-start-line="32" selection-start-column="35" selection-end-line="32" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2242">
+          <caret line="118" column="8" lean-forward="false" selection-start-line="118" selection-start-column="8" selection-end-line="120" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/renderers/clusteredDeferred.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="570">
+          <caret line="40" column="201" lean-forward="false" selection-start-line="40" selection-start-column="176" selection-end-line="40" selection-end-column="201" />
+          <folding>
+            <element signature="e#0#57#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2299">
+          <caret line="121" column="33" lean-forward="true" selection-start-line="121" selection-start-column="33" selection-end-line="121" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="494">
@@ -451,22 +504,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/init.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="14" column="1" lean-forward="true" selection-start-line="14" selection-start-column="1" selection-end-line="14" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/scene.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="931">
-          <caret line="49" column="4" lean-forward="true" selection-start-line="49" selection-start-column="4" selection-end-line="49" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/renderers/textureBuffer.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
@@ -498,18 +535,26 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl">
+    <entry file="file://$PROJECT_DIR$/src/init.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="608">
-          <caret line="32" column="35" lean-forward="false" selection-start-line="32" selection-start-column="35" selection-end-line="32" selection-end-column="35" />
+        <state relative-caret-position="-647">
+          <caret line="27" column="49" lean-forward="true" selection-start-line="27" selection-start-column="49" selection-end-line="27" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/scene.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2709">
+          <caret line="9" column="38" lean-forward="true" selection-start-line="9" selection-start-column="38" selection-end-line="9" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/renderers/clusteredDeferred.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="40" column="201" lean-forward="false" selection-start-line="40" selection-start-column="176" selection-end-line="40" selection-end-column="201" />
+        <state relative-caret-position="1167">
+          <caret line="174" column="36" lean-forward="true" selection-start-line="174" selection-start-column="36" selection-end-line="174" selection-end-column="36" />
           <folding>
             <element signature="e#0#57#0" expanded="true" />
           </folding>
@@ -518,16 +563,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/shaders/clusteredForward.frag.glsl.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="118" column="8" lean-forward="false" selection-start-line="118" selection-start-column="8" selection-end-line="120" selection-end-column="7" />
+        <state relative-caret-position="1311">
+          <caret line="133" column="4" lean-forward="false" selection-start-line="133" selection-start-column="4" selection-end-line="133" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/shaders/deferredToTexture.frag.glsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="740">
+          <caret line="40" column="40" lean-forward="true" selection-start-line="40" selection-start-column="40" selection-end-line="40" selection-end-column="40" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/shaders/deferred.frag.glsl.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="237">
-          <caret line="121" column="33" lean-forward="true" selection-start-line="121" selection-start-column="33" selection-end-line="121" selection-end-column="33" />
+        <state relative-caret-position="654">
+          <caret line="141" column="29" lean-forward="true" selection-start-line="141" selection-start-column="29" selection-end-line="141" selection-end-column="29" />
           <folding />
         </state>
       </provider>
