@@ -19,6 +19,14 @@ export default class ClusteredRenderer {
     return Math.tan(rad);
 
   }
+
+  getContainingZPlane(posZ) {
+    if (posZ > -5) {
+      return 0;
+    } else {
+      return Math.floor(Math.sqrt(Math.abs(posZ) - 5.0)) + 1.0;
+    }
+  }
   /*
   Options parameter includes: 
   stride : distance between clusters
@@ -145,10 +153,11 @@ export default class ClusteredRenderer {
       let light = scene.lights[l];
       vec3.copy(lightPositionScratch, light.position);
       vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
-      let height = Math.abs(lightPositionScratch[2]) * this.getTanDeg(camera.fov / 2) * 2;
-      let width = height * camera.aspect;
       let posX = lightPositionScratch[0];
       let posY = lightPositionScratch[1];
+      let posZ = lightPositionScratch[2];
+      let height = Math.abs(posZ) * this.getTanDeg(camera.fov / 2) * 2;
+      let width = height * camera.aspect;
       let minX = Math.max(0, Math.floor(((posX - light.radius + 0.5 * width) / width) * this._xSlices));
       let maxX = Math.min(this._xSlices - 1, Math.floor(((posX + light.radius + 0.5 * width) / width) * this._xSlices));
       let minY = Math.max(0, Math.floor(((posY - light.radius + 0.5 * height) / height) * this._ySlices));

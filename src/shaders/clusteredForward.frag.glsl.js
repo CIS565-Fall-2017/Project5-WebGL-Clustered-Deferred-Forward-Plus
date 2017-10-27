@@ -104,6 +104,16 @@ export default function(params) {
     return vec3(clusterXID / sliceDimensions.x, clusterYID / sliceDimensions.y, clusterZID / sliceDimensions.z);
   }
 
+  int getContainingZPlane(float posZ) {
+    bool firstPlane = posZ > -5.0;
+    if (firstPlane) {
+      return 0;
+    } else {
+      return int(floor(sqrt(abs(posZ) - 5.0)) + 1.0);
+    }
+    return 0;
+  }
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
