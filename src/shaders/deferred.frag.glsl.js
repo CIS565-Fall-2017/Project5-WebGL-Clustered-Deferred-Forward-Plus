@@ -27,7 +27,7 @@ export default function(params) {
   const int numTexelsInColumn = int(ceil(float(${params.maxLightsPerCluster}+1) * 0.25)); 
   
   const vec3 specColor = vec3(0.1, 0.1, 0.1);
-  const float shininess = 600.0;
+  const float shininess = 700.0;
   const float screenGamma = 2.2; // Assume the monitor is calibrated to the sRGB color space
 
   struct Light {
@@ -92,13 +92,16 @@ export default function(params) {
     return normalize(result);
   }
 
-  void main() {
+  void main() 
+  {
     // extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], f_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], f_uv);
     // vec4 gb2 = texture2D(u_gbuffers[2], f_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], f_uv);
     
+    vec3 cameraPos = vec3(u_viewMatrix[3].rgb);
+
     vec3 f_position = gb0.rgb;
     vec3 albedo = gb1.rgb;
 
@@ -149,26 +152,56 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      //blinn-phong specular
-      // float specular;
-      // if(lambertTerm > 0.0)
-      // {        
-      //   vec3 viewDir = normalize(-f_position);
-      //   vec3 halfDir = normalize(L + viewDir);
-      //   float specAngle = max(dot(halfDir, normal), 0.0);
-      //   specular = pow(specAngle, shininess);
-      // }
+      //---------- Blinn-phong specular -----------
+      float specular;
+      if(lambertTerm > 0.0)
+      {        
+        vec3 viewDir = normalize(-f_position);
+        vec3 halfDir = normalize(L + viewDir);
+        float specAngle = max(dot(halfDir, normal), 0.0);
+        specular = pow(specAngle, shininess);
+      }
+      //-------------------------------------------
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);// + specular*specColor;
+      //----------- Toon shading ------------------
+      float discrete_lambertTerm = lambertTerm*5.0;
+      discrete_lambertTerm = floor(discrete_lambertTerm);
+      discrete_lambertTerm = discrete_lambertTerm/5.0;
+
+      float blackoutline = abs(dot( normal, normalize(cameraPos - f_position)));
+      blackoutline = blackoutline * 10.0;
+      blackoutline = floor(blackoutline)/10.0;
+      if(blackoutline < 0.1) 
+      {
+        blackoutline = 0.1;
+      }
+      else 
+      {
+        blackoutline = 1.0;
+      }
+      //-------------------------------------------
+
+      
+      // // Lambertian
+      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      // // Blinn Phong
+      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular*specColor;
+
+      // Toon Shading
+      // With Black outline -- looks terrible 
+      // fragColor += blackoutline * albedo * discrete_lambertTerm * light.color * vec3(lightIntensity);
+      // Without Black outline
+      fragColor += albedo * discrete_lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    // gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragColor = vec4(fragColor, 1.0);
 
-    vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
-    gl_FragColor = vec4(colorGammaCorrected, 1.0);
+    // vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
+    // gl_FragColor = vec4(colorGammaCorrected, 1.0);
   }
   `;
 }
