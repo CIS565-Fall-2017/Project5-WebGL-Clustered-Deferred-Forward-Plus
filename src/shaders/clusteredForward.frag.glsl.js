@@ -103,10 +103,11 @@ export default function(params) {
     int ySlice = int(screenToView.y * float(num_ySlices));
     int zSlice = 0;
     
-    float nearPlane = u_screenbuffer.z;
+    float near = u_screenbuffer.z;
+    floar far = u_screenbuffer.w;
 
-    if(-view.z >= nearPlane) {
-      float n = log(-view.z - nearPlane + 1.0) / log(u_screenbuffer.w - nearPlane + 1.0);
+    if(-view.z >= near) {
+      float n = log(-view.z - near + 1.0) / log(far - near + 1.0);
       zSlice =  int(n * float(num_zSlices - 1))  + 1;
     }
     
