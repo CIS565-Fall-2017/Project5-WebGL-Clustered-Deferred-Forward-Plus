@@ -17,11 +17,11 @@ In this project, I implement the cluster forward shader and cluster deferred sha
 
 [![](img/video.png)](TODO)
 
-### Performance Anaysis.
+### Performance Analysis.
 
 #### General Description of methods
 
-* **Forward Shading and Cluster Forward Shading**
+* ***Forward Shading and Cluster Forward Shading***
 
 For a scene with hundreds of lights, the brute force way to render the scene is to compute the shading of each geometry with each light. However, this method is too time costy. Since not all the geometries can be lightened by each light, we can filter out the lights that don't affect the current geometry. To do this efficiently, we divid the camera frustrum into grids and for each grid, we compute which light influence it and save the light indices into a buffer. Then, in the fragment shader, we only need to compute the shading of each geometry in the grid with the lights we saved in the buffer, which dramatically decrease the number of light we need to deal with for each geometry. 
 
@@ -29,7 +29,7 @@ Note: Here I divide the frustrum equally in each direction and other division st
 
 ![](./img/cluster.png)
 
-* **Cluster Deferred shading**
+* ***Cluster Deferred shading***
 
 For the method above, we can continue optimizing it. In the traditional OpenGL or WebGL rendering pipeline, all the geomtries will be shaded in the fragment shader, whether it can be seen or not. Since in most cases we only one or a few light sources in the scene(like sun), this method works well and since we compute and save shading result at different depth, we can easily create many special visual effect like transparency, blending and so on.  But for the scene with hundreds of lights, the performance of this method is not ideal. For each light, we need to unnecessarily compute the shading  
 for blocked geometries and when there are huge number of lights, the overall time costy will be extremely large. So instead, we use deferred shading, which means we only want to shade the geometry that we can see for each light.
@@ -47,7 +47,9 @@ To do this, in the fragment shader, instead of computing the light shading, we p
 </tr>
 </table>
 
-* **Efficiency discussion**
+#### Analysis
+
+* ***Efficiency discussion***
 
 For the three different methods, forward shading, cluster forward shading and cluster deferred shading, I made a plot to compare this rendering efficiency.
 
@@ -57,7 +59,7 @@ As we can see, when the number of the lights in the scene is relatively small, t
 
 The cluster strategy and deferred shading essentially decrease the times we need to compute the light shadings to improve the efficiency. However, they also have the drawbacks. For the cluster strategy, we need to update the light information for each cluster in each frame. The influence is not obvious when the number of light is huge, but for the scenes with only a few lights this may hurt the overall performance. For the deferred shading, since we pass a data package(g-buffer) to the framebuffer instead of a single value or vec3, the memory cost will be much larger. We will talk about how to optimize this in the next part.
 
-* **Data compression for g-buffer**
+* ***Data compression for g-buffer***
 
 Generally speaking, we need world space position, camera space position, normal, color, and depth for 
 light shading. However, since framebuffer will automatically deal with the depth for us and camera space position can be computed through world space postion and camera view matrix, we actually only need to package 3 componets into g-buffer.
