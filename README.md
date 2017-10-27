@@ -8,7 +8,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/ThumbNail.png)](https://huyuxin.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+[![](img/ThumbNail.PNG)](https://huyuxin.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
