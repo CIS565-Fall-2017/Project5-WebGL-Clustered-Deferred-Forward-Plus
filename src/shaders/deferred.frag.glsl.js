@@ -152,18 +152,24 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      //---------- Blinn-phong specular -----------
-      float specular;
-      if(lambertTerm > 0.0)
-      {        
-        vec3 viewDir = normalize(-f_position);
-        vec3 halfDir = normalize(L + viewDir);
-        float specAngle = max(dot(halfDir, normal), 0.0);
-        specular = pow(specAngle, shininess);
-      }
+      //------------- Lambertian ------------------
+      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
       //-------------------------------------------
 
-      //----------- Toon shading ------------------
+      //---------- Blinn-Phong Specular -----------
+      // float specular;
+      // if(lambertTerm > 0.0)
+      // {        
+      //   vec3 viewDir = normalize(-f_position);
+      //   vec3 halfDir = normalize(L + viewDir);
+      //   float specAngle = max(dot(halfDir, normal), 0.0);
+      //   specular = pow(specAngle, shininess);
+      // }
+
+      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular*specColor;
+      //-------------------------------------------
+
+      //----------- Toon Shading ------------------
       float discrete_lambertTerm = lambertTerm*5.0;
       discrete_lambertTerm = floor(discrete_lambertTerm);
       discrete_lambertTerm = discrete_lambertTerm/5.0;
@@ -179,29 +185,25 @@ export default function(params) {
       {
         blackoutline = 1.0;
       }
-      //-------------------------------------------
 
-      
-      // // Lambertian
-      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-
-      // // Blinn Phong
-      // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular*specColor;
-
-      // Toon Shading
       // With Black outline -- looks terrible 
       // fragColor += blackoutline * albedo * discrete_lambertTerm * light.color * vec3(lightIntensity);
       // Without Black outline
       fragColor += albedo * discrete_lambertTerm * light.color * vec3(lightIntensity);
+      //-------------------------------------------
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    //----------- No Gamma Correction -------------
+    //gl_FragColor = vec4(fragColor, 1.0);
+    //-------------------------------------------
 
-    // vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
-    // gl_FragColor = vec4(colorGammaCorrected, 1.0);
+    //----------- Gamma Correction ----------------
+    vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
+    gl_FragColor = vec4(colorGammaCorrected, 1.0);
+    //-------------------------------------------
   }
   `;
 }
