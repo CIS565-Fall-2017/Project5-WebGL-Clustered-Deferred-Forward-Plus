@@ -90,7 +90,7 @@ export default class ClusteredRenderer {
          (1.0 * Width_Y / 2.0))
          / parseFloat(width_SliceY)
          ) + 10;
-        */// distance between light point and sliceX plane (ignore Y value)
+        */
         function xDistanceInCameraSpace(distance, width, lightPos)
         {
           distance = (lightPos[0] - width*lightPos[2]) / Math.sqrt(1.0 + width * width);
