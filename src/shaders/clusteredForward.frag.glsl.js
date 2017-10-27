@@ -1,7 +1,6 @@
 export default function(params) {
   return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
   #version 100
   precision highp float;
   
@@ -11,15 +10,10 @@ export default function(params) {
   
   uniform mat4 u_viewMatrix;
   
-  uniform int u_width;
-  uniform int u_height;
+  uniform float u_width;
+  uniform float u_height;
   uniform float u_nearZ;
   uniform float u_farZ;
-  uniform int u_xSlices;
-  uniform int u_ySlices;
-  uniform int u_zSlices;
-
-  uniform int u_maxLightsInCluster;
   
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -109,23 +103,24 @@ export default function(params) {
   
       // Use gl_FragCoord to get xyz values
       // http://www.txutxi.com/?p=182
-      // Essentially have to divide the gl_FragCoord by the stride
-      int xCluster = int(float(x) / float(u_width / u_xSlices));
-      int yCluster = int(y) / (u_height / u_ySlices);
-      int zCluster = int(z - u_nearZ) / (int(u_farZ - u_nearZ) / u_zSlices);
+      float xStride = float(u_width) / float(${params.xSlices});  
+      float yStride = float(u_height) / float(${params.ySlices});  
+      float zStride = float(u_farZ - u_nearZ) / float(${params.zSlices});  
+      int xCluster = int(float(x) / xStride);
+      int yCluster = int(float(y) / yStride);
+      int zCluster = int(float(z - u_nearZ) / zStride);
       
       // Find which cluster the current fragment lies in
       // Cluster index
-      int index = xCluster + (yCluster * u_xSlices) + (zCluster * u_xSlices * u_ySlices);
+      int index = xCluster + (yCluster * ${params.xSlices}) + (zCluster * ${params.xSlices} *${params.ySlices});
   
-      int numClusters = u_xSlices * u_ySlices * u_zSlices;
+      int numClusters = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
       float u = float(index + 1) / float(numClusters + 1);
   
       // Get how many lights are in the shader
       int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
 
-      // int numTexels = int( ceil( float(100 + 1) / float(4.0)) );
-      int numTexels = 26;
+      int numTexels = int( ceil( float(${params.maxLightsPerCluster} + 1) / float(4.0)) );
 
       for (int i = 0; i < ${params.numLights}; ++i) {
           if(i <= numLightsInCluster) {
@@ -154,5 +149,6 @@ export default function(params) {
   
       gl_FragColor = vec4(fragColor, 1.0);
   }  
+ 
   `;
 }
