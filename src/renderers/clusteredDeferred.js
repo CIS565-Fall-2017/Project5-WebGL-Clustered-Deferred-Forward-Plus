@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4 } from 'gl-matrix';
+import { mat4, vec4, vec3 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -8,6 +8,7 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
 export const NUM_GBUFFERS = 4;
 
@@ -28,8 +29,11 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 
+      'u_lightbuffer', 'u_clusterbuffer','u_viewMatrix', 'u_fov', 'u_aspectRatio', 'u_zSliceNum', 
+      'u_xSliceNum', 'u_ySliceNum', 'u_zFar', 'u_zNear', 'u_inverseProjMatrix', 'u_cameraPosition'],
       attribs: ['a_uv'],
     });
 
@@ -123,6 +127,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -153,8 +158,6 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Use this shader program
     gl.useProgram(this._progShade.glShaderProgram);
 
-    // TODO: Bind any other shader inputs
-
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
@@ -163,6 +166,27 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
     }
 
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 4);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 5);
+
+    // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    gl.uniform3f(this._progShade.u_cameraPosition, camera.position.x, camera.position.y, camera.position.z);
+    gl.uniform1f(this._progShade.u_fov,(camera.fov)*Math.PI/180);
+    gl.uniform1f(this._progShade.u_aspectRatio,camera.aspect);
+    gl.uniform1f(this._progShade.u_zNear, camera.near);
+    gl.uniform1f(this._progShade.u_zFar, camera.far);
+    gl.uniform1i(this._progShade.u_xSliceNum,this._xSlices);
+    gl.uniform1i(this._progShade.u_ySliceNum,this._ySlices);
+    gl.uniform1i(this._progShade.u_zSliceNum,this._zSlices);
+    
     renderFullscreenQuad(this._progShade);
   }
 };
