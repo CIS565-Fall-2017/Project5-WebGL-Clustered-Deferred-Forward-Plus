@@ -3,9 +3,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Aman Sachan
+* Tested on: Windows 10, Intel(R) Xeon(R) CPU E5-1630 v4 @ 3.7GHz (8 CPUs) 32GB RAM, 
+			GTX 1070 8081MB (Lab Machine)
 
 ### Live Online
 
@@ -15,14 +15,25 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+### OverView
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+## Features
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+### Forward Shading Model
 
+### Clustering
+
+### Clustered Forward+ Shading Model
+
+### Clustered Deferred Shading Model
+
+### Optimizations
+#### Using Two G-buffers (use total 8 channels) - Pack values together into vec4s
+#### 2 Component Normals
+
+### Effects
+#### Toon Shading
+#### Blinn-Phong
 
 ### Credits
 
