@@ -2,7 +2,7 @@ import { mat4, vec2, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 500;
+export const MAX_LIGHTS_PER_CLUSTER = 200;
 
 class Plane{
   constructor(ori,nor){

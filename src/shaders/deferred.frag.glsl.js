@@ -86,17 +86,17 @@ export default function(params) {
 
     vec3 albedo = gbuffer0.rgb;
     vec3 v_position = gbuffer1.xyz;
-    // vec3 normal = gbuffer2.xyz;
+    vec3 normal = gbuffer2.xyz;
 
-  //Spherical Representation of normal
-    vec2 normal_sph = vec2(gbuffer0.w, gbuffer1.w);
-    vec3 normal;
-    float flag = normal_sph.x * normal_sph.x + normal_sph.y * normal_sph.y;
-    normal.x = flag * sin(normal_sph.x)*cos(normal_sph.y);
-    normal.y = flag * sin(normal_sph.x)*sin(normal_sph.y);
-    normal.z = flag * cos(normal_sph.x);
+  // //Spherical Representation of normal
+  //   vec2 normal_sph = vec2(gbuffer0.w, gbuffer1.w);
+  //   vec3 normal;
+  //   float flag = normal_sph.x * normal_sph.x + normal_sph.y * normal_sph.y;
+  //   normal.x = flag * sin(normal_sph.x)*cos(normal_sph.y);
+  //   normal.y = flag * sin(normal_sph.x)*sin(normal_sph.y);
+  //   normal.z = flag * cos(normal_sph.x);
     
-    normal = normalize(normal);
+  //   normal = normalize(normal);
 
     vec3 fragColor = vec3(0.0);
 

@@ -62,7 +62,7 @@ stats.domElement.style.top = '0px';
 document.body.appendChild(stats.domElement);
 
 // Initialize camera
-export const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+export const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 50);
 
 // Initialize camera controls
 export const cameraControls = new OrbitControls(camera, canvas);
@@ -88,27 +88,15 @@ if (DEBUG) {
 }
 
 
-var RenderTimes = 0;
-var totalTime = 0;
+
 // Creates a render loop that is wrapped with camera update and stats logging
 export function makeRenderLoop(render) {
   return function tick() {
     cameraControls.update();
     stats.begin();
 
-    RenderTimes++;
-    if(RenderTimes <= 500){
-      let t0 = performance.now();
-      render();
-      let t1 = performance.now();
-      totalTime += (t1 - t0);
-    }
-    else
-      render();
+    render();
 
-    if(RenderTimes == 500){
-      console.log('Totaltime for 500 frames : ' + totalTime + 'ms');
-    }
     stats.end();
     if (!ABORTED) {
       requestAnimationFrame(tick)
