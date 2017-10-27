@@ -7,7 +7,6 @@ export default function(params) {
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer;
   uniform mat4 u_viewMatrix;
-  uniform mat4 u_inverseProjMatrix;
   uniform float u_fov;
   uniform float u_aspectRatio;
   uniform int u_zSliceNum;
@@ -15,6 +14,7 @@ export default function(params) {
   uniform int u_ySliceNum;
   uniform float u_zFar;
   uniform float u_zNear;
+  uniform vec3 u_cameraPosition;
   
   varying vec2 v_uv;
 
@@ -143,7 +143,7 @@ export default function(params) {
     float uv_v = float(0)/float(clusterTextureHeight);
     vec4 v1 = texture2D(u_clusterbuffer, vec2(uv_u, uv_v));
     int numberOfLights = int (v1.x);
-    //fragColor += normal;
+    //fragColor += vec3(u_cameraPosition.y);
     for (int i = 1; i <= ${params.maxLightsPerCluster}; ++i) {
       if (i > numberOfLights) {
         break;
@@ -154,30 +154,16 @@ export default function(params) {
         vec3 L = (light.position - position) / lightDistance;
         float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
         float lambertTerm = max(dot(L, normal), 0.0);        
-        fragColor += 0.5*albedo * lambertTerm * light.color * vec3(lightIntensity);
+        fragColor += 0.7*albedo * lambertTerm * light.color * vec3(lightIntensity);
+        
         //Added Blinn-Phong Shading Model Here
-        vec3 VEye = v_position_eye/(distance(v_position_eye, vec3(0)));
-        vec3 LEye = vec3(u_viewMatrix * vec4(light.position, 1.0));
-        vec3 HEye = normalize((VEye+LEye)*0.5);
-        vec3 normalEye = normalize(vec3(u_viewMatrix * vec4(normal, 0.0)));
-        float blinnPhoneTerm = max(pow(dot(HEye, normalEye), shiness), 0.0);
-        fragColor += 0.5*albedo * blinnPhoneTerm * light.color * vec3(lightIntensity);
-      }  
+        vec3 VDir = normalize(u_cameraPosition - position);
+        vec3 HDir = normalize((VDir+L)*0.5);
+        float blinnPhongTerm = max(pow(dot(HDir, normal), shiness), 0.0);
+        fragColor += 0.3*albedo * blinnPhongTerm * light.color * vec3(lightIntensity);
+      } 
     }
     //*********************Clustered Rendering**********************//
-
-    //***********Normal Forward Rendering***************//
-    /*for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, position);
-      vec3 L = (light.position - position) / lightDistance;
-    
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-    
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    }*/
-    //***********Normal Forward Rendering***************//
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 

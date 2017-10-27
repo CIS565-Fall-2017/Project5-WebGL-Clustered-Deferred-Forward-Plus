@@ -12,7 +12,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-![](img/ZLogIntervalResult.gif)
+![](img/ZLogIntervalResult2.gif)
 
 ### Yuxin Hu
 
