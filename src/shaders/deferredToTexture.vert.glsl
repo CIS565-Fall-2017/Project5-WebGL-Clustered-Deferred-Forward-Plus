@@ -10,10 +10,12 @@ attribute vec2 a_uv;
 varying vec3 v_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
+varying float v_depth;
 
 void main() {
     gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
     v_position = a_position;
     v_normal = a_normal;
     v_uv = a_uv;
+    v_depth = clamp(gl_Position.z / gl_Position.w, 0.0, 1.0); // what is the z range? [1, -1] or [0, 1]?
 }

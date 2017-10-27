@@ -9,8 +9,12 @@ export default function(params) {
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
 
-  // TODO: Read this buffer to determine the lights influencing a cluster
+  // Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+  
+  // Camera parameters
+  uniform float u_camera_fov; // already in radians
+  uniform float u_camera_aspect;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -73,13 +77,25 @@ export default function(params) {
       return 0.0;
     }
   }
-
+  
+  // Compute the proper index the the cluster buffer texture
+  int bufferIndex(int index, int component) {
+    return 4 * index + 4 * component * int(ceil(float(${params.numLights}) / 4.0));
+  }
+  
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+
+    // Determine the cluster that this fragment is in - 
+    //vec3 fragCluster;
+
+    // Compute the same stuff we computed on the CPU for each light
+    const int lightRadius = ${params.lightRadius};
+    //int numLightsInThisCluster = int(texture2D(u_clusterBuffer, vec2(u, v)));
 
     for (int i = 0; i < ${params.numLights}; ++i) {
       Light light = UnpackLight(i);
@@ -95,6 +111,7 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    //fragColor = vec3(float(lightRadius));
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
