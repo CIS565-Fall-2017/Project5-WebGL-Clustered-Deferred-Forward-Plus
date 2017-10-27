@@ -6,6 +6,7 @@ WebGL Clustered Deferred and Forward+ Shading
 * YAOYI BAI (pennkey: byaoyi)
 * Tested on: Windows 10 Professional, i7-6700HQ  @2.60GHz 16GB, GTX 980M 8253MB (My own Dell Alienware R3)
 * Browser: Google Chrome
+* Resolution: 3840*2160 pixels
 
 ### Live Online
 
@@ -38,15 +39,19 @@ To check for the intersection, there are few steps to do:
 
 After all those checking, we will write the light indexes that lies inside the cluster to the _clusterTexture buffer. 
 
+demo: lightNum = 300:
+
 ## **2. Deferred Shading With Clusters**
 
 The cluster mechanism of deferred shading are basically the same. The differences between forward+ and deffer shading are the gbuffers pass from vertex shader to fragment shader, which takes less processing time than forward+.
+
+demo: lightNum = 300:
 
 ## **3. Blinn-Phong Shading** 
 
 [Reference](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model) from Wikipedia.
 
-
+demo: lightNum = 300:
 
 ## **4. G-Buffer Optimization** 
 
@@ -55,6 +60,8 @@ The core idea here is to transfer from the normal coordinate system into *Polar 
     gl_FragData[0] = vec4(v_position[0],v_position[1],v_position[2],norm[1]);
     gl_FragData[1] = vec4(col[0],col[1],col[2],theta);
          
+ 
+demo: lightNum = 300:
 
 ## **5. Performance Analysis** 
 
