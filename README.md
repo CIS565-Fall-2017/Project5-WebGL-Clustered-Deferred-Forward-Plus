@@ -42,13 +42,13 @@ After all those checking, we will write the light indexes that lies inside the c
 
 demo: lightNum = 300:
 
-![enter image description here](https://lh3.googleusercontent.com/-v2Ix4s6Eu4U/WfOvJ1rOTrI/AAAAAAAABJs/IFem-dwTGvYxFlttadANpXTdceHwiPzjwCLcBGAs/s0/forwardplus300.gif "forwardplus300.gif")
+![forward + shading](image/forwardplus300.gif)
 
 ## **2. Deferred Shading With Clusters**
 
 The cluster mechanism of deferred shading are basically the same. The differences between forward+ and deffer shading are the gbuffers pass from vertex shader to fragment shader, which takes less processing time than forward+.
 
-demo: lightNum = 300:
+demo: lightNum = 300 (low res version):
 
 ![deferred shading](image/deferred300.gif)
 
@@ -58,7 +58,7 @@ demo: lightNum = 300:
 
 demo: deferred shading lightNum = 300:
 
-![enter image description here](https://lh3.googleusercontent.com/-ZHv3OvU3L2k/WfOxJy5kt-I/AAAAAAAABKM/wDVnByk7bSEffApYkZx8yyL9i0_vlhrBACLcBGAs/s0/deferredPhong300.gif "deferredPhong300.gif")
+![Blinn-Phong deferred shading](image/deferredPhong300.gif)
 
 ## **4. G-Buffer Optimization** 
 
@@ -70,7 +70,7 @@ The core idea here is to transfer from the normal coordinate system into *Polar 
  
 demo: deferred with Phong lightNum = 300:
 
-![enter image description here](https://lh3.googleusercontent.com/-U9WgA_LIwhs/WfO1jGFJJFI/AAAAAAAABLo/vLfnmUvKPEcZp9gEIwVB92dpuxPSEEh7wCLcBGAs/s0/deferredOptimizedPhong300.gif "deferredOptimizedPhong300.gif")
+![optimized deferred shading with Bilnn-Phong](image/deferredOptimizedPhong300.gif)
 
 ## **5. Performance Analysis** 
 
