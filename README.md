@@ -12,9 +12,7 @@ WebGL Clustered Deferred and Forward+ Shading
   * NVIDIA GeForce GTX 1070 (mobile version)
   * Chrome Version 61.0.3163.100 (Official Build) (64-bit)
 
-### Live Online
-
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+## [Try it live!](https://mmerchante.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
