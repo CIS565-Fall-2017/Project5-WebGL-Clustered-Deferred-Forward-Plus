@@ -3,9 +3,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Fengkai Wu
+* Tested on: **Google Chrome 61.0.3163.100 (64bit)** on
+  Windows 10, i7-4700HQ @ 2.40GHz 4GB, GT 745M 2048MB (Personal)
 
 ### Live Online
 
@@ -15,13 +15,27 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
+### Analysis
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+#### Clustered Forward+
+* Divides the space in clusters (or small blocks) and only render when lights overlapped on a cluster.
+* Keeps track of the indices of lights based on a data structure to enable fast look up.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+#### Clustered Deferred
+* Using clusteres to keep track of lights. (Same as above)
+* Stores attributes in g-buffers and renders on the last pass.
+* Uses three g buffers to store the attributes.
+* Adds Bling-Phong shading model
+
+Below shows the performance using different rendering strategies.
+
+![numLights]()
+
+As the graph shows, the rendering time varies significantly with different strategies. Naive forward is the simplest way, which iterates all the lights and does computation on all of them, which is very slow, and the running time increasing very fast when we have more lights to render. 
+
+Clustered forward+ is a good technique, which only computes the lights are overlapped in clusteres, which greately reduces the amount of work. When the number of lights is relatively small. the speed is considerably reduced. 
+
+Clustered deferred stores the vertex attributes in g-buffers and only do the computation at the last pass. This technique is much more faster than the previous two especially when number of lights is large.
 
 
 ### Credits
