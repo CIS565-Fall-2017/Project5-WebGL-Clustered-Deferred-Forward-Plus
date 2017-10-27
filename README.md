@@ -64,7 +64,7 @@ ___
 ### Performance Analysis
 * ***Num of Lights***: 
   
-| **Comparision Between Forward/Clustered Forward+/Clustered Deferred** |
+| **Comparision Between Forward/Clustered Forward+/Clustered Deferred(far = 1000)** |
 |---|
 |<img src="./results/form1.JPG" width="1000" height="220">|
 
@@ -72,7 +72,7 @@ ___
 
 * ***Num of Clusters***: 
 
-| **Comparision Between Different Number of Clusters** |
+| **Comparision Between Different Number of Clusters(far = 1000)** |
 |---|
 |<img src="./results/plot1.JPG" width="800" height="550">|
 
@@ -80,7 +80,7 @@ ___
 
 * ***G-buffer Compression***:
 
-| **Comparision Between Different Number of G-buffers** |
+| **Comparision Between Different Number of G-buffers(far = 1000)** |
 |---|
 |<img src="./results/form2.JPG" width="1000" height="130">|
 
@@ -97,9 +97,9 @@ ___
 |---|---|
 |<img src="./results/Albedo.JPG" width="600" height="250">|<img src="./results/Normal.JPG" width="600" height="250">
 
-| **XSlices Display** | **ZSlices Display** |
+| **XSlices Display** | **ZSlices Display(far = 50)** |
 |---|---|
-|<img src="./results/XSlice.JPG" width="600" height="250">|<img src="./results/ZSlice.JPG" width="600" height="250">
+|<img src="./results/XSlices.JPG" width="600" height="250">|<img src="./results/ZSlices.JPG" width="600" height="250">
 
 ### Credits
 
