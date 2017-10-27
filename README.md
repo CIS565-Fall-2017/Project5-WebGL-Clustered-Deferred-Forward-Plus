@@ -3,25 +3,47 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Jonathan Lee
+* Tested on: **Google Chrome 61.0.3163.100** on
+  Windows 10, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (SigLab)
+
+# Overview
+
+In this project, I was able to explore **Clustered Forward+ and Deferred Shading**. 
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](images/blinn.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
-### Demo Video/GIF
+### Demo
 
-[![](img/video.png)](TODO)
+![](images/shading.gif)
 
-### (TODO: Your README)
+## Clustered Forward+
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+![](images/forward+.gif)
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+## Clustered Deferred
+
+![](images/deferred.gif)
+
+### Blinn Shading
+
+| 100 Shininess             | 200 Shininess              | 500 Shininess            | 
+|---------------------------|----------------------------|--------------------------|
+| ![](images/100shine.gif)  | ![](images/200shine.gif)   | ![](images/500shine.gif) |  
+
+# Analysis
+
+## Forward vs. Forward+ vs. Deferred Shading
+
+![](images/shadingchart.png)
+![](images/shadingfps.PNG)
+
+## Normal Compression in Deferred Shading
+
+![](images/deferredchart.png)
+![](images/deferredfps.PNG)
 
 
 ### Credits

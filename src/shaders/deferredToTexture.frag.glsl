@@ -11,6 +11,8 @@ varying vec3 v_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
 
+#define COMPRESSED false
+
 vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
@@ -29,8 +31,8 @@ void main() {
     norm += 0.5;
 
     // TODO: populate your g buffer
-    gl_FragData[0] = vec4(v_position, 0.0);
-    gl_FragData[1] = vec4(col, 0.0);
-    gl_FragData[2] = vec4(norm, 0.0);
+    gl_FragData[0] = vec4(v_position, norm.x);
+    gl_FragData[1] = vec4(col, norm.y);
+    // gl_FragData[2] = vec4(norm, 0.0);
     // gl_FragData[3] = ??
 }
