@@ -53,6 +53,24 @@ export default class ClusteredRenderer {
     this._zSlices = zSlices;
   }
 
+  // Check to see if the cluster is within the camera 
+  lightInCluster(minX, maxX, minY, maxY, minZ, maxZ) 
+  {
+    if(minX < 0 && maxX < 0 || minX > this.xSlices && maxX > this.xSlices) {
+      return false;
+    }
+
+    if(minY < 0 && maxY < 0 || minY > this.ySlices && maxY > this.ySlices) {
+      return false;
+    }
+
+    if(minZ < 0 && maxZ < 0 || minZ > this.zSlices && maxZ > this.zSlices) {
+      return false;
+    }
+    
+    return true;
+  }
+
   updateClusters(camera, viewMatrix, scene) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
@@ -79,9 +97,9 @@ export default class ClusteredRenderer {
     var zStride = depth / this._zSlices;
 
     for(let i = 0; i < NUM_LIGHTS; i++) {
-      let light = scene.lights[i];
-      let lightPos = vec4.fromValues(light.position[0], light.position[1], light.position[2], 1.0);
-      let lightRad = light.radius;
+      let light     = scene.lights[i];
+      let lightPos  = vec4.fromValues(light.position[0], light.position[1], light.position[2], 1.0);
+      let lightRad  = light.radius;
 
       // Take the lightPos from world to camera space
       vec4.transformMat4(lightPos, lightPos, viewMatrix);
@@ -118,21 +136,29 @@ export default class ClusteredRenderer {
                                         lightPos[1] + lightRad,
                                         lightPos[2] + lightRad);
 
+        minX = Math.floor((lightMin[0] + (width / 2)) / xStride);  
+        maxX = Math.floor((lightMax[0] + (width / 2)) / xStride);  
+
+        minY = Math.floor((lightMin[1] + (height / 2)) / yStride);
+        maxY = Math.floor((lightMax[1] + (height / 2)) / yStride);
+
+        minZ = Math.floor(lightMin[2] / zStride);
+        maxZ = Math.floor(lightMax[2] / zStride);
+
         // Offset the min/max values by the slices since the clusters will be indexed [0, slices - 1]
-        minX = clamp((lightMin[0]) / xStride, 0, this._xSlices - 1);
-        maxX = clamp((lightMax[0]) / xStride, 0, this._xSlices - 1);
+        minX = clamp(minX, 0, this._xSlices - 1);
+        maxX = clamp(maxX, 0, this._xSlices - 1);
 
-        minY = clamp((lightMin[1]) / yStride, 0, this._ySlices - 1);
-        maxY = clamp((lightMax[1]) / yStride, 0, this._ySlices - 1);
+        minY = clamp(minY, 0, this._ySlices - 1);
+        maxY = clamp(maxY, 0, this._ySlices - 1);
 
-        minZ = clamp(lightMin[2] / zStride, 0, this._zSlices - 1);
-        maxZ = clamp(lightMax[2] / zStride, 0, this._zSlices- 1);
+        minZ = clamp(minZ, 0, this._zSlices - 1);
+        maxZ = clamp(maxZ, 0, this._zSlices - 1);
 
-        // if( minX <= 0 && maxX >= this._xSlices - 1 ||
-        //     minY <= 0 && maxY >= this._ySlices - 1 || 
-        //     minZ <= 0 && maxZ >= this._zSlices - 1) {
-        //   continue;
-        // }
+        // Check if the light is outside the cluster frustum
+        if(!this.lightInCluster(minX, maxX, minY, maxY, minZ, maxZ)) {
+          continue;
+        }
       }
       
       // Update the buffer 
@@ -163,15 +189,15 @@ export default class ClusteredRenderer {
 
               // Find the component (v)
               // component0
-              let component = Math.floor((lightCount + 1) / 4);
+              let component = Math.floor((lightCount) / 4);
 
               // Get the light id in the cluster (lid0, lid1, etc.)
               // |count|lid0|lid1|lid2
-              let lightClusterID = (lightCount + 1) % 4;
+              let lightClusterID = (lightCount) % 4;
 
               // Update the pixel to include the current light
               let texelIndex = this._clusterTexture.bufferIndex(clusterIndex, component);
-              let componentIndex = (lightCount + 1) - (component * 4);
+              let componentIndex = (lightCount) - (component * 4);
               this._clusterTexture.buffer[texelIndex + componentIndex] = i;
             }
           }

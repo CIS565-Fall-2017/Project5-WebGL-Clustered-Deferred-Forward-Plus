@@ -22,7 +22,18 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       zSlices : zSlices,
       maxLightsPerCluster : MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: [
+        'u_viewProjectionMatrix', 
+        'u_viewMatrix',
+        'u_colmap', 
+        'u_normap', 
+        'u_lightbuffer', 
+        'u_clusterbuffer',
+        'u_width',
+        'u_height',
+        'u_nearZ',
+        'u_farZ'
+      ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 

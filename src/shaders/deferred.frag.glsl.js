@@ -158,6 +158,8 @@ export default function(params) {
         float lambertTerm = max(dot(L, normal), 0.0);
 
         fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        
+        // fragColor = vec3(float(xCluster) / 15.0);        
     }
 
     const vec3 ambientLight = vec3(0.025);
