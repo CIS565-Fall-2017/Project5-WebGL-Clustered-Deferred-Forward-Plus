@@ -88,9 +88,9 @@ export default function(params) {
     // g-buffer[1] : normal.x  | normal.y  | 0.0       | NDC_Depth
 
     vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
-    // vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
+    //vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
     vec2 enc_nor = texture2D(u_gbuffers[1], v_uv).xy;
-    // vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
+    //vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
 
     float NDC_depth = texture2D(u_gbuffers[1], v_uv).w;
 

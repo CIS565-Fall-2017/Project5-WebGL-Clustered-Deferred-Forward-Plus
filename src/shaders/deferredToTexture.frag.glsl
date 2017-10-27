@@ -36,9 +36,10 @@ void main() {
     // Populate g buffer
     gl_FragData[0] = vec4(col, v_pos_ViewSpace.z);
     gl_FragData[1] = vec4(norm.xy, 0.0, v_pos_NDC.z);
+
     //gl_FragData[1] = vec4(norm.xyz, v_pos_NDC.z);
 
-    //gl_FragData[0] = vec4(col, 0.0);
+    //gl_FragData[0] = vec4(col, v_pos_ViewSpace.z);
     //gl_FragData[1] = vec4(norm, 0.0);
     //gl_FragData[2] = vec4(depth, 0.0);
     //gl_FragData[3] = vec4(v_position, 1.0);
