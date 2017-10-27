@@ -30,7 +30,7 @@ void main() {
      gl_FragData[3] = vec4(0.0);
 
      //TODO: gbuffer improvement version 
-/*     float theta;
+     /*float theta;
      if(norm[0] != 0.0)
      {
          if(norm[2] > 0.0)
