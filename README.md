@@ -25,7 +25,7 @@ WebGL Clustered Deferred and Forward+ Shading
 ### Overview
 * This is a WebGL based project. There are three rendering methods implemented for performance comparason.
 * Forward Rendering: For each geometry, loop over all lights in the scene.
-* Forward Plus Clustered Rendering: Divide frustrum into 15*15*15 clusters. Build a light cluster map to store lights within each cluster. For each geometry, only loop over lights within the same cluster.
+* Forward Plus Clustered Rendering: Divide frustrum into 15 x 15 x 15 clusters. Build a light cluster map to store lights within each cluster. For each geometry, only loop over lights within the same cluster.
 * Deferred Clustered Rendering: Generate gBuffer maps by 1st pass of scene. Each gBuffer stores the information of fragment that is going to be rendered on screen: such as normal, color, and position. In the second pass, for each fragment in gBuffer, applies the light in the same cluster based on position in gBuffer.
 * Clusters will improve the performance when the number of lights in scene increase. A preprocess to build the light cluster structure will increase the render speed. Deferred clustered rendering filters out the fragments that are occluded or out of screen in the first pass, and it saves computation time over lights by only looping through fragments in gBuffer in second pass, thus in general it is faster than forward plus rendering. However, deferred clustered does not handle transparent objects in scene.
 
