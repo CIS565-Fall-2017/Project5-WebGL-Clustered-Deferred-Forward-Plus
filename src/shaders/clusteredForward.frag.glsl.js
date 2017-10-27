@@ -1,3 +1,5 @@
+//Adding more variables to params should happens in clusterForwardPlus.js
+//begin with line 17
 export default function(params) {
   return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
@@ -8,10 +10,13 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-
+  uniform mat4 u_viewMatrix;
+  uniform mat4 u_invViewMatrix;
+  uniform mat4 u_invProjectionMatrix;
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
-
+  uniform float u_farPlane;
+  uniform float u_nearPlane;
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
@@ -80,22 +85,80 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
-
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+//Determine the cluster for a fragment
+//hard code near and far
+//not anymore.
+//only hardcode near plane.
+    int num_xSlices = ${params.xSliceCount};
+    int num_ySlices = ${params.ySliceCount};
+    int num_zSlices = ${params.zSliceCount};
+    vec4 viewCoords = u_viewMatrix * vec4(v_position,1);
+    viewCoords /= viewCoords .w;
+    int numClusters = num_xSlices * num_ySlices * num_zSlices;
+    float nearPlane = u_nearPlane;
+    float farPlane  = u_farPlane;
+    float specialNearPlane = float(${params.specialNearPlane});
+    float xSliceWidth = float(${params.screenWidth})   /  float(${params.xSliceCount});
+    float ySliceWidth = float(${params.screenHeight})  /  float(${params.ySliceCount});
+    int xid = int(floor(gl_FragCoord.x / xSliceWidth));
+    int yid = int(floor(gl_FragCoord.y / ySliceWidth));
+    float viewZ =  -1.0 * viewCoords.z;
+    int zid = 0;
+    //special near depth slice    
+    if(viewZ >= specialNearPlane)
+    {
+      //0....1
+      float normalizedZ = log(viewZ - specialNearPlane + 1.0) / log(farPlane - specialNearPlane + 1.0);
+      zid =  int(normalizedZ * float(num_zSlices - 1))  + 1;
+    } 
+    int clusterIndex = xid + yid * num_xSlices + zid * num_xSlices * num_ySlices;
+    float clusterUcoord = float(clusterIndex + 1) / float(numClusters + 1);
+    int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterUcoord, 0.0))[0]);   
+    const int maxNumLights = int(min(float(${params.numLights}), float(${params.num_maxLightsPerCluster})));
+    
+    //Do shading for just those lights
+    for (int i = 1; i <= maxNumLights; i++)
+    {
+      if (lightCount < i)
+      {
+        break;
+      }
+      int clusterTexelIndex = i / 4;          
+      float clustersLightVcoord = float(clusterTexelIndex + 1) / ceil(float(${params.num_maxLightsPerCluster} + 1) * 0.25  + 1.0);    
+     
+      vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(clusterUcoord, clustersLightVcoord));
+      int lightIndex;
+      int remainder = i - 4 * clusterTexelIndex;
+      //fetch
+      if (remainder == 0)      
+        lightIndex = int(clusterTexel[0]);      
+      else if (remainder == 1)     
+        lightIndex = int(clusterTexel[1]);      
+      else if (remainder == 2)      
+        lightIndex = int(clusterTexel[2]);
+      else if (remainder == 3)
+        lightIndex = int(clusterTexel[3]);
+      Light thisLight = UnpackLight(lightIndex);
+      float lightDistance = distance(thisLight.position, v_position);
+      vec3 L = (thisLight.position - v_position) / lightDistance;
+      
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / thisLight.radius);
+      vec4 cameraWorldPos = u_invViewMatrix*vec4(0.0,0.0,0.0,1.0);      
+      vec3 viewVec = normalize(cameraWorldPos.xyz - v_position);
+      vec3 halfVec = normalize(L + viewVec);
+      vec3 diffuseTerm = albedo;
+      float speculatTerm = pow(max(dot(halfVec, normal), 0.0), 100.0);      
+      fragColor += (diffuseTerm + vec3(speculatTerm)) * max(dot(L, normal), 0.0) * lightIntensity * thisLight.color;
     }
+//Original code for all lights
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = vec4(,1.0);
+    //Test code.
+    //gl_FragColor = vec4(gl_FragCoord.x / 640.0, gl_FragCoord.y / 480.0, 0, 1);
   }
   `;
 }
