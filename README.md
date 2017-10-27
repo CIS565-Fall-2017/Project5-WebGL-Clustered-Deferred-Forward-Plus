@@ -50,7 +50,7 @@ The cluster mechanism of deferred shading are basically the same. The difference
 
 demo: lightNum = 300:
 
-![enter image description here](https://lh3.googleusercontent.com/-ZuR9HGF5tp8/WfO2es0KlEI/AAAAAAAABL4/QcJJlt6IXhQNLVqgtNasUaMLvgmJ2m7nQCLcBGAs/s0/deferred300.gif "deferred300.gif")
+![enter image description here](https://lh3.googleusercontent.com/-_sPyU8dHhr4/WfO24TOiRGI/AAAAAAAABME/x-FhYTAUj5IWgZJaYCPJuBYSDcx0qppnwCLcBGAs/s0/deferred300.gif "deferred300.gif")
 
 ## **3. Blinn-Phong Shading** 
 
