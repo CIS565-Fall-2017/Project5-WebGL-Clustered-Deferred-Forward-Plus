@@ -35,7 +35,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numMaxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_lightbuffer', 'u_clusterbuffer'
-    , 'u_cameraFar', 'u_cameraNear', 'u_screenWidth', 'u_screenHeight', 'u_viewMatrix', 'u_invViewMatrix'],
+    , 'u_cameraFar', 'u_cameraNear', 'u_screenWidth', 'u_screenHeight', 'u_viewMatrix', 'u_invViewMatrix', 'u_viewProjectionMatrix'],
       attribs: ['a_uv'],
     });
 
@@ -165,6 +165,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // TODO: Bind any other shader inputs
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
     gl.uniformMatrix4fv(this._progShade.u_invViewMatrix, false, this._invViewMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE4);

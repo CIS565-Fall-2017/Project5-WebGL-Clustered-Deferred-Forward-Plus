@@ -7,6 +7,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
   uniform mat4 u_viewMatrix;
   uniform mat4 u_invViewMatrix;
+  uniform mat4 u_viewProjectionMatrix;
   uniform float u_screenWidth;
   uniform float u_screenHeight;
   uniform float u_cameraFar;

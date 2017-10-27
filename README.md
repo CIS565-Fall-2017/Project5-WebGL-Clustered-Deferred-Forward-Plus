@@ -43,6 +43,16 @@ In this project, I implemented 2 different rendering methods, including Clustere
 
 ![](img/toon.gif)
 
+### Bebug:
+
+| Aldeo | Normal |
+|-------------|--------------------------------|
+|![](img/aldeo.png)|![](img/normal.png)|
+
+| Position | Depth |
+|-------------|--------------------------------|
+|![](img/position.png)|![](img/depth.png)|
+
 ## Performance Analysis
 
 ### Comparision of Forward, Clustered Forward+ & Clustered Deferred
