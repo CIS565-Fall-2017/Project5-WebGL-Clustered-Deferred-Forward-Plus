@@ -7,7 +7,7 @@ Sarah Forcier
 
 Tested on GeForce GTX 1070
 
-### Live Demo(http://sarahforcier.github.io/Project5B-WebGL-Deferred-Shading)
+### [Live Demo](http://sarahforcier.github.io/Project5B-WebGL-Deferred-Shading)
 
 [![](img/final.png)](https://youtu.be/QgfXGOQ58Ss)
 
