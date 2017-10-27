@@ -9,8 +9,8 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Overview
 * Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
-  * **Deferred Shading**: https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3
-  * **Cluster Shading**: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
+  * [**Deferred Shading**](https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3)
+  * [**Cluster Shading**](https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3)
 * The following are the results of **Clustered-Deferred Shading** with different shaders:
   
 | **Regular Shading (200 lights)** |
