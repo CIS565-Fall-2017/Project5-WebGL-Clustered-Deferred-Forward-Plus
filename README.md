@@ -8,6 +8,10 @@ WebGL Clustered Deferred and Forward+ Shading
 * Browser: Google Chrome
 * Resolution: 3840*2160 pixels
 
+### Github Pages:
+
+[Github Pages link](https://velysianp.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+
 ### Live Online
 
 
