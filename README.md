@@ -23,7 +23,7 @@ project, and we will not be able to grade you without a good README.
 This assignment has a considerable amount of performance analysis compared
 to implementation work. Complete the implementation early to leave time!
 
-### **1. Clustered Forward+**
+## **1. Clustered Forward+**
 
 All the clusters are linearly divided in the camera space. Which means that the clusters are all trapezoids, or irregular "cubes". Therefore, the intersection test of those clusters are the most importance in the part. The way to implement this test is to do projection to four surfaces of the cluster, they are up, down, left and right surfaces. For near and far surface, we simply compare the z-value of the light we want to check and the near and far surface. 
 
@@ -38,17 +38,21 @@ To check for the intersection, there are few steps to do:
 
 After all those checking, we will write the light indexes that lies inside the cluster to the _clusterTexture buffer. 
 
-### **2. Deferred Shading With Clusters**
+## **2. Deferred Shading With Clusters**
 
-The cluster mechanism of deferred shading are basically the same
+The cluster mechanism of deferred shading are basically the same. The differences between forward+ and deffer shading are the gbuffers pass from vertex shader to fragment shader, which takes less processing time than forward+.
 
-### **3. Blinn-Phong Shading** 
+## **3. Blinn-Phong Shading** 
+
+[Reference](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model) from Wikipedia.
 
 
 
-### **4. G-Buffer Optimization** 
+## **4. G-Buffer Optimization** 
 
-### **5. Performance Analysis** 
+
+
+## **5. Performance Analysis** 
 
 #### **Improvement:**
 
