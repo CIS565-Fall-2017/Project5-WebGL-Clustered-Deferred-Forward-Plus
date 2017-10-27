@@ -144,7 +144,12 @@ export default function(params) {
     //gl_FragColor = vec4(normal, 1.0);
     //camera debugging
     //gl_FragColor = vec4(u_cameraPos.x,u_cameraPos.y,u_cameraPos.z, 1.0);
-
+    //albedo debugging
+    //gl_FragColor = vec4(albedo, 1.0);
+    //Pos debugging
+    //gl_FragColor = vec4(v_position, 1.0);
+    //U debugging
+    //gl_FragColor = vec4(vec3(U), 1.0);
   }
   `;
 }

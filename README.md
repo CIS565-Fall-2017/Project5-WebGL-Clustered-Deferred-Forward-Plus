@@ -7,15 +7,51 @@ WebGL Clustered Deferred and Forward+ Shading
 * Tested on:  Windows 8.1, Intel(R) Core(TM)i5-4200M CPU @ 2.50GHz 8GB, NVIDIA GeForce 840M (Personal Notebook)
 
 ### Description
-In this project, I implement the cluster forward shader and cluster deferred shader to render a scene with hundreds of moving lights. For the cluster deferred shading, the objects are rendered based on Blinning Phong model. Also, I compress the data structure that passed into the g-buffer and normals are presented using only 2 componets. All rendering processes are based on WebGl and rendering results can be shown online.
+In this project, I implement the cluster forward shader and cluster deferred shader to render a scene with hundreds of moving lights. For the cluster deferred shading, the objects are rendered based on Blinn-Phong model. Also, I compress the data structure that passed into the g-buffer and normals are presented using only 2 componets. All rendering processes are based on WebGl and rendering results can be shown online.
 
 ### Live Demo Online
 
 [![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
 ### Screen shot
+* **Rendering result**
 
-[![](img/video.png)](TODO)
+<table class="image">
+<tr>
+	<td>Lambert </td>
+	<td>Blinn-Phong </td>
+</tr>
+<tr>
+	<td><img src="img/lambert.gif"/></td>
+	<td><img src="img/blinn.gif"/></td>
+</tr>
+</table>
+
+* **Debug view**
+
+<table class="image">
+<tr>
+	<td>Normal </td>
+	<td>Albedo </td>
+</tr>
+<tr>
+	<td><img src="img/normal.gif"/></td>
+	<td><img src="img/albedo.gif"/></td>
+</tr>
+</table>
+
+<table class="image">
+<tr>
+	<td>position </td>
+	<td>U coordinates for cluster buffer texture </td>
+</tr>
+<tr>
+	<td><img src="img/position.gif"/></td>
+	<td><img src="img/U.gif"/></td>
+</tr>
+</table>
+
+
 
 ### Performance Analysis.
 
@@ -64,7 +100,7 @@ The cluster strategy and deferred shading essentially decrease the times we need
 Generally speaking, we need world space position, camera space position, normal, color, and depth for 
 light shading. However, since framebuffer will automatically deal with the depth for us and camera space position can be computed through world space postion and camera view matrix, we actually only need to package 3 componets into g-buffer.
 
-* **2 Component normal**
+* ***2 Component normal***
 
 To continue compress the data structure, we can use 2 componets the describe a normal. Since we know that normals are unit vectors, as long as we know 2 component of them, the third one can be computed.To do this, we need to use spherical coordinates, which mean for normal(x,y,z):
 
