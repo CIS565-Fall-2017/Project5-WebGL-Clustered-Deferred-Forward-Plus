@@ -109,20 +109,20 @@ export default class ClusteredRenderer {
             break;
           }
         }
-        function distanceY(distance, height, lightPos)
+        function yDistanceInCameraSpace(distance, height, lightPos)
         {
           distance = (lightPos[1] - height*lightPos[2]) / Math.sqrt(1.0 + height * height);
           return distance;
         }
         let begin_Y;
         for(begin_Y = 0; begin_Y <= this._ySlices; begin_Y++){
-          if( distanceY(distance, width_SliceY * (begin_Y + 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
+          if( yDistanceInCameraSpace(distance, width_SliceY * (begin_Y + 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
             break;
           }
         }
         let end_Y;
         for(end_Y = this._ySlices; end_Y >= begin_Y; end_Y--){
-          if( -distanceY(distance, width_SliceY * (end_Y - 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
+          if( -yDistanceInCameraSpace(distance, width_SliceY * (end_Y - 1 - this._ySlices * 0.5), LightCameraSpace) <=  lightRadius){
             end_Y--;
             break;
           }
