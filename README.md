@@ -66,7 +66,7 @@ ___
   
 | **Comparision Between Forward/Clustered Forward+/Clustered Deferred(far = 1000)** |
 |---|
-|<img src="./results/form1.JPG" width="1000" height="220">|
+|<img src="./results/form1.JPG" width="1000" height="190">|
 
   * According to the results above, we can find that the rendering time per frame is increasing with the number of the lights growing. Also, with the number of lights increasing, the difference between these three methods becomes more obvious. The reason I've already mentioned on the former part and the slides I provided before.
 
@@ -82,7 +82,7 @@ ___
 
 | **Comparision Between Different Number of G-buffers(far = 1000)** |
 |---|
-|<img src="./results/form2.JPG" width="1000" height="130">|
+|<img src="./results/form2.JPG" width="1000" height="100">|
 
   * As I said before, using 3 buffers can save the time of encoding and decoding the normals, but will add an extra buffer on G-buffer.
 
