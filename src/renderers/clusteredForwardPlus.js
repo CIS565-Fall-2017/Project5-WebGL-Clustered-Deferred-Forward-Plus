@@ -82,8 +82,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
     gl.uniform1f(this._shaderProgram.u_width, canvas.width);
     gl.uniform1f(this._shaderProgram.u_height, canvas.height);
+    
     gl.uniform1f(this._shaderProgram.u_nearZ, camera.near);
     gl.uniform1f(this._shaderProgram.u_farZ, camera.far);
 

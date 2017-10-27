@@ -1,6 +1,7 @@
 export default function(params) {
   return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
+
   #version 100
   precision highp float;
   
@@ -12,6 +13,7 @@ export default function(params) {
   
   uniform float u_width;
   uniform float u_height;
+
   uniform float u_nearZ;
   uniform float u_farZ;
   
@@ -117,13 +119,13 @@ export default function(params) {
       int numClusters = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
       float u = float(index + 1) / float(numClusters + 1);
   
-      // Get how many lights are in the shader
+      // Get how many lights are in the cluster
       int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
 
       int numTexels = int( ceil( float(${params.maxLightsPerCluster} + 1) / float(4.0)) );
 
       for (int i = 0; i < ${params.numLights}; ++i) {
-          if(i <= numLightsInCluster) {
+          if(i < numLightsInCluster) {
             int lightIndex = int(ExtractFloat(u_clusterbuffer, numClusters, numTexels, index, i + 1));
 
             Light light = UnpackLight(lightIndex);
@@ -149,6 +151,5 @@ export default function(params) {
   
       gl_FragColor = vec4(fragColor, 1.0);
   }  
- 
   `;
 }
