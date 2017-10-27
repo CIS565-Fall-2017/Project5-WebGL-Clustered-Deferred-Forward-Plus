@@ -83,6 +83,8 @@ As the number of light increase, it take longer time to render. We can also clea
 | 400         | 86                             | 83                             |
 | 500         | 100                            | 97                             |
 
+(Timing in milliseconds)
+
 We can see that the difference with Clustered Deferred with 3 or 2 g-buffers is not very obvious. This is because though the number of the g-buffers is reduced, Clustered Deferred with 2 g-buffers needs extra time to reconstruct the normal.
 
 ### Credits
