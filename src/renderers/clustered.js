@@ -2,7 +2,7 @@ import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = NUM_LIGHTS;
 
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -101,8 +101,8 @@ export default class ClusteredRenderer {
             let lightRadius = scene.lights[iTemp].radius;
 
             //left
-            let leftProjection = vec3.dot(lightPos,leftNormal)/vec3.length(leftNormal);
-            if((leftProjection>0)&&(judgeInOut))
+            let leftProjection = vec3.dot(lightPos,leftNormal);
+            if(leftProjection>0)
             {
               if(lightRadius<Math.abs(leftProjection)){
                 judgeInOut = false;
@@ -110,8 +110,8 @@ export default class ClusteredRenderer {
             }
 
             //right
-            let rightProjection = vec3.dot(lightPos,rightNormal)/vec3.length(rightNormal);
-            if((rightProjection>0)&&(judgeInOut))
+            let rightProjection = vec3.dot(lightPos,rightNormal);
+            if(rightProjection>0)
             {
               if(lightRadius<Math.abs(rightProjection))
               {
@@ -120,8 +120,8 @@ export default class ClusteredRenderer {
             }
 
             //up
-            let upProjection = vec3.dot(lightPos,upNormal)/vec3.length(upNormal);
-            if((upProjection>0)&&(judgeInOut))
+            let upProjection = vec3.dot(lightPos,upNormal);
+            if(upProjection>0)
             {
               if(lightRadius<Math.abs(upProjection))
               {
@@ -130,8 +130,8 @@ export default class ClusteredRenderer {
             }
 
             //down
-            let downProjection = vec3.dot(lightPos,downNormal)/vec3.length(downNormal);
-            if((downProjection>0)&&(judgeInOut))
+            let downProjection = vec3.dot(lightPos,downNormal);
+            if(downProjection>0)
             {
               if(lightRadius<Math.abs(downProjection))
               {

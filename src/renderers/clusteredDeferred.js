@@ -29,7 +29,9 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_lightbuffer'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_lightbuffer',
+    'u_xSlice','u_ySlice','u_zSlice','u_far','u_near','u_fov','u_aspect',
+  'u_clusterbuffer','u_viewMatrix'],
       attribs: ['a_uv'],
     });
 
@@ -126,7 +128,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
-    
+
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
@@ -154,10 +156,25 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+
     gl.activeTexture(gl.TEXTURE4);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
     gl.uniform1i(this._progShade.u_lightbuffer, 4);
 
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 5);
+
+    gl.uniform1i(this._progShade.u_xSlice,this._xSlices);
+    gl.uniform1i(this._progShade.u_ySlice,this._ySlices);
+    gl.uniform1i(this._progShade.u_zSlice,this._zSlices);
+
+    gl.uniform1f(this._progShade.u_far,camera.far);
+    gl.uniform1f(this._progShade.u_near,camera.near);
+    gl.uniform1f(this._progShade.u_fov,camera.fov);
+    gl.uniform1f(this._progShade.u_aspect,camera.aspect);
+
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix,false,this._viewMatrix);
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {

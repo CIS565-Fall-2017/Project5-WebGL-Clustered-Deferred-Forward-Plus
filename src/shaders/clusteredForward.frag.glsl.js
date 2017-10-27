@@ -92,8 +92,11 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);  
+    vec4 worldPos = vec4(v_position[0],v_position[1],v_position[2],1.0);
+    vec4 cameraPos = u_viewMatrix * worldPos;
+    cameraPos[2] = -cameraPos[2];
 
-    float farHeight = 2.0 * ( u_far * tan((u_fov*0.5*3.1415926)/180.0));
+    float farHeight = 2.0 * ( abs(cameraPos[2]) * tan((u_fov*0.5*3.1415926)/180.0));
     float farWidth = farHeight*u_aspect;
 
     float xSliceLength = farWidth/float(u_xSlice);
@@ -103,27 +106,25 @@ export default function(params) {
     float xInitial = -farWidth/2.0;
     float yInitial = farHeight/2.0;
 
-    vec4 worldPos = vec4(v_position[0],v_position[1],v_position[2],1.0);
-    vec4 cameraPos = u_viewMatrix * worldPos;
-
-    int zSliceCoord = int((cameraPos[2]-u_near)/zSliceLength);
-    int xSliceCoord = int(abs(cameraPos[0]-xInitial)/xSliceLength);
+    int zSliceCoord = int(abs(cameraPos[2]-u_near)/zSliceLength);
+    int xSliceCoord = int((cameraPos[0]-xInitial)/xSliceLength);
     int ySliceCoord = int((yInitial-cameraPos[1])/ySliceLength);
 
     int index = xSliceCoord + ySliceCoord * u_xSlice + zSliceCoord * u_xSlice * u_ySlice;
   
     float uRatio = float(index)/float(u_xSlice*u_ySlice*u_zSlice);
     int lightCount = int(texture2D(u_clusterbuffer,vec2(uRatio,0.0))[0]);
- 
-    for(int i = 0 ;i < ${params.numLights};++i)
+
+    //fragColor = vec3(float(lightCount)/float(${params.numLights}));
+    for(int i = 1 ;i < ${params.numLights};++i)
     {
-      if(i>=lightCount)
+      if(i>lightCount)
       {
         break;
       }
       int rowIndex = i/4;
       int colIndex = i - rowIndex*4;
-      float tempRowRatio = float(rowIndex)/float((${params.numLights}+1)/4+1);
+      float tempRowRatio = float(rowIndex+1)/float((${params.numLights}+1)/4+1);
       int tempLightIndex; 
       if(colIndex == 0)
       {
@@ -151,10 +152,11 @@ export default function(params) {
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
-    const vec3 ambientLight = vec3(0.01);
+    const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = cameraPos;
   }
   `;
 }
