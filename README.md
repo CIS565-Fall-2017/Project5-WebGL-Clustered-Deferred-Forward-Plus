@@ -8,7 +8,7 @@ WebGL Clustered Deferred and Forward+ Shading
   Windows 10, i7-6700 @ 2.60GHz 16.0GB, GTX 970M 3072MB (Personal)
 
 ### Overview
-* Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
+* Realized a demo of **Clustered Forward Plus Shading** and **Clustered Deferred Shading** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
   * [**Deferred Shading**](https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3)
   * [**Clustered Shading**](https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3)
 * The following are the results of **Clustered-Deferred Shading** with different shaders:
