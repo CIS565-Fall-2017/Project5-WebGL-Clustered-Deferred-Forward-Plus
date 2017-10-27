@@ -10,11 +10,12 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+
+[![forwardPlusScreenshot](https://lh3.googleusercontent.com/p3yCgBto5Mh1dEnaGnDF1QTAA_geN-uc8GXBqN-Ou5XRgx-rovsUcYAt73m4ySVBCFO5w2l7BlV3=s0 "screenshot.jpg")](https://youtu.be/9kVQnuy2FUk)
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![!\[](https://lh3.googleusercontent.com/-cjlyaU6Adm0/WfOzpyfSGVI/AAAAAAAABLA/GNcOWmLp9vYQSGpZLBvYg0VAxR0hB196ACLcBGAs/s0/forwardPlus300Rough.gif "forwardPlus300Rough.gif")
 
 ### (TODO: Your README)
 
@@ -41,17 +42,23 @@ After all those checking, we will write the light indexes that lies inside the c
 
 demo: lightNum = 300:
 
+![enter image description here](https://lh3.googleusercontent.com/-v2Ix4s6Eu4U/WfOvJ1rOTrI/AAAAAAAABJs/IFem-dwTGvYxFlttadANpXTdceHwiPzjwCLcBGAs/s0/forwardplus300.gif "forwardplus300.gif")
+
 ## **2. Deferred Shading With Clusters**
 
 The cluster mechanism of deferred shading are basically the same. The differences between forward+ and deffer shading are the gbuffers pass from vertex shader to fragment shader, which takes less processing time than forward+.
 
 demo: lightNum = 300:
 
+![enter image description here](https://lh3.googleusercontent.com/-2_w1KgfG0RA/WfOwBPhQtaI/AAAAAAAABJ4/HeJGXquY1Mkx2Ss8TSrJ8zX5VRDL_hkuACLcBGAs/s0/deferred300.gif "deferred300.gif")
+
 ## **3. Blinn-Phong Shading** 
 
 [Reference](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model) from Wikipedia.
 
-demo: lightNum = 300:
+demo: deferred shading lightNum = 300:
+
+![enter image description here](https://lh3.googleusercontent.com/-ZHv3OvU3L2k/WfOxJy5kt-I/AAAAAAAABKM/wDVnByk7bSEffApYkZx8yyL9i0_vlhrBACLcBGAs/s0/deferredPhong300.gif "deferredPhong300.gif")
 
 ## **4. G-Buffer Optimization** 
 
@@ -61,7 +68,9 @@ The core idea here is to transfer from the normal coordinate system into *Polar 
     gl_FragData[1] = vec4(col[0],col[1],col[2],theta);
          
  
-demo: lightNum = 300:
+demo: deferred with Phong lightNum = 300:
+
+![enter image description here](https://lh3.googleusercontent.com/-U9WgA_LIwhs/WfO1jGFJJFI/AAAAAAAABLo/vLfnmUvKPEcZp9gEIwVB92dpuxPSEEh7wCLcBGAs/s0/deferredOptimizedPhong300.gif "deferredOptimizedPhong300.gif")
 
 ## **5. Performance Analysis** 
 
@@ -90,3 +99,4 @@ According to the graph above we can see that:
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
+
