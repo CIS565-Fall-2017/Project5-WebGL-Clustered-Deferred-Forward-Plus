@@ -25,13 +25,32 @@ to implementation work. Complete the implementation early to leave time!
 
 ## 1. Clustered Forward+
 
+All the clusters are linearly divided in the camera space. Which means that the clusters are all trapezoids, or irregular "cubes". Therefore, the intersection test of those clusters are the most importance in the part. The way to implement this test is to do projection to four surfaces of the cluster, they are up, down, left and right surfaces. For near and far surface, we simply compare the z-value of the light we want to check and the near and far surface. 
+
+To check for the intersection, there are few steps to do:
+
+ 1.  Calculate the z-value of the light lies on;
+ 2.  Calculate the width and height of the mini frustum slice, and divide them by the number of slices the frustum is divided;
+ 3.  Calculate the left top value of this cluster, and left bottom, right top and right bottom on the near plane;
+ 4.  Calculate the normals of left, right, top and bottom surfaces;
+ 5.  Calculate the projection of the vector from the camera to the light position in the camera space on the surface normals;
+ 6.  If the projection is larger than 0, check if the length of the projection is larger than the radius of the light, if it is true then the light lies outside the cluster, if not check for the next plane. 
+
+After all those checking, we will write the light indexes that lies inside the cluster to the _clusterTexture buffer. 
+
 ## 2. Deferred Shading With Clusters
 
+The cluster mechanism of deferred shading are basically the same
+
 ## 3. Blinn-Phong Shading 
+
+
 
 ## 4. G-Buffer Optimization 
 
 ## 5. Performance Analysis 
+
+The result is actually 
 
 ### Credits
 
