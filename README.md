@@ -7,13 +7,11 @@ WebGL Clustered Deferred and Forward+ Shading
 * Tested on: **Google Chrome 61.0.3163.100 (64bit)** on
   Windows 10, i7-4700HQ @ 2.40GHz 4GB, GT 745M 2048MB (Personal)
 
-### Live Online
+### Demo GIF
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](https://github.com/wufk/Project5-WebGL-Clustered-Deferred-Forward-Plus/blob/master/img/mygif.gif)]()
 
-### Demo Video/GIF
-
-[![](img/video.png)](TODO)
+The gif shows when clustered foward+ mode is switched to the clustered deferred mode.
 
 ### Analysis
 
@@ -25,7 +23,7 @@ WebGL Clustered Deferred and Forward+ Shading
 * Using clusteres to keep track of lights. (Same as above)
 * Stores attributes in g-buffers and renders on the last pass.
 * Uses three g buffers to store the attributes.
-* Adds Bling-Phong shading model
+* Adds Bling-Phong shading model. The effect is shown in the above gif when the reflectivity of lights are changed.
 
 This figure shows the data g-buffers are storing, which corresponds to albedo, normal and position.
 ![g-buffers](https://github.com/wufk/Project5-WebGL-Clustered-Deferred-Forward-Plus/blob/master/img/gbuffers.png)
