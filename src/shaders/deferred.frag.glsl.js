@@ -70,16 +70,30 @@ export default function(params) {
   }
 
   void main() {
+    vec3 fragColor = vec3(0.0);
     // TODO: extract data from g buffers and do lighting
      vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
      vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
      vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
      vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
      
-     vec3 fragColor = vec3(0.0);
      vec3 albedo = vec3(gb2[0],gb2[1],gb2[2]);
      vec3 normal = vec3(gb1[0],gb1[1],gb1[2]); 
      vec3 position = vec3(gb0[0],gb0[1],gb0[2]);
+     
+     //TODO: for the gbuffer improvement
+    //  vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
+    //  vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
+
+    //  vec3 albedo = vec3(gb1[0],gb1[1],gb1[2]);
+    //  vec3 position = vec3(gb0[0],gb0[1],gb0[2]);
+
+    //  float y = gb0[3];
+    //  float r = sqrt(1.0 - y*y);
+    //  float x = r * cos(gb1[3]);
+    //  float z = -r * sin(gb1[3]);
+    //  vec3 normal = vec3(x,y,z);
+     /////////////////////////
 
      vec4 worldPos = vec4(position[0],position[1],position[2],1.0);
      vec4 cameraPos = u_viewMatrix * worldPos;
@@ -145,7 +159,7 @@ export default function(params) {
          vec3 viewDir = normalize(-position);
          vec3 halfDir = normalize(light.position+viewDir);
          float specAngle = max(dot(halfDir,normal),0.0);
-         float specular = pow(specAngle, 2.0);
+         float specular = pow(specAngle, 1.5);
          specColor = specular*specColor;
        }
        fragColor += albedo * (lambertTerm*0.5+specColor*0.5) * light.color * vec3(lightIntensity);
@@ -155,8 +169,6 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    //gl_FragColor = vec4(v_uv, 0.0, 1.0);
-    //fragColor = vec3(lightCount);
     gl_FragColor = vec4(fragColor,1.0);
   }
   `;
