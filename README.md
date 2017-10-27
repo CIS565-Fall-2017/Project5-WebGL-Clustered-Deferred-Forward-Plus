@@ -45,7 +45,7 @@ In this project, I implemented 2 different rendering methods, including Clustere
 
 ### Bebug:
 
-| Aldeo | Normal |
+| Albedo | Normal |
 |-------------|--------------------------------|
 |![](img/aldeo.png)|![](img/normal.png)|
 
