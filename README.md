@@ -1,11 +1,16 @@
 WebGL Clustered Deferred and Forward+ Shading
 ======================
 
+![](images/header.png)
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Mariano Merchante
+* Tested on
+  * Microsoft Windows 10 Pro
+  * Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz, 2601 Mhz, 4 Core(s), 8 Logical Processor(s)
+  * 32.0 GB RAM
+  * NVIDIA GeForce GTX 1070 (mobile version)
+  * Chrome Version 61.0.3163.100 (Official Build) (64-bit)
 
 ### Live Online
 
@@ -15,14 +20,12 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/video.png)](TODO)
 
-### (TODO: Your README)
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+## Details
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+This project implements both a forward+ and a clustered deferred rendering pipeline. The clustering is done in frustum space, by using the lights' bounding volumes to find the intersecting cluster cells.
 
+It also implements a simple Phong shader in the deferred pipeline.
 
 ### Credits
 
