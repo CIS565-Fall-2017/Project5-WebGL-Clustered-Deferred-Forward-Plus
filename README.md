@@ -9,6 +9,14 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
+This project requires a WebGL-capable browser with support for several extensions(listed below). You can check for support on [WebGL Report](http://webglreport.com/):
+- OES_texture_float
+- OES_texture_float_linear
+- OES_element_index_uint
+- EXT_frag_depth
+- WEBGL_depth_texture
+- WEBGL_draw_buffer
+
 [Live Deom Link](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 [![](img/screenshot.jpg)](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
