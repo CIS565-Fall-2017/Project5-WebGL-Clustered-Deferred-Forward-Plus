@@ -6,15 +6,15 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-  
-  uniform vec3 sizeMin; // 0,0,0 ???
-  uniform vec3 sizeMax; // w,h,1000 ???
-  uniform vec3 slices;  // 15,15,15
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
-  uniform mat4 viewMat;
-  uniform vec4 sceneDim; // width, height, near, far
+
+  uniform mat4 u_viewMatrix;
+  uniform float u_screenW;
+  uniform float u_screenH;
+  uniform float u_camN;
+  uniform float u_camF;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -89,32 +89,47 @@ export default function(params) {
     // Read in the lights in that cluster from the populated data
     // Do shading for just those lights
 
-    // here, Z is not in the correct space..?? Also maybe include screensize as everything is 0-1
-    // recompute using view matrix..
-    // vec4 clusterPos = vec4(gl_FragCoord.xyz / slices, 1.0); // (v_position - sizeMin) / (sizeMax - sizeMin) * slices;
+    ivec3 clusterPos = ivec3(
+      int(gl_FragCoord.x / u_screenW * float(${params.xSlices})),
+      int(gl_FragCoord.y / u_screenH * float(${params.ySlices})),
+      int((-(u_viewMatrix * vec4(v_position,1.0)).z - u_camN) / (u_camF - u_camN) * float(${params.zSlices}))
+    );
     
-    vec4 clusterPos = viewMatrix * vec4(v_position,1.0); // see google group...
-    clusterPos.x = clusterPos.x / sceneDim.x * slices.x;
-    clusterPos.y = clusterPos.y / sceneDim.y * slices.y;
-    clusterPos.z = clusterPos.z / (sceneDim.w - sceneDim.z) * slices.z;
-
-    clusterPos = vec4(floor(clusterPos.x), floor(clusterPos.y), floor(clusterPos.z), 1.0);
-
     // optimize z using non linear scale once linear works..
     // show perf. comparison..
 
-    int clusterIdx = int(clusterPos.x + clusterPos.y * slices.x + clusterPos.z * slices.x * slices.y);
-    int slicesSize = int(slices.x * slices.y * slices.z);
-    int clusterTexCoord = (clusterIdx + 1) / (slicesSize + 1); // like u in UnpackLight()..
+    // use UnpackLight() logic to read lightIdx, and then use UnpackLight() to read light from that idx..
 
-    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterTexCoord, 0.0)).x); // clamp to max lights in scene if this misbehaves..
+    int clusterIdx = clusterPos.x + clusterPos.y * ${params.xSlices} + clusterPos.z * ${params.xSlices} * ${params.ySlices};
+    int clusterWidth = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int clusterHeight = int(float(${params.maxLights}+1) / 4.0) + 1;
+    float clusterU = float(clusterIdx + 1) / float(clusterWidth + 1); // like u in UnpackLight()..
+
+    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterU, 0.0)).x); // clamp to max lights in scene if this misbehaves..
 
     for (int i = 0; i < ${params.numLights}; i++) {
       if(i >= numLights) {
         break;
       }
-      int clusterTex = i / 4; // floors by default..
-      int lightIdx = int(ExtractFloat(u_clusterbuffer, slicesSize, ${params.maxLights},clusterIdx, i));
+      // int clusterTex = (i) / 4; // floors by default..
+      // int lightIdx = int(ExtractFloat(u_clusterbuffer, slicesSize, ${params.maxLights}+1, clusterIdx, clusterTex));
+
+      //int lightIdx = getLightIdx(u_clusterbuffer, slicesSize, ${params.maxLights}, clusterIdx, clusterTex);
+
+      int clusterPixel = int(float(i+1) / 4.0); // FIXED BUG: offset by 1
+      float clusterV = float(clusterPixel+1) / float(clusterHeight+1);
+      vec4 texel = texture2D(u_clusterbuffer, vec2(clusterU, clusterV));
+      int lightIdx;
+      int clusterPixelComponent = (i+1) - (clusterPixel * 4);
+      if (clusterPixelComponent == 0) {
+          lightIdx = int(texel[0]);
+      } else if (clusterPixelComponent == 1) {
+          lightIdx = int(texel[1]);
+      } else if (clusterPixelComponent == 2) {
+          lightIdx = int(texel[2]);
+      } else if (clusterPixelComponent == 3) {
+          lightIdx = int(texel[3]);
+      } 
 
       // shading
       Light light = UnpackLight(lightIdx);
@@ -127,8 +142,8 @@ export default function(params) {
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
-    const vec3 ambientLight = vec3(0.1);
-    fragColor += albedo * ambientLight;
+    const vec3 ambientLight = vec3(0.025);
+    fragColor += albedo * ambientLight; // float(numLights) // vec3(float(u_slices.x)/2.0, float(u_slices.y)/2.0, float(u_slices.z)/2.0)
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
