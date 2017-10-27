@@ -1,5 +1,5 @@
 import { gl } from '../init';
-import { mat4, vec4, vec3 } from 'gl-matrix';
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { loadShaderProgram } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/clusteredForward.vert.glsl';
@@ -17,7 +17,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount', 'u_viewMatrix', 'u_texDims'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -77,10 +77,16 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
     // bind u_dims
-    gl.uniform3fv(this._shaderProgram.u_dims, vec3.fromValues(canvas.width, canvas.height, 1));
+    gl.uniform4fv(this._shaderProgram.u_dims, vec4.fromValues(canvas.width, canvas.height, camera.near, camera.far - camera.near));
 
     // bind u_sliceCount
     gl.uniform3fv(this._shaderProgram.u_sliceCount, vec3.fromValues(this._xSlices, this._ySlices, this._zSlices));
+
+    // Upload the view matrix
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    // bind u_texDims
+    gl.uniform2fv(this._shaderProgram.u_texDims, vec2.fromValues(this._clusterTexWidth, this._clusterTexHeight));
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

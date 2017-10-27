@@ -9,12 +9,12 @@ export default function(params) {
   
   void main() {
     // TODO: extract data from g buffers and do lighting
-    // vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
-    // vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
+    vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
+    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
-    gl_FragColor = vec4(v_uv, 0.0, 1.0);
+    gl_FragColor = gb1;//vec4(v_uv, 0.0, 1.0);
   }
   `;
 }
