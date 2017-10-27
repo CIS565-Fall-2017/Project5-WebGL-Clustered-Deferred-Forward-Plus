@@ -17,11 +17,11 @@ This project requires a WebGL-capable browser with support for several extension
 - WEBGL_depth_texture
 - WEBGL_draw_buffer
 
-[Live Deom Link](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+[Live Demo Link](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 [![](img/screenshot.jpg)](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
-### Demo Video/GIF
+### Demo Video
 
 [![](img/videoCover.jpg)](https://www.youtube.com/watch?v=JL3-XckKPKk)
 
@@ -45,7 +45,7 @@ ramp shading | bloom + ramping shading
   - cluster part are the same as Clustered Forward+
   - Store vertex attributes in g-buffer
   - Read g-buffer in a shader to produce final output
-  - Two g-buffers are used(two-component normal and reconstruct position using screen space X, Y, and depth information)
+  - Two g-buffers are used(reconstruct norm using two-component normal and reconstruct position using screen space X, Y, and depth information)
 
 ### Effects
 - Bloom (additional pipeline stages include brightness filter, horizontal & vertical Gaussian blur and finally combine)
