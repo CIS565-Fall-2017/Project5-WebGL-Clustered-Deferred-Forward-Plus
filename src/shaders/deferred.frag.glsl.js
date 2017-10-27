@@ -21,6 +21,9 @@ export default function(params) {
   uniform float u_farZ;
 
   varying vec2 v_uv;
+
+  const float shininess = 600.0;
+  const vec3 specularColor = vec3(0.1, 0.1, 0.1);
   
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) 
   {
@@ -157,9 +160,22 @@ export default function(params) {
         float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
         float lambertTerm = max(dot(L, normal), 0.0);
 
-        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-        
-        // fragColor = vec3(float(xCluster) / 15.0);        
+        // Blinn
+        vec3 lightDir = normalize(light.position - v_position);
+        vec3 viewDir = normalize(-v_position);
+        vec3 halfDir = normalize(viewDir + lightDir);
+
+        float specularAngle = max(dot(halfDir, normal), 0.0);
+        float specular = 0.0;
+
+        if(lambertTerm > 0.0) {
+            specular = pow(specularAngle, shininess);
+        }
+
+        // Blinn
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular * specularColor;
+
+        // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
