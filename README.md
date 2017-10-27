@@ -50,7 +50,7 @@ ___
     return vec2.fromValues(normSide1, normSide2);
   }
   ```
-  ![]("./results/ex01.JPG")</br>
+  <img src="./results/ex01.JPG" width="626" height="446"></br>
   The orange line is the target normal we want to compute, we also know that `IH = i * Stride + Orig`, and triangle IJH and triangle CIH are similar, Also, extend the target till its length equals to 1. then we can get the target direction.
 
 * **G-Buffer Optimization**: I used 2 methods to compress the G-buffer to reduce the memory usages, first one is to pack the data into `vec4`s, which is the unit size of texture data. The second one is to compress the 3D normal into 2-component normal.
