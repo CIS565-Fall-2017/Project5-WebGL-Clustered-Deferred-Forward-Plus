@@ -5,6 +5,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 * YAOYI BAI (pennkey: byaoyi)
 * Tested on: Windows 10 Professional, i7-6700HQ  @2.60GHz 16GB, GTX 980M 8253MB (My own Dell Alienware R3)
+* Browser: Google Chrome
 
 ### Live Online
 
