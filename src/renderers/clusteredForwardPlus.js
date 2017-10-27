@@ -82,7 +82,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1f(this._shaderProgram.u_numclusters, this._xSlices * this._ySlices * this._zSlices); 
     gl.uniform1f(this._shaderProgram.u_cameranear, camera.near); 
     gl.uniform1f(this._shaderProgram.u_camerafar, camera.far);
-    gl.uniform3f(this._shaderProgram.u_camerapos, camera.position[0], camera.position[1], camera.position[2]);
+    gl.uniform3f(this._shaderProgram.u_camerapos, camera.position.x, camera.position.y, camera.position.z);
     gl.uniform2f(this._shaderProgram.u_res, canvas.width, canvas.height); 
     gl.uniform3f(this._shaderProgram.u_slices, this._xSlices, this._ySlices, this._zSlices);
 

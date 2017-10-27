@@ -115,6 +115,7 @@ export default function(params) {
       float specularTerm = pow(max(dot(normal, halfVec), 0.0), 100.0);
 
       fragColor += (albedo + vec3(specularTerm)) * lambertTerm * light.color * lightIntensity;
+      //fragColor += vec3(specularTerm);
     }
 
     const vec3 ambientLight = vec3(0.025);

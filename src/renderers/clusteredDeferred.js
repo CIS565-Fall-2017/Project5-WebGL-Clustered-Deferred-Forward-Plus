@@ -21,7 +21,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -30,7 +30,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_viewMatrix', 'u_lightbuffer', 'u_clusterbuffer', 'u_slices', 'u_cameranear', 'u_camerafar', 'u_camerapos', 'u_res'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_viewMatrix', 'u_InvViewMatrix', 'u_lightbuffer', 'u_clusterbuffer', 'u_slices', 'u_cameranear', 'u_camerafar', 'u_camerapos', 'u_res'],
       attribs: ['a_uv'],
     });
 
@@ -124,6 +124,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progCopy.u_viewMatrix, false, this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -156,6 +157,9 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
      // Upload the camera matrix
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    var inverse = mat4.create();
+    mat4.invert(inverse, this._viewMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_InvViewMatrix, false, inverse);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
