@@ -40,9 +40,10 @@ Although different grid sizes may improve these results, the lack of intersectio
 The deferred renderer uses only two buffers:
 
 G1: [albedo | depth]
+
 G2: [NormalXY | specularValue | specularExponent]
 
-In the accumulation pass, the view space position is reconstructed from the depth, and the normal is also rebuilt from the encoded XY values.
+In the accumulation pass, the view space position is reconstructed from the depth, and the normal is also rebuilt from the encoded XY values. Initially, the texture format was RGBA8 but because of precision issues I reverted to FLOAT. Ideally, buffers should be RGBA8 and depth should be encoded in all four components of a separate buffer.
 
 ### Credits
 
