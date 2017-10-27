@@ -126,7 +126,7 @@ export default function(params) {
     for (int i = 0; i < numLights; ++i) 
     {
       if(i >= clusterNumLights)
-      {        
+      {
         break;
       }
 
@@ -187,8 +187,8 @@ export default function(params) {
       }
     }
 
-    const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
+    // const vec3 ambientLight = vec3(0.025);
+    // fragColor += albedo * ambientLight;
 
     if(u_gammaCorrection == 1)
     {
