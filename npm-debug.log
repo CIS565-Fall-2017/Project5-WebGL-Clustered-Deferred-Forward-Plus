@@ -1,0 +1,47 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'D:\\NodeJS\\node.exe',
+1 verbose cli   'D:\\NodeJS\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'start' ]
+2 info using npm@3.10.10
+3 info using node@v6.11.4
+4 verbose run-script [ 'prestart', 'start', 'poststart' ]
+5 info lifecycle @~prestart: @
+6 silly lifecycle @~prestart: no script for prestart, continuing
+7 info lifecycle @~start: @
+8 verbose lifecycle @~start: unsafe-perm in lifecycle true
+9 verbose lifecycle @~start: PATH: D:\NodeJS\node_modules\npm\bin\node-gyp-bin;F:\Course\CIS565GPUProgramming\Project5-WebGL-Clustered-Deferred-Forward-Plus\node_modules\.bin;C:\Users\VElysianP\bin;D:\Git\Git\mingw64\bin;D:\Git\Git\usr\local\bin;D:\Git\Git\usr\bin;D:\Git\Git\usr\bin;D:\Git\Git\mingw64\bin;D:\Git\Git\usr\bin;C:\Users\VElysianP\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\libnvvp;C:\ProgramData\Oracle\Java\javapath;D:\CUDA\bin;D:\CUDA\libnvvp;C:\Program Files (x86)\Intel\iCLS Client;C:\Program Files\Intel\iCLS Client;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\program files (x86)\skype\Phone;C:\Users\VElysianP\.dnx\bin;C:\Program Files\Microsoft DNX\Dnvm;C:\Program Files\Microsoft SQL Server\130\Tools\Binn;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit;C:\Program Files\Microsoft SQL Server\110\Tools\Binn;D:\MATLAB2016a\runtime\win64;D:\MATLAB2016a\bin;C:\Program Files\Common Files\Autodesk Shared;C:\Program Files (x86)\Autodesk\Backburner;C:\Users\VElysianP\.dnx\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;D:\QT\5.4\msvc2013_64\bin;D:\Putty;D:\NodeJS;D:\cmake\bin;C:\Users\VElysianP\AppData\Local\Microsoft\WindowsApps;C:\Users\VElysianP\AppData\Roaming\npm;D:\visual studio code\Microsoft VS Code\bin;D:\Git\Git\usr\bin\vendor_perl;D:\Git\Git\usr\bin\core_perl
+10 verbose lifecycle @~start: CWD: F:\Course\CIS565GPUProgramming\Project5-WebGL-Clustered-Deferred-Forward-Plus
+11 silly lifecycle @~start: Args: [ '/d /s /c', 'webpack-dev-server' ]
+12 silly lifecycle @~start: Returned: code: 3221225786  signal: null
+13 info lifecycle @~start: Failed to exec start script
+14 verbose stack Error: @ start: `webpack-dev-server`
+14 verbose stack Exit status 3221225786
+14 verbose stack     at EventEmitter.<anonymous> (D:\NodeJS\node_modules\npm\lib\utils\lifecycle.js:255:16)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at EventEmitter.emit (events.js:191:7)
+14 verbose stack     at ChildProcess.<anonymous> (D:\NodeJS\node_modules\npm\lib\utils\spawn.js:40:14)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at ChildProcess.emit (events.js:191:7)
+14 verbose stack     at maybeClose (internal/child_process.js:920:16)
+14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:230:5)
+15 verbose pkgid @
+16 verbose cwd F:\Course\CIS565GPUProgramming\Project5-WebGL-Clustered-Deferred-Forward-Plus
+17 error Windows_NT 10.0.14393
+18 error argv "D:\\NodeJS\\node.exe" "D:\\NodeJS\\node_modules\\npm\\bin\\npm-cli.js" "start"
+19 error node v6.11.4
+20 error npm  v3.10.10
+21 error code ELIFECYCLE
+22 error @ start: `webpack-dev-server`
+22 error Exit status 3221225786
+23 error Failed at the @ start script 'webpack-dev-server'.
+23 error Make sure you have the latest version of node.js and npm installed.
+23 error If you do, this is most likely a problem with the  package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     webpack-dev-server
+23 error You can get information on how to open an issue for this project with:
+23 error     npm bugs
+23 error Or if that isn't available, you can get their info via:
+23 error     npm owner ls
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]
