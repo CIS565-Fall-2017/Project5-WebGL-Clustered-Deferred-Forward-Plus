@@ -83,12 +83,12 @@ export function renderFullscreenQuad(program) {
 
   // Enable the bound buffer as the vertex attrib array for
   // program.a_position, using gl.enableVertexAttribArray
+
   gl.enableVertexAttribArray(program.a_position);
-  
+
   // Use gl.vertexAttribPointer to tell WebGL the type/layout for
   // program.a_position's access pattern.
   gl.vertexAttribPointer(program.a_position, 3, gl.FLOAT, gl.FALSE, 0, 0);
-
   // Use gl.drawArrays to draw the quad
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

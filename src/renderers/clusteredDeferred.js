@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4 } from 'gl-matrix';
+import { mat4, vec4,vec3 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -8,8 +8,8 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-
-export const NUM_GBUFFERS = 4;
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
+export const NUM_GBUFFERS = 2;
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -28,9 +28,14 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSlices:xSlices,
+      ySlices:ySlices,
+      zSlices:zSlices,
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
-      attribs: ['a_uv'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_cameraPos',
+      'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix','u_screenWidth', 'u_screenHeight', 'u_near', 'u_far'],
+      attribs: ['a_position','a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
@@ -102,6 +107,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     if (canvas.width != this._width || canvas.height != this._height) {
       this.resize(canvas.width, canvas.height);
     }
+    //Performance Analysis
+    //var t_start=performance.now();
 
     // Update the camera matrices
     camera.updateMatrixWorld();
@@ -154,7 +161,12 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
-
+    gl.uniform1f(this._progShade.u_screenWidth,canvas.width);
+    gl.uniform1f(this._progShade.u_screenHeight,canvas.height);
+    gl.uniform1f(this._progShade.u_near,camera.near);
+    gl.uniform1f(this._progShade.u_far,camera.far);
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    gl.uniform3f(this._progShade.u_cameraPos,camera.position.x,camera.position.y,camera.position.z);
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
@@ -162,7 +174,19 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
     }
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 4);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 5);
 
     renderFullscreenQuad(this._progShade);
+
+
+    // var t_end=performance.now();
+    // console.log(t_end-t_start,"ms");
   }
 };

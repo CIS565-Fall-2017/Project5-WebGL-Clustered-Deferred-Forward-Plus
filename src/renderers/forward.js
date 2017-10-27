@@ -26,6 +26,9 @@ export default class ForwardRenderer {
 
   render(camera, scene) {
     // Update the camera matrices
+    //var t_start=performance.now();
+    
+
     camera.updateMatrixWorld();
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
@@ -67,5 +70,9 @@ export default class ForwardRenderer {
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
+
+
+    // var t_end=performance.now();
+    // console.log(t_end-t_start,"ms");
   }
 };
