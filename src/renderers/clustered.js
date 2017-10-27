@@ -37,7 +37,7 @@ export default class ClusteredRenderer {
     // var farNormal = [0,0,-camera.far];
     var totalLight = scene.lights.length;
 
-    for (let z = 0; z < this._zSlices; ++z) {
+    for (let z = 0; z < zSliceMax; ++z) {
       // if(z>=1)
       // {
       //   break;
