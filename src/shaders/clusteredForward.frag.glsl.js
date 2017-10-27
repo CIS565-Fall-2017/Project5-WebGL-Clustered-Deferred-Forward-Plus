@@ -23,8 +23,8 @@ export default function (params) {
   // More uniforms 
   uniform float u_screenHeight;
   uniform float u_screenWidth;
-  uniform float u_cameraFar;
-  uniform float u_cameraNear;
+  uniform float u_camFar;
+  uniform float u_camNear;
   uniform mat4 u_viewMatrix;
 
   varying vec3 v_position;
@@ -98,86 +98,90 @@ export default function (params) {
       return 0.0;
     }
   }
+
+  // --------------------------------------------------------------------------
+  
+  float ExtractLightInfoFromCluster(int u, int lightIdx) 
+  {
+    int v = int(  floor(  (float(lightIdx) + 1.0) / 4.0  )  );
+    vec4 pixelComponent = texture2D(u_clusterbuffer, vec2(u, v));   
+    int lightIdxInTexture = int(mod(float(lightIdx) + 1.0, 4.0));
+    
+    if (lightIdxInTexture == 0) {
+      return pixelComponent[0];
+    } else if (lightIdxInTexture == 1) {
+      return pixelComponent[1];
+    } else if (lightIdxInTexture == 2) {
+      return pixelComponent[2];
+    } else if (lightIdxInTexture == 3) {
+      return pixelComponent[3];
+    }
+  }
   
   // --------------------------------------------------------------------------
 
   void main() 
   {
     vec4 _fragPos = u_viewMatrix * vec4(v_position, 1.0);
-    vec3 fragPos = vec3(_fragPos[0], _fragPos[1], _fragPos[2]); 
+    vec3 fragPos = vec3(_fragPos[0], _fragPos[1], -1.0 * _fragPos[2]);  // Make sure to negate z
 
-    float z_stride = (u_cameraFar - u_cameraNear) / float(${params.z_slices});
-    float y_stride = u_screenHeight / float(${params.y_slices});
-    float x_stride = u_screenWidth / float(${params.x_slices});
+    float z_stride = float(u_camFar - u_camNear) / float(${params.z_slices});
+    float y_stride = float(u_screenHeight) / float(${params.y_slices});
+    float x_stride = float(u_screenWidth) / float(${params.x_slices});
 
     // gl_FragCoord.xy are in pixel/screen space, .z is in [0, 1]
-    // DO WE NEED TO MULTIPLY Z BY -1? SINCE LOOKING DOWN -Z?
-    int z_cluster_idx = int(floor(-fragPos[2] / z_stride));
-    int y_cluster_idx = int(floor((gl_FragCoord.y + (u_screenHeight / 2.0)) / y_stride));
-    int x_cluster_idx = int(floor((gl_FragCoord.x + (u_screenWidth / 2.0)) / x_stride));
+    int z_cluster_idx = int(floor((fragPos[2] - u_camNear) / z_stride));
+
+    int y_cluster_idx = int(floor(gl_FragCoord.y / y_stride)); 
+    int x_cluster_idx = int(floor(gl_FragCoord.x / x_stride));
+    // int y_cluster_idx = int(floor((gl_FragCoord.y + (u_screenHeight / 2.0)) / y_stride));
+    // int x_cluster_idx = int(floor((gl_FragCoord.x + (u_screenWidth / 2.0)) / x_stride));
+
+    //Test to see if you have 15 slices
+    // gl_FragColor = vec4(float(x_cluster_idx)/15.0, float(x_cluster_idx)/15.0, float(x_cluster_idx)/15.0, 1.0);
+
 
     // Calculate u index into cluster texture
-    int u = x_cluster_idx + 
+    int clusterIdx = x_cluster_idx + 
             (y_cluster_idx * ${params.x_slices}) + 
             (z_cluster_idx * ${params.x_slices} * ${params.y_slices});
 
+    int totalNumClusters = ${params.x_slices} * ${params.y_slices} * ${params.z_slices};            
+    int texWidth = int(ceil(float(${params.maxLightsPerCluster} + 1) / 4.0)); 
+    const int maxLightsPerCluster = int(${params.maxLightsPerCluster});
+
     // Get the light count from cluster texture, iterate through that
+    // Note: Textures go from [0, 1], so divide u and v by width and height before calling texture2D
+    // "+ 1" to make sure you hit inside pixel 
+    float u = float(clusterIdx + 1) / float(totalNumClusters + 1);
     vec4 firstVComponent = texture2D(u_clusterbuffer, vec2(u, 0));
-    int numLightsInCluster = int(firstVComponent[0]);
+    int numLightsInCluster = int(firstVComponent.r); 
 
-
-    // [BUG] WHY IS numLightsInCluster 0?!?!?!?!?
-
-
-
-    // ========================= CURRENT CODE =========================    
     // Light Calculation
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
     vec3 fragColor = vec3(0.0);
-    
-    // for (int i = 0; i < numLightsInCluster; ++i) 
-    // {
-    //   int v = (i + 1) / 4;    //shouldn't need to floor since all ints, but double check
-    //   int pixelIdx = mod(i + 1, 4);
-    //   vec4 pixelComponent = texture2D(u_clusterbuffer, vec2(u, v));
-    //   int lightIdxInTexture = pixelComponent[pixelIdx];
-      
-    //   Light light = UnpackLight(lightIdxInTexture);
-    //   float lightDistance = distance(light.position, v_position);
-    //   vec3 L = (light.position - v_position) / lightDistance;
 
-    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-    //   float lambertTerm = max(dot(L, normal), 0.0);
+    for (int i = 0; i < maxLightsPerCluster; ++i) 
+    {
+      if(i >= numLightsInCluster)  break;
 
-    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    // }
+      // Get the light index in cluster texture 
+      int lightIdxInTexture = int(ExtractFloat(u_clusterbuffer, totalNumClusters, texWidth, clusterIdx, i+1));  
+      // int lightIdxInTexture = int(ExtractLightInfoFromCluster(u, i));
 
-    // const vec3 ambientLight = vec3(0.025);
-    // fragColor += albedo * ambientLight;
-    // gl_FragColor = vec4(fragColor, 1.0);
+      Light light = UnpackLight(lightIdxInTexture);
+      float lightDistance = distance(light.position, v_position);
+      vec3 L = (light.position - v_position) / lightDistance;
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+      float lambertTerm = max(dot(L, normal), 0.0);
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    }
 
-    // ========================= OLD CODE =========================
-    // vec3 albedo = texture2D(u_colmap, v_uv).rgb;
-    // vec3 normap = texture2D(u_normap, v_uv).xyz;
-    // vec3 normal = applyNormalMap(v_normal, normap);
-    // vec3 fragColor = vec3(0.0);
-
-    // for (int i = 0; i < ${params.numLights}; ++i) {
-    //   Light light = UnpackLight(i);
-    //   float lightDistance = distance(light.position, v_position);
-    //   vec3 L = (light.position - v_position) / lightDistance;
-
-    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-    //   float lambertTerm = max(dot(L, normal), 0.0);
-
-    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    // }
-
-    // const vec3 ambientLight = vec3(0.025);
-    // fragColor += albedo * ambientLight;
-    // gl_FragColor = vec4(fragColor, 1.0);
+    const vec3 ambientLight = vec3(0.025);
+    fragColor += albedo * ambientLight;
+    gl_FragColor = vec4(fragColor, 1.0);
 
   }
   `;
