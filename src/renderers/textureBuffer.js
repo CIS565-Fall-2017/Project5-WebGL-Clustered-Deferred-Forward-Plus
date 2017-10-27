@@ -39,7 +39,7 @@ export default class TextureBuffer {
    * @param {*} component The ith float of an element is located in the (i/4)th pixel
    */
   bufferIndex(index, component) {
-    return 4 * index + 4 * component * this._elementCount;
+    return 4 * (component * this._elementCount + index); // seriously?
   }
 
   /**
