@@ -141,6 +141,9 @@ export default function(params) {
       fragColor += albedo * ambientLight;
 
       gl_FragColor = vec4(fragColor, 1.0);
+      //gl_FragColor = vec4(albedo, 1.0);
+      //gl_FragColor = vec4(normal, 1.0);
+      //gl_FragColor = vec4(v_position, 1.0);
   }
   `;
 }
