@@ -110,13 +110,11 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      vec3 viewDir = normalize(u_camerapos - v_position);
+      vec3 halfVec = normalize(L + viewDir);
+      float specularTerm = pow(max(dot(normal, halfVec), 0.0), 100.0);
 
-      // vec3 lightDir = light.position - v_position;
-      // vec3 viewDir = u_camerapos - v_position;
-      // vec3 halfVec = normalize(lightDir + viewDir);
-      // float specularTerm = pow(dot(normal, halfVec), 1.0);
-      // fragColor = specularTerm * light.color * vec3(lightIntensity);
+      fragColor += (albedo + vec3(specularTerm)) * lambertTerm * light.color * lightIntensity;
     }
 
     const vec3 ambientLight = vec3(0.025);
