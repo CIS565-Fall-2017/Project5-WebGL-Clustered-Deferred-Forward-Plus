@@ -85,6 +85,17 @@ export default function(params) {
       }
   }
 
+  vec3 uncompressNormal(vec2 compressed)
+  {
+    compressed -= 0.5;
+    compressed *= 2.0;
+    
+    float z = sqrt(1.0 - (compressed.x*compressed.x) - (compressed.y*compressed.y));
+    vec3 normal = vec3(compressed.x, compressed.y, z);
+
+    return normalize(normal);
+  }
+
   void main() {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);    // v_position
@@ -93,23 +104,60 @@ export default function(params) {
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
     // Grab the individual components from the textures
-    vec3 v_pos = gb0.rgb;
+    vec3 v_position = gb0.rgb;
     vec3 albedo = gb1.rgb;
-    vec3 normal = gb2.rgb;
+    vec3 _normal = gb2.rgb;
+
+    vec3 compressed = uncompressNormal(vec2(_normal.x, _normal.y));
+    vec3 normal = vec3(u_invViewMatrix * vec4(compressed, 0.0));
 
     vec3 fragColor = vec3(0.0);
+
+    // GLSL type inconsistencies
+    // https://stackoverflow.com/questions/33579110/glsl-type-inconsistencies
+    float x = gl_FragCoord.x;
+    float y = gl_FragCoord.y;
+    // Get the position in camera space    
+    vec4 v_posCamera = u_viewMatrix * vec4(v_position, 1.0);
+    float z = -v_posCamera[2];
+
+    // Use gl_FragCoord to get xyz values
+    // http://www.txutxi.com/?p=182
+    float xStride = float(u_width) / float(${params.xSlices});  
+    float yStride = float(u_height) / float(${params.ySlices});  
+    float zStride = float(u_farZ - u_nearZ) / float(${params.zSlices});  
+    int xCluster = int(float(x) / xStride);
+    int yCluster = int(float(y) / yStride);
+    int zCluster = int(float(z - u_nearZ) / zStride);
     
+    // Find which cluster the current fragment lies in
+    // Cluster index
+    int index = xCluster + (yCluster * ${params.xSlices}) + (zCluster * ${params.xSlices} *${params.ySlices});
+
+    int numClusters = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    float u = float(index + 1) / float(numClusters + 1);
+
+    // Get how many lights are in the cluster
+    int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
+
+    int numTexels = int( ceil( float(${params.maxLightsPerCluster} + 1) / float(4.0)) );
+
     for(int i = 0; i < ${params.numLights}; i++) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_pos);
-      vec3 L = (light.position - v_pos) / lightDistance;
+        if(i >= numLightsInCluster) {
+            break;
+        }
 
-      vec3 lightPos = light.position;
+        int lightIndex = int(ExtractFloat(u_clusterbuffer, numClusters, numTexels, index, i + 1));
+        Light light = UnpackLight(lightIndex);
+        float lightDistance = distance(light.position, v_position);
+        vec3 L = (light.position - v_position) / lightDistance;
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+        vec3 lightPos = light.position;
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal), 0.0);
+
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);

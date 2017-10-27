@@ -8,12 +8,13 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
 export const NUM_GBUFFERS = 4;
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
-  constructor(xSlices, ySlices, zSlices, camera, MAX_LIGHTS_PER_CLUSTER) {
-    super(xSlices, ySlices, zSlices, camera, MAX_LIGHTS_PER_CLUSTER);
+  constructor(xSlices, ySlices, zSlices) {
+    super(xSlices, ySlices, zSlices);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
     
@@ -21,27 +22,33 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: [
+        'u_viewProjectionMatrix', 
+        'u_viewMatrix', 
+        'u_colmap', 
+        'u_normap'
+      ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
-      numXSlices: xSlices,
-      numYSlices: ySlices,
-      numZSlices: zSlices,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
       maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-                 'u_viewProjectionMatrix', 'u_viewMatrix', 
-                 'u_screenHeight', 'u_screenWidth', 'u_zStride', 'u_camNear',
+                 'u_viewProjectionMatrix', 'u_viewMatrix', 'u_invViewMatrix',
+                 'u_height', 'u_width', 'u_nearZ', 'u_farZ',
                  'u_lightbuffer', 'u_clusterbuffer'],
       attribs: ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
+    this._invViewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
   }
 
@@ -116,6 +123,9 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
+    // Inverse View Matrix
+    mat4.invert(this._invViewMatrix, this._viewMatrix);
+
     // Render to the whole screen
     gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -130,6 +140,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progCopy.u_viewMatrix, false, this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -174,14 +185,14 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._progShade.u_clusterbuffer, 3);
 
-    // Upload the view matrix
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
-    //upload the screen dimensions
-    gl.uniform1f (this._progShade.u_screenWidth, canvas.width);
-    gl.uniform1f (this._progShade.u_screenHeight, canvas.height);
-    //upload z_stride -- this is constant
-    gl.uniform1f (this._progShade.u_zStride, this.zStride);
-    gl.uniform1f (this._progShade.u_camNear, camera.near);
+    gl.uniformMatrix4fv(this._progShade.u_invViewMatrix, false, this._invViewMatrix);
+
+    gl.uniform1f (this._progShade.u_width, canvas.width);
+    gl.uniform1f (this._progShade.u_height, canvas.height);
+
+    gl.uniform1f (this._progShade.u_farZ, camera.far);
+    gl.uniform1f (this._progShade.u_nearZ, camera.near);
 
     // Bind g-buffers
     const firstGBufferBinding = 10; // You may have to change this if you use other texture slots

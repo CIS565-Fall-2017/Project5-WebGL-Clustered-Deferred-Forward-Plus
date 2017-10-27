@@ -134,7 +134,7 @@ export default class ClusteredRenderer {
         //   continue;
         // }
       }
-
+      
       // Update the buffer 
       for(let z = minZ; z <= maxZ; z++) {
         for(let y = minY; y <= maxY; y++) {
