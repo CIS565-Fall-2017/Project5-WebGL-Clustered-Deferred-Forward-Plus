@@ -2,7 +2,7 @@ import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 300;
+export const MAX_LIGHTS_PER_CLUSTER = 100;
 
 function getDistance(ratio, lightPos){
   //only consider 2D space

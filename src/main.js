@@ -24,7 +24,7 @@ function setRenderer(renderer) {
       params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(20, 20, 20);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
   }
 }
