@@ -126,7 +126,7 @@ export default function(params) {
        }
        int rowIndex = i/4;
        int colIndex = i - rowIndex*4;
-       float tempRowRatio = float(rowIndex+1)/float((${params.numLights}+1)/4+1);
+       float tempRowRatio = float(rowIndex)/float((${params.numLights}+1)/4+1);
        int tempLightIndex; 
        if(colIndex == 0)
        {
@@ -162,8 +162,8 @@ export default function(params) {
          float specular = pow(specAngle, 1.5);
          specColor = specular*specColor;
        }
-       fragColor += albedo * (lambertTerm*0.5+specColor*0.5) * light.color * vec3(lightIntensity);
-      
+       //fragColor += albedo * (lambertTerm*0.5+specColor*0.5) * light.color * vec3(lightIntensity);
+       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
       }
 
     const vec3 ambientLight = vec3(0.025);

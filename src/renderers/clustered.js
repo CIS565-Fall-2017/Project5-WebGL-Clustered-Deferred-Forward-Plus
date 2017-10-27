@@ -38,19 +38,11 @@ export default class ClusteredRenderer {
     var totalLight = scene.lights.length;
 
     for (let z = 0; z < zSliceMax; ++z) {
-      // if(z>=1)
-      // {
-      //   break;
-      // }
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-          // if(z==1)
-          // {
-          //   debugger;
-          // }
 
           let zPosNear = -(z*zClusterDis + camera.near);
           let zPosFar = -((z+1)*zClusterDis + camera.near);
@@ -102,67 +94,51 @@ export default class ClusteredRenderer {
 
             //left
             let leftProjection = vec3.dot(lightPos,leftNormal);
-            if(leftProjection>0)
+            if(leftProjection>lightRadius)
             {
-              if(lightRadius<Math.abs(leftProjection)){
+              //if(lightRadius<=leftProjection){
                 judgeInOut = false;
-              } 
+              //} 
             }
 
             //right
             let rightProjection = vec3.dot(lightPos,rightNormal);
-            if(rightProjection>0)
+            if(rightProjection>lightRadius)
             {
-              if(lightRadius<Math.abs(rightProjection))
-              {
+              // if(lightRadius<=rightProjection)
+              // {
                 judgeInOut = false;
-              }              
+              //}              
             }
 
             //up
             let upProjection = vec3.dot(lightPos,upNormal);
-            if(upProjection>0)
+            if(upProjection>lightRadius)
             {
-              if(lightRadius<Math.abs(upProjection))
-              {
+              // if(lightRadius<=upProjection)
+              // {
                 judgeInOut = false;
-              }             
+              //}             
             }
 
             //down
             let downProjection = vec3.dot(lightPos,downNormal);
-            if(downProjection>0)
+            if(downProjection>lightRadius)
             {
-              if(lightRadius<Math.abs(downProjection))
-              {
+              // if(lightRadius<=downProjection)
+              // {
                 judgeInOut = false;
-              }
+              //}
             }
 
             //near
-            // let nearProjection = vec3.dot(lightPos,nearNormal)/vec3.length(nearNormal);
-            // if(nearProjection>0)
-            // {
-            //   if(lightRadius<Math.abs(nearProjection))
-            //   {
-            //     judgeInOut = false;
-            //   }           
-            // }
-            if((lightPos[2]-lightRadius)>zPosNear)
+            if((lightPos[2]-lightRadius)>=zPosNear)
             {
               judgeInOut = false;
             }
 
             //far
-            // let farProjection = vec3.dot(lightPos,farNormal)/vec3.length(farNormal);
-            // if(farProjection>0)
-            // {
-            //   if(lightRadius<Math.abs(farProjection))
-            //   {
-            //     judgeInOut = false;
-            //   }           
-            // }
-            if((lightPos[2]+lightRadius)<zPosFar)
+            if((lightPos[2]+lightRadius)<=zPosFar)
             {
               judgeInOut = false;
             }
@@ -187,37 +163,6 @@ export default class ClusteredRenderer {
     //debugger;
     this._clusterTexture.update();
   }
-
-  //Another method for clusters 
-  // updateClusters(camera, viewMatrix, scene) {
-  //   // TODO: Update the cluster texture with the count and indices of the lights in each cluster
-  //   // This will take some time. The math is nontrivial...
-  //   var zClusterDis = (camera.far - camera.near)/this._zSlices;
-  //   var _cameraAspect = camera.aspect;
-  //   var _cameraFovTan = Math.tan(((camera.fov/2)*Math.PI)/180);
-  //   var _farDis = camera.far;
-  //   var farHeight = 2*(_farDis*_cameraFovTan);
-  //   var farWidth = farHeight*_cameraAspect;
-  //   var nearNormal = [0,0,-1];
-  //   var farNormal = [0,0,1];
-  //   var SceneLights = scene.lights;
-  //   var totalLight = SceneLights.length;
-
-  //   for (let z = 0; z < this._zSlices; ++z) {
-  //     for (let y = 0; y < this._ySlices; ++y) {
-  //       for (let x = 0; x < this._xSlices; ++x) {
-  //         let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-  //         let lightCount = 0;
-  //         // Reset the light count to 0 for every cluster
-  //         this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-     
-  //       }
-  //     }
-  //   }
-
-  //   this._clusterTexture.update();
-  // }
-
 
   //TODO
   //another method specially for the deferred shading
