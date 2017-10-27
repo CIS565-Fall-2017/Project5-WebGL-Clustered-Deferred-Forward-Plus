@@ -9,7 +9,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/thumb.png)](https://lostink.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+(https://lostink.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
