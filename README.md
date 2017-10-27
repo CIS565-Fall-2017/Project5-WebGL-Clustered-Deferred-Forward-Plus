@@ -9,7 +9,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/screenshoot.jpg)](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+[![](img/screenshot.jpg)](https://HanmingZhang.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
@@ -19,11 +19,11 @@ WebGL Clustered Deferred and Forward+ Shading
 Project Features
 ================
 
-### Screenshoots:
-![](img/screenshoot.jpg) |  ![](img/screenshoot_bloom.jpg)
+### Screenshots:
+![](img/screenshot.jpg) |  ![](img/screenshot_bloom.jpg)
 ------------ | -------------
 no post processing | bloom
-![](img/screenshoot_rampShading.jpg) |  ![](img/screenshoot_bloom+rampShading.jpg)
+![](img/screenshot_rampShading.jpg) |  ![](img/screenshot_bloom+rampShading.jpg)
 ramp shading | bloom + ramping shading
 
 
@@ -72,6 +72,7 @@ depth | position
    As we can see, when the size of g-buffers reduces from 4 to 2, we have around 16% performance increase. During the process of rendering, we only need to write information to 2 frames buffers, and also only need to extract information from these 2 buffers. The bandwidth burden is reduced.
 
 
+
 - #### Forward, Clustered Forward and Clustered Deferred Comparison
 
   ![](img/comparsion_chart1.jpg)
@@ -89,9 +90,10 @@ depth | position
   In terms of clustered deferred shading, since we only save visible(nearer to camera and not occluded) fragments' information(color, normal, depth) to g-buffers, we save the time to render those not visible fragments.
 
 
-  - #### Bloom & ramp shading performance analysis
 
-  ![](img/comparsion_chart2.jpg)
+- #### Bloom & ramp shading performance analysis
+
+ ![](img/comparsion_chart2.jpg)
 
   ##### Analysis:
   Basically, Bloom post processing effect take additional stages to do brightness filter, horizontal Gaussian blur, vertical Gaussian blur and finally combine it with origin no effect frame. But in our case, it does not take so long time to do all these things, since all these actions are very basic, and just reading and writing frame buffers again and again. Several results during these stages are shown below.
