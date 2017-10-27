@@ -2,6 +2,11 @@
 precision highp float;
 
 uniform mat4 u_viewProjectionMatrix;
+//uniform mat4 u_viewMatrix;
+//uniform float u_camerafov;
+//uniform float u_cameraaspect;
+//uniform float u_cameraFar;
+//uniform float u_cameraNear;
 
 attribute vec3 a_position;
 attribute vec3 a_normal;

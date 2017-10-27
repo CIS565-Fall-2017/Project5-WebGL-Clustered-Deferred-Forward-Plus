@@ -8,6 +8,11 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  uniform mat4 u_viewMatrix;
+  uniform float u_screenWidth;
+  uniform float u_screenHeight;
+  uniform float u_cameraFar;
+  uniform float u_cameraNear;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -15,6 +20,11 @@ export default function(params) {
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+
+  const int numxSlices = ${params.numxSlices};
+  const int numySlices = ${params.numySlices};
+  const int numzSlices = ${params.numzSlices};
+  const int numMaxLightsPerCluster = ${params.numMaxLightsPerCluster};
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -81,8 +91,55 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    //TODO: Determine the cluster this fragment belongs to
+    //Read the data inside u_clusterbuffer
+    //Loop over the light indices
+
+    //LightCount, Index0, Index1, Index2 ||| Index3, Index4, Index5, Index6 |||
+    //Index => pixelIndex
+    //pixelIndex => v-coordinate of the texture
+    //Get the texel from the texture
+    //access the correct component of the texel
+
+    vec4 v_position_eye = u_viewMatrix * vec4(v_position, 1.0);
+    float zInterval = (u_cameraFar - u_cameraNear)/float(numzSlices);
+    int z = int((-v_position_eye.z - u_cameraNear) / zInterval);
+
+    float xInterval = float(u_screenWidth) / float(numxSlices);
+    int x = int(gl_FragCoord.x/xInterval);
+
+    float yInterval = float(u_screenHeight) / float(numySlices);
+    int y = int(gl_FragCoord.y/yInterval);
+
+    int index = x + y * numxSlices + z * numxSlices * numySlices;
+    float ucoord = float(index + 1) / float(numxSlices * numySlices * numzSlices + 1);
+    int lightCount = int(texture2D(u_clusterbuffer, vec2(ucoord, 0.0))[0]);
+    int TexelsinColumn = int(float(numMaxLightsPerCluster+1) / 4.0) + 1;
+
+    for (int index = 0; index < numMaxLightsPerCluster; index++)
+    {
+      if(index + 1>lightCount)
+      {
+        break;
+      }
+
+      int pixel = (index + 1) / 4;          
+      float vcoord = float(pixel + 1) / float(TexelsinColumn + 1);
+      vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(ucoord, vcoord));
+
+      int lightIndex;
+      int component = (index + 1) - 4 * pixel;
+      //fetch
+      if (component == 0)      
+        lightIndex = int(clusterTexel[0]);      
+      else if (component == 1)     
+        lightIndex = int(clusterTexel[1]);      
+      else if (component == 2)      
+        lightIndex = int(clusterTexel[2]);
+      else if (component == 3)
+        lightIndex = int(clusterTexel[3]);
+
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -91,6 +148,18 @@ export default function(params) {
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
+
+    /*for (int i = 0; i < ${params.numLights}; ++i) {
+      Light light = UnpackLight(i);
+      float lightDistance = distance(light.position, v_position);
+      vec3 L = (light.position - v_position) / lightDistance;
+
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+      float lambertTerm = max(dot(L, normal), 0.0);
+
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      //fragColor += vec3(lightIntensity);
+    }*/
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
