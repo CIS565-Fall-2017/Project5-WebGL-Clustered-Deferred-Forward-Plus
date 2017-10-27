@@ -1,6 +1,8 @@
 export default function(params) {
   return `
   #version 100
+  #extension GL_EXT_draw_buffers: enable
+
   precision highp float;
 
   uniform float u_nearClip;
@@ -88,9 +90,9 @@ export default function(params) {
     // g-buffer[1] : normal.x  | normal.y  | 0.0       | NDC_Depth
 
     vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
-    //vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
+    // vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
     vec2 enc_nor = texture2D(u_gbuffers[1], v_uv).xy;
-    //vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
+    // vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
 
     float NDC_depth = texture2D(u_gbuffers[1], v_uv).w;
 
@@ -189,6 +191,7 @@ export default function(params) {
         lambertTerm = max(dot(L, normal), 0.0);
       }
 
+
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
 
       if(cluster_texel_fetch_Idx == 4){
@@ -202,7 +205,8 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    // render to fbo
+    gl_FragData[0] = vec4(fragColor, 1.0);
   }
   `;
 }

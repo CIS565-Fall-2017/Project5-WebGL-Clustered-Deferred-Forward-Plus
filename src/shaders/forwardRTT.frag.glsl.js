@@ -1,6 +1,7 @@
 export default function(params) {
   return `
   #version 100
+  #extension GL_EXT_draw_buffers: enable
   precision highp float;
 
   uniform sampler2D u_colmap;
@@ -99,14 +100,13 @@ export default function(params) {
         lambertTerm = max(dot(L, normal), 0.0);
       }
 
-
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragData[0] = vec4(fragColor, 1.0);
   }
   `;
 }

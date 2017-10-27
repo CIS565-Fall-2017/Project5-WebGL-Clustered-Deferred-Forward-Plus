@@ -1,28 +1,35 @@
 export default function(params) {
   return `
+
   #version 100
+  #extension GL_EXT_draw_buffers: enable
   precision highp float;
+
+  uniform sampler2D u_colmap;
+  uniform sampler2D u_normap;
+  uniform sampler2D u_lightbuffer;
 
   uniform float u_nearClip;
   uniform vec2 u_cluster_tile_size;
   uniform float u_cluster_depth_stride;
   uniform mat4 u_viewMatrix;
-  uniform mat4 u_invViewMatrix;
-  uniform mat4 u_invViewProjMatrix;
+
+  // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
-
-  uniform sampler2D u_lightbuffer;
-
-  uniform sampler2D u_gbuffers[${params.numGBuffers}];
-
+  varying vec3 v_position;
+  varying vec3 v_normal;
   varying vec2 v_uv;
 
-  struct Light {
-    vec3 position;
-    float radius;
-    vec3 color;
-  };
+
+  //float getCulsterIndexK(float z_EyeSpace, float nearClip, float fovby2_radius, float ySlices) {
+    //float c = log(10.0);
+    //float tmp1 = log(-z_EyeSpace / nearClip) / c;
+    //float tmp2 = log(1.0 + 2.0 * tan(fovby2_radius) / ySlices) / c;
+
+    //return floor(0.12 * tmp1 / tmp2);
+    //return 0.0;
+  //}
 
   int getCulsterDepthIndex(float viewSpaceDepth, float nearClip) {
       //2.15 is calculated based on near and far clip
@@ -30,6 +37,20 @@ export default function(params) {
       //far  Clip : 1000.0
       return int(floor(2.15 * log(viewSpaceDepth - nearClip + 1.0)));
   }
+
+  vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
+    normap = normap * 2.0 - 1.0;
+    vec3 up = normalize(vec3(0.001, 1, 0.001));
+    vec3 surftan = normalize(cross(geomnor, up));
+    vec3 surfbinor = cross(geomnor, surftan);
+    return normalize(normap.y * surftan + normap.x * surfbinor + normap.z * geomnor);
+  }
+
+  struct Light {
+    vec3 position;
+    float radius;
+    vec3 color;
+  };
 
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
     float u = float(index + 1) / float(textureWidth + 1);
@@ -51,8 +72,8 @@ export default function(params) {
   Light UnpackLight(int index) {
     Light light;
     float u = float(index + 1) / float(${params.numLights + 1});
-    vec4 v1 = texture2D(u_lightbuffer, vec2(u, 0.0));
-    vec4 v2 = texture2D(u_lightbuffer, vec2(u, 0.5));
+    vec4 v1 = texture2D(u_lightbuffer, vec2(u, 0.3));
+    vec4 v2 = texture2D(u_lightbuffer, vec2(u, 0.6));
     light.position = v1.xyz;
 
     // LOOK: This extracts the 4th float (radius) of the (index)th light in the buffer
@@ -76,51 +97,21 @@ export default function(params) {
   }
 
   void main() {
-
-    // vec4 gb0 = texture2D(u_gbuffers[0], v_uv); // color / albedo
-    // vec4 gb1 = texture2D(u_gbuffers[1], v_uv); // normal
-    // vec4 gb2 = texture2D(u_gbuffers[2], v_uv); // depth
-    // vec4 gb3 = texture2D(u_gbuffers[3], v_uv); // v_position
-
-    // optimized g-buffer
-
-    // g-buffer[0] : color.x   | color.y   | color.z   | viewSpaceDepth
-    // g-buffer[1] : normal.x  | normal.y  | 0.0       | NDC_Depth
-
-    vec3 albedo = texture2D(u_gbuffers[0], v_uv).rgb;
-    //vec3 normal = texture2D(u_gbuffers[1], v_uv).xyz;
-    vec2 enc_nor = texture2D(u_gbuffers[1], v_uv).xy;
-    //vec3 v_position = texture2D(u_gbuffers[3], v_uv).xyz;
-
-    float NDC_depth = texture2D(u_gbuffers[1], v_uv).w;
-
-    // reconstruct v_position
-    vec4 screenPos = vec4(v_uv * 2.0 - vec2(1.0), NDC_depth, 1.0);
-    vec4 tmp_pos = u_invViewProjMatrix * screenPos;
-    tmp_pos = tmp_pos / tmp_pos.w;
-    vec3 v_position = tmp_pos.xyz;
-
-    // reconstruct normal
-    // when reconstruct a normal, it should happen on view space,
-    // so that we can really handle normals of fragment we really see(deferred shading)
-    // But in our case, v_position and normal should on world space
-    // so we tranform normal back to world space
-    vec3 normal;
-    normal.xy = enc_nor;
-    normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy));
-    normal    = vec3(u_invViewMatrix * vec4(normal, 0.0));
+    vec3 albedo = texture2D(u_colmap, v_uv).rgb;
+    vec3 normap = texture2D(u_normap, v_uv).xyz;
+    vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
 
-    //vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
-
-    float viewSpaceDepth = texture2D(u_gbuffers[0], v_uv).w;
+    vec3 pos_viewSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
 
     // determine which cluster this fragment is in
     int cluster_Idx_x = int(gl_FragCoord.x / u_cluster_tile_size.x);
     int cluster_Idx_y = int(gl_FragCoord.y / u_cluster_tile_size.y);
-    //int cluster_Idx_z = int((-viewSpaceDepth - u_nearClip) / u_cluster_depth_stride);
-    int cluster_Idx_z = getCulsterDepthIndex(-viewSpaceDepth, u_nearClip);
+    //int cluster_Idx_z = int(getCulsterIndexK(v_eyeSpaceDepth, u_nearClip, u_fovby2_radius, u_ySlices));
+    //int cluster_Idx_z = int((-pos_viewSpace.z - u_nearClip) / u_cluster_depth_stride);
+    int cluster_Idx_z = getCulsterDepthIndex(-pos_viewSpace.z, u_nearClip);
+
 
     // clusterTexture Size
     const int clusterTexutreWidth  = int(${params.numXSlices}) * int(${params.numYSlices}) * int(${params.numZSlices});
@@ -145,8 +136,7 @@ export default function(params) {
 
     const int maxNumLights = int(min(float(${params.maxLightsPerCluster}),float(${params.numLights})));
 
-
-
+    // Shade lights store in the cluster instead of all
     for (int i = 0; i < maxNumLights; ++i) {
       if(i == lightCountInCluster) {break;}
 
@@ -202,7 +192,7 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragData[0] = vec4(fragColor, 1.0);
   }
   `;
 }

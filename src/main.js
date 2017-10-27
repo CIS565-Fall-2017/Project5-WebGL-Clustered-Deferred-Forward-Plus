@@ -11,6 +11,8 @@ const CLUSTERED_DEFFERED = 'Clustered Deferred';
 const params = {
   renderer: CLUSTERED_FORWARD_PLUS,
   _renderer: null,
+  Bloom: false,
+  ToonShading: false,
 };
 
 setRenderer(params.renderer);
@@ -18,18 +20,49 @@ setRenderer(params.renderer);
 function setRenderer(renderer) {
   switch(renderer) {
     case FORWARD:
-      params._renderer = new ForwardRenderer();
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
+  }
+}
+
+function setBloom(){
+  switch(params.renderer) {
+    case FORWARD:
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_FORWARD_PLUS:
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_DEFFERED:
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
+  }
+}
+
+function setToonShading(){
+  switch(params.renderer) {
+    case FORWARD:
+      params._renderer = new ForwardRenderer(params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_FORWARD_PLUS:
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, params.Bloom, params.ToonShading);
+      break;
+    case CLUSTERED_DEFFERED:
+      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, params.Bloom, params.ToonShading);
       break;
   }
 }
 
 gui.add(params, 'renderer', [FORWARD, CLUSTERED_FORWARD_PLUS, CLUSTERED_DEFFERED]).onChange(setRenderer);
+
+gui.add(params, 'Bloom').onChange(setBloom);
+gui.add(params, 'ToonShading').onChange(setToonShading);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
