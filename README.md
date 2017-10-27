@@ -27,9 +27,12 @@ WebGL Clustered Deferred and Forward+ Shading
 * Uses three g buffers to store the attributes.
 * Adds Bling-Phong shading model
 
+This figure shows the data g-buffers are storing, which corresponds to albedo, normal and position.
+![g-buffers](https://github.com/wufk/Project5-WebGL-Clustered-Deferred-Forward-Plus/blob/master/img/gbuffers.png)
+
 Below shows the performance using different rendering strategies.
 
-![numLights]()
+![](https://github.com/wufk/Project5-WebGL-Clustered-Deferred-Forward-Plus/blob/master/img/numLights.PNG)
 
 As the graph shows, the rendering time varies significantly with different strategies. Naive forward is the simplest way, which iterates all the lights and does computation on all of them, which is very slow, and the running time increasing very fast when we have more lights to render. 
 
