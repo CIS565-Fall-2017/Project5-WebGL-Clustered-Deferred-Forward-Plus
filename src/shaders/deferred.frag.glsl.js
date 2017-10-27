@@ -129,7 +129,13 @@ export default function(params) {
         float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
         float lambertTerm = max(dot(L, normal), 0.0);
 
-        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        vec4 cam_word_pos = u_invViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+        vec3 view_vec = normalize(cam_word_pos.xyz - v_position);
+        float specular = max(dot(normalize(L + view_vec), normal), 0.0);
+        specular = pow(specular, 50.0);
+
+        fragColor += (vec3(specular) + albedo) * lambertTerm * light.color * vec3(lightIntensity);
+        //fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
       }
       const vec3 ambientLight = vec3(0.025);
       fragColor += albedo * ambientLight;
