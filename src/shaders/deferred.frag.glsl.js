@@ -85,8 +85,8 @@ export default function(params) {
     vec3 alb = gb0.rgb;
     vec3 pos = gb1.xyz;
     
-    // vec4 normal4 = vec4(gb1.w, gb1.w, sqrt(1.0-gb0.w*gb0.w-gb1.w*gb1.w), 0.0);
-    // vec3 norm = normalize(normal4.xyz);
+    //vec4 abnormal = vec4(gb1.w, gb1.w, sqrt(1.0-gb0.w*gb0.w-gb1.w*gb1.w), 0.0);
+    //vec3 norm = normalize(abnormal.xyz);
     vec3 norm = gb2.xyz;
 
     //same idea as clusteredForward,find cluster index
