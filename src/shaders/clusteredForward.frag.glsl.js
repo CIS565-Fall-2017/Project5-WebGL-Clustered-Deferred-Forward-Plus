@@ -78,6 +78,25 @@ export default function(params) {
     }
   }
 
+  //
+  vec3 getClusterUVD(vec3 pos, vec2 frustrumRatios, vec2 nearFar) {
+    float height = abs(pos.z) * frustrumRatios.y;
+    float pHeight = (pos.y + height / 2.0);
+    float pv = pHeight / height;
+
+    float width = abs(pos.z) * frustrumRatios.x;
+    float pWidth = (pos.x + width / 2.0);
+    float pu = pWidth / width;
+
+    float pd = (abs(pos.z) - nearFar.x) / (nearFar.y - nearFar.x);
+
+    pu = max(0.0, min(pu, 0.999));
+    pv = max(0.0, min(pv, 0.999));
+    pd = max(0.0, min(pd, 0.999));
+    
+    return vec3(pu, pv, pd);
+  }
+
   int getContainingZPlane(float posZ) {
     bool firstPlane = posZ > -5.0;
     if (firstPlane) {
@@ -90,27 +109,37 @@ export default function(params) {
   }
 
   int getClusterID(vec3 position) {
-    //useWidth ratio and multiply the z coordinate by that ratio to obtain the width where the
-    //fragment is, and then find the 
-    float frustrumWidth = u_frustrumRatios.x * abs(position.z);
-    float frustrumHeight = u_frustrumRatios.y * abs(position.z);
+    vec3 clusterUVD = getClusterUVD(position, u_frustrumRatios, u_nearFar);
     vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
-    int clusterXID = int(floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x));
-    int clusterYID = int(floor((0.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y));
-    int clusterZID = getContainingZPlane(position.z);
-    return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.z);
+    
+    int clusterXID = int(floor(clusterUVD.x * sliceDimensions.x));
+    
+    int clusterYID = int(floor(clusterUVD.y * sliceDimensions.y));
+    
+    float pd = clusterUVD.z;
+    pd = pd * pd * (3.0 - .0 * pd);
+    pow(pd, 0.25);
+    int clusterZID = int(floor(pd * sliceDimensions.z));
+
+    return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.x);
   }
 
   vec3 getClusterColor(vec3 position) {
-    float frustrumWidth = u_frustrumRatios.x * abs(position.z);
-    float frustrumHeight = u_frustrumRatios.y * abs(position.z);
+    vec3 clusterUVD = getClusterUVD(position, u_frustrumRatios, u_nearFar);
     vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
-    float clusterXID = floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x);
-    float clusterYID = floor((.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y);
-    float clusterZID = float(getContainingZPlane(position.z));
-    if (clusterXID < 0.0 || clusterXID > 14.5) clusterXID = 0.0;
-    if (clusterYID < 0.0 || clusterYID > 14.5) clusterYID = 0.0;
-    if (clusterZID < 0.0 || clusterZID > 14.5) clusterZID = 0.0;
+    
+    float clusterXID = floor(clusterUVD.x * sliceDimensions.x);
+    
+    float clusterYID = floor(clusterUVD.y * sliceDimensions.y);
+    
+    float pd = clusterUVD.z;
+    pd = pd * pd * (3.0 - .0 * pd);
+    pow(pd, 0.25);
+    float clusterZID = floor(pd * sliceDimensions.z);
+
+    if (clusterUVD.x == 0.999) clusterXID = 0.0;
+    if (clusterUVD.y == 0.999) clusterYID = 0.0;
+    
     
     return vec3(clusterXID / sliceDimensions.x, clusterYID / sliceDimensions.y, clusterZID / sliceDimensions.z);
   }
@@ -144,9 +173,9 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;  
 
-    fragColor = 0.6 * fragColor;
+    fragColor = 0.75 * fragColor;
     
-    fragColor += 0.4 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
+    fragColor += 0.25 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
 
     gl_FragColor = vec4(fragColor, 1.0);
   }

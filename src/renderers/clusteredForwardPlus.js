@@ -30,7 +30,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._viewProjectionMatrix = mat4.create();
 
     //Debugging view : frozen frustrum
-    this._debug = true;
+    this._debug = false;
     this._constViewMatrix = mat4.create();
     this._capturedViewMatrix = false;
 

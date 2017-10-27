@@ -61,23 +61,48 @@ export default class ClusteredRenderer {
     return radius > Math.abs(vec3.dot(planeNormal, relativePosition));
   }
 
-
-
-  //scratch variables to prevent recreating vectors every scene
+  clamp(a, b, c) {
+    return Math.max(b, Math.min(c, a));
+  }
   
+  //Calculate the normalized frustrum space coordinates given a position
+  getClusterUVD(options) {
+    let absZ = Math.abs(options.position[2]);
+
+    let height = options.fovTan * absZ * 2;
+    let pHeight = (options.position[1] + height / 2);
+    let pv = pHeight / height;
+
+    let width = height * options.aspect;
+    let pWidth = (options.position[0] + width / 2);
+    let pu = pWidth / width;
+
+    let pd = ((absZ - options.near) / (options.far - options.near));
+
+    // pu = this.clamp(pu, 0, 0.999);
+    // pv = this.clamp(pv, 0, 0.999);
+    // pd = this.clamp(pd, 0, 0.999);
+
+    return {
+      x : pu,
+      y : pv,
+      z : pd
+    };
+
+    //vec3.set(options.output, pu, pv, pd);
+  }
 
   updateClusters(camera, viewMatrix, scene) {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
-    var tanTheta = this.getTanDeg(camera.fov / 2);
-    var vDimension = tanTheta;
-    var hDimension = vDimension * camera.aspect;
-    var clusterWidth = hDimension / this._xSlices;
-    var clusterHeight = vDimension / this._ySlices;
+    var fovTan = this.getTanDeg(camera.fov / 2);
+    var minClusterUVDScratch = vec3.create();
+    var maxClusterUVDScratch = vec3.create();
         
 
     //scratch variables for normals
+    /*
     var origin = vec3.create();
     var z1OriginScratch = vec3.create();
     var z2OriginScratch = vec3.create();
@@ -87,100 +112,102 @@ export default class ClusteredRenderer {
     var y2NormalScratch = vec3.create();
     var zNormal = vec3.create();
     zNormal.z = 1;
+    */
     var lightPositionScratch = vec3.create();
 
     for (let z = 0; z < this._zSlices; ++z) {
-      // z1OriginScratch.z = 5 + z * ((camera.far - camera.near) / this._zSlices); 
-      // z2OriginScratch.z = 5 + (z + 1) * ((camera.far - camera.near) / this._zSlices); 
       for (let y = 0; y < this._ySlices; ++y) {
-        // this.calculatePlaneNormal({
-        //   stride : clusterHeight,
-        //   strideMultiple : y - this._ySlices / 2,
-        //   axis : 'vertical',
-        //   output : y1NormalScratch,
-        // });
-        // this.calculatePlaneNormal({
-        //   stride : clusterHeight,
-        //   strideMultiple : (y - this._ySlices / 2) + 1,
-        //   axis : 'vertical',
-        //   output : y2NormalScratch,
-        // });
         for (let x = 0; x < this._xSlices; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
-          //Calculate normals for planes
-          // this.calculatePlaneNormal({
-          //   stride : clusterWidth,
-          //   strideMultiple : x - this._xSlices / 2,
-          //   axis : 'horizontal',
-          //   output : x1NormalScratch,
-          // });
-          // this.calculatePlaneNormal({
-          //   stride : clusterWidth,
-          //   strideMultiple : (x - this._xSlices / 2) + 1,
-          //   axis : 'horizontal',
-          //   output : x2NormalScratch,
-          // });
-
-          // //Loop through lights
-          // let numLights = 0;
-          // for (let l = 0; l < scene.lights.length; ++l) {
-          //   let light = scene.lights[l];
-          //   vec3.copy(lightPositionScratch, light.position);
-          //   vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
-          //   if ((this.intersectsPlane(x1NormalScratch, origin, lightPositionScratch) || 
-          //        this.intersectsPlane(x2NormalScratch, origin, lightPositionScratch))
-          //       && (this.intersectsPlane(y1NormalScratch, origin, lightPositionScratch) || 
-          //           this.intersectsPlane(y2NormalScratch, origin, lightPositionScratch))) {
-          //         //This could be optimized with better frustrum culling by Austin Eng
-          //         ++numLights;
-          //         this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, numLights)] = l;
-                  
-          //       }
-          // }
-          // this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 3;          
-          // // loop through lights
-          // convert light to view space - helper function
-          // perform intersection test - helper function
-          // if intersect with multiple planes, update light count
-
-          
-
         }
       }
     }
 
     for (let l = 0; l < scene.lights.length; ++l) {
       let light = scene.lights[l];
-      let radius = light.radius * 1.2;
+      let radius = light.radius + 0.001;
+      let outOfView = false;
       vec3.copy(lightPositionScratch, light.position);
       vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
-      let posX = lightPositionScratch[0];
-      let posY = lightPositionScratch[1];
-      let posZ = lightPositionScratch[2];
-      let height = Math.abs(posZ) * this.getTanDeg(camera.fov / 2) * 2;
-      let width = height * camera.aspect;
-      let minX = Math.max(0, Math.floor(((posX - radius + 0.5 * width) / width) * this._xSlices));
-      let maxX = Math.min(this._xSlices - 1, Math.floor(((posX + radius + 0.5 * width) / width) * this._xSlices));
-      let minY = Math.max(0, Math.floor(((posY - radius + 0.5 * height) / height) * this._ySlices));
-      let maxY = Math.min(this._ySlices - 1, Math.floor(((posY + radius + 0.5 * height) / height) * this._ySlices));
 
-      //Exponential zplaes
-      let minZ = Math.max(0, this.getContainingZPlane(posZ + radius));
-      let maxZ = Math.min(this._zSlices, this.getContainingZPlane(posZ - radius));
-      for (let cz = minZ; cz < maxZ + 1; ++cz) {
-        for (let cy = minY; cy < maxY + 1; ++cy) {
-          for (let cx = minX; cx < maxX + 1; ++cx) {
-            let clusterId = cx + cy * this._xSlices + cz * this._xSlices * this._ySlices;
-            let numLights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(clusterId, 0)];
-            ++numLights;
-            let lidInBuffer = this._clusterTexture.bufferIndex(clusterId, Math.floor(numLights / 4));
-            lidInBuffer += numLights % 4;
-            this._clusterTexture.buffer[lidInBuffer] = l;
-            this._clusterTexture.buffer[this._clusterTexture.bufferIndex(clusterId, 0)] = numLights;
+      lightPositionScratch[2] += radius;
+      lightPositionScratch[1] -= radius;
+      lightPositionScratch[0] -= radius;
+      let minUVD = this.getClusterUVD({
+        position : lightPositionScratch, 
+        fovTan : fovTan, 
+        aspect : camera.aspect, 
+        near : camera.near, 
+        far : camera.far
+      });
+
+      lightPositionScratch[2] -= 2 * radius;
+      lightPositionScratch[1] += 2 * radius;
+      lightPositionScratch[0] += 2 * radius;
+      let maxUVD = this.getClusterUVD({
+        position : lightPositionScratch, 
+        fovTan : fovTan, 
+        aspect : camera.aspect, 
+        near : camera.near, 
+        far : camera.far
+      });
+      
+      if (minUVD.x > 0.999 && maxUVD.x > 0.999) {
+        outOfView = true;
+      } else if (minUVD.y > 0.999 && maxUVD.y > 0.999) {
+        outOfView = true;
+      } else if (minUVD.z > 0.999 && maxUVD.z > 0.999) {
+        outOfView = true;
+      } else if (minUVD.x < 0 && maxUVD.x < 0) {
+        outOfView = true;
+      } else if (minUVD.y < 0 && maxUVD.y < 0) {
+        outOfView = true;
+      } else if (minUVD.z < 0 && maxUVD.z < 0) {
+        outOfView = true;
+      }
+
+      if (!outOfView) {
+        let pu1 = this.clamp(minUVD.x, 0, 0.999);
+        let pu2 = this.clamp(maxUVD.x, 0, 0.999);
+
+        let minX = Math.floor(pu1 * this._xSlices);
+        let maxX = Math.floor(pu2 * this._xSlices);
+
+        let pv1 = this.clamp(minUVD.y, 0, 0.999);
+        let pv2 = this.clamp(maxUVD.y, 0, 0.999);
+        
+        let minY = Math.floor(pv1 * this._ySlices);
+        let maxY = Math.floor(pv2 * this._ySlices);
+
+        //Exponential zplanes
+        let pd1 = this.clamp(minUVD.z, 0, 0.999);
+        pd1 = pd1 * pd1 * (3 - 2 * pd1);
+        Math.pow(pd1, 0.25);
+
+        let pd2 = this.clamp(maxUVD.z, 0, 0.999);
+        pd2 = pd2 * pd2 * (3 - 2 * pd2);
+        Math.pow(pd2, 0.25);
+
+        let minZ = Math.floor(pd1 * this._zSlices);
+        let maxZ = Math.floor(pd2 *  this._zSlices);
+      
+      
+        // loop through bounding frustrum
+          for (let cz = minZ; cz < maxZ + 1; ++cz) {
+            for (let cy = minY; cy < maxY + 1; ++cy) {
+              for (let cx = minX; cx < maxX + 1; ++cx) {
+                let clusterId = cx + cy * this._xSlices + cz * this._xSlices * this._ySlices;
+                let numLights = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(clusterId, 0)];
+                ++numLights;
+                let lidInBuffer = this._clusterTexture.bufferIndex(clusterId, Math.floor(numLights / 4));
+                lidInBuffer += numLights % 4;
+                this._clusterTexture.buffer[lidInBuffer] = l;
+                this._clusterTexture.buffer[this._clusterTexture.bufferIndex(clusterId, 0)] = numLights;
+              }
+            }
           }
-        }
       }
     }
 
