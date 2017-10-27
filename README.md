@@ -35,7 +35,7 @@ ramp shading | bloom + ramping shading
   - cluster part are the same as Clustered Forward+
   - Store vertex attributes in g-buffer
   - Read g-buffer in a shader to produce final output
-  - Two g-bufers are used(two component normal and reconstruct postion using screen space X, Y and depth information)
+  - Two g-buffers are used(two-component normal and reconstruct position using screen space X, Y, and depth information)
 
 ### Effects
 - Bloom (additional pipeline stages include brightness filter, horizontal & vertical Gaussian blur and finally combine)
@@ -60,7 +60,7 @@ color / albedo | normal
 ![](img/depth.jpg) |  ![](img/position.jpg)
 depth | position
 
-  After optimization, 2 g-buffers are used, which are albedo, view space depth(to determine fragment cluster depth index, because I slice clusters in view space), two component normal(X, Y) and NDC depth(to reconstruct position with screen space postion). The structure is shown as below.
+  After optimization, 2 g-buffers are used, which are albedo, view space depth(to determine fragment cluster depth index, because I slice clusters in view space), two component normal(X, Y) and NDC depth(to reconstruct position with screen space position). The structure is shown as below.
 
    ![](img/gbuffer.jpg)
 
@@ -100,7 +100,7 @@ depth | position
 
 ![](img/bloom_brightnessFilter.jpg) |  ![](img/bloom_brightnessFilter_horizontalBlur.jpg) | ![](img/bloom_brightnessFilter_horizontalBlur+verticalBlur.jpg)
 ------------ | ------------- | -------------
-after brightness filter | after horizontal GaussianBlur | after vertical Gaussian Blur  
+after brightness filter | after horizontal Gaussian Blur | after vertical Gaussian Blur  
 
 
   Ramp shading is almost the same as no effect rendering in terms of performance, and we only do several extra steps to modulate the diffuse coefficient(lambert term) in fragment shader.
