@@ -18,6 +18,8 @@ export default function(params) {
   uniform int u_xSlices;
   uniform int u_ySlices;
   uniform int u_zSlices;
+
+  uniform int u_maxLightsInCluster;
   
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -96,47 +98,55 @@ export default function(params) {
       vec3 normal = applyNormalMap(v_normal, normap);
   
       vec3 fragColor = vec3(0.0);
-  
-  
+
       // GLSL type inconsistencies
       // https://stackoverflow.com/questions/33579110/glsl-type-inconsistencies
       float x = gl_FragCoord.x;
       float y = gl_FragCoord.y;
-  
-  
       // Get the position in camera space    
       vec4 v_posCamera = u_viewMatrix * vec4(v_position, 1.0);
+      float z = -v_posCamera[2];
   
       // Use gl_FragCoord to get xyz values
       // http://www.txutxi.com/?p=182
       // Essentially have to divide the gl_FragCoord by the stride
-      int xCluster = int(x) / (u_width / u_xSlices);
+      int xCluster = int(float(x) / float(u_width / u_xSlices));
       int yCluster = int(y) / (u_height / u_ySlices);
-      int zCluster = int(-v_posCamera.z - u_nearZ) / (int(u_farZ - u_nearZ) / u_zSlices);
+      int zCluster = int(z - u_nearZ) / (int(u_farZ - u_nearZ) / u_zSlices);
       
       // Find which cluster the current fragment lies in
       // Cluster index
-      int index = xCluster + (yCluster * u_xSlices) + (zCluster * u_ySlices * u_zSlices);
+      int index = xCluster + (yCluster * u_xSlices) + (zCluster * u_xSlices * u_ySlices);
   
-      int totalClusters = u_xSlices * u_ySlices * u_zSlices;
-      float u = float(index + 1) / float(totalClusters + 1);
+      int numClusters = u_xSlices * u_ySlices * u_zSlices;
+      float u = float(index + 1) / float(numClusters + 1);
   
+      // Get how many lights are in the shader
       int numLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
-  
-      gl_FragColor = vec4(vec3(-v_posCamera.z/float(u_farZ)), 1.0);
-      return;
-  
+
+      // int numTexels = int( ceil( float(100 + 1) / float(4.0)) );
+      int numTexels = 26;
+
       for (int i = 0; i < ${params.numLights}; ++i) {
-          Light light = UnpackLight(i);
-          float lightDistance = distance(light.position, v_position);
-          vec3 L = (light.position - v_position) / lightDistance;
-  
-          vec3 lightPos = light.position;
-  
-          float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-          float lambertTerm = max(dot(L, normal), 0.0);
-  
-          fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+          if(i <= numLightsInCluster) {
+            int lightIndex = int(ExtractFloat(u_clusterbuffer, numClusters, numTexels, index, i + 1));
+
+            Light light = UnpackLight(lightIndex);
+            float lightDistance = distance(light.position, v_position);
+            vec3 L = (light.position - v_position) / lightDistance;
+    
+            vec3 lightPos = light.position;
+    
+            float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+            float lambertTerm = max(dot(L, normal), 0.0);
+    
+            fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+          }
+          else {
+            break;
+          }
+
+          // fragColor = vec3(float(xCluster) / 15.0);
       }
   
       const vec3 ambientLight = vec3(0.025);
