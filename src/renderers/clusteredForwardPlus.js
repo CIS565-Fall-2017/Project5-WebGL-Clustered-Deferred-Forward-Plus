@@ -17,7 +17,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 
+      'u_normap', 'u_lightbuffer', 'u_clusterbuffer',
+      'u_nearPlane', 'u_farPlane', 'u_aspect', 'u_tanfov2', 'u_slices', 
+      'u_MAX_LIGHTS_PER_CLUSTER'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -76,6 +79,20 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+
+  //uniform float u_nearPlane; // camera clip
+  //uniform float u_farPlane; // camera clip
+  //uniform float u_aspect; // aspect ratio
+  //uniform float u_tanfov2; // tangent of half fov
+  //uniform vec3 u_slices;
+    gl.uniform1f(this._shaderProgram.u_nearPlane, camera.near);
+    gl.uniform1f(this._shaderProgram.u_farPlane, camera.far);
+    gl.uniform1f(this._shaderProgram.u_aspect, camera.aspect);
+    gl.uniform1f(this._shaderProgram.u_tanfov2, Math.abs(Math.tan(camera.fov * 0.5 * Math.PI / 180.0)));
+    gl.uniform3f(this._shaderProgram.u_slices, this._xSlices, this._ySlices, this._zSlices);
+    //gl.uniform1i(this._shaderProgram.u_MAX_LIGHTS_PER_CLUSTER, 100);
+
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
