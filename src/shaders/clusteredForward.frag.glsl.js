@@ -90,13 +90,6 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    // TODO: pass in as uniform??
-    //float texWidth = u_sliceCount.x * u_sliceCount.y * u_sliceCount.z;
-    // TODO: hardcoded height for now
-    //float texHeight = ceil(101.0 / 4.0);
-    //texHeight = 26.0;
-    //texWidth = 15.0 * 15.0 * 15.0;
-
     // use v_pos to compute Z slice
     vec3 viewSpacePos = vec3(u_viewMatrix * vec4(v_position, 1.0));
     viewSpacePos.z *= -1.0;

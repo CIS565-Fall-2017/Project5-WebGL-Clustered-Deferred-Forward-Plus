@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4 } from 'gl-matrix';
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -29,7 +29,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount', 'u_viewMatrix', 'u_texDims'],
       attribs: ['a_uv'],
     });
 
@@ -154,6 +154,28 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 5);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 6);
+
+    // TODO: Bind any other shader inputs
+    // bind u_dims
+    gl.uniform4fv(this._progShade.u_dims, vec4.fromValues(canvas.width, canvas.height, camera.near, camera.far - camera.near));
+
+    // bind u_sliceCount
+    gl.uniform3fv(this._progShade.u_sliceCount, vec3.fromValues(this._xSlices, this._ySlices, this._zSlices));
+
+    // Upload the view matrix
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+
+    // bind u_texDims
+    gl.uniform2fv(this._progShade.u_texDims, vec2.fromValues(this._clusterTexWidth, this._clusterTexHeight));
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
