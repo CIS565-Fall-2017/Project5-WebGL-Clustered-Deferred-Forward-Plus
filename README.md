@@ -9,23 +9,14 @@ WebGL Clustered Deferred and Forward+ Shading
 ### Description
 In this project, I implement the cluster forward shader and cluster deferred shader to render a scene with hundreds of moving lights. For the cluster deferred shading, the objects are rendered based on Blinn-Phong model. Also, I compress the data structure that passed into the g-buffer and normals are presented using only 2 componets. All rendering processes are based on WebGl and rendering results can be shown online.
 
-### Live Demo Online
+### Demo Video
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+click [here](https://vimeo.com/240100889) to see the demo video.
 
 ### Screen shot
 * **Rendering result**
 
-<table class="image">
-<tr>
-	<td>Lambert </td>
-	<td>Blinn-Phong </td>
-</tr>
-<tr>
-	<td><img src="img/lambert.gif"/></td>
-	<td><img src="img/blinn.gif"/></td>
-</tr>
-</table>
+![](./img/blinn.gif)
 
 * **Debug view**
 
