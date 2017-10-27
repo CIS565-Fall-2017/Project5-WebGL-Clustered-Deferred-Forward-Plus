@@ -53,9 +53,7 @@ click [here](https://vimeo.com/240100889) to see the demo video.
 For a scene with hundreds of lights, the brute force way to render the scene is to compute the shading of each geometry with each light. However, this method is too time costy. Since not all the geometries can be lightened by each light, we can filter out the lights that don't affect the current geometry. To do this efficiently, we divid the camera frustrum into grids and for each grid, we compute which light influence it and save the light indices into a buffer. Then, in the fragment shader, we only need to compute the shading of each geometry in the grid with the lights we saved in the buffer, which dramatically decrease the number of light we need to deal with for each geometry. 
 
 Note: Here I divide the frustrum equally in each direction and other division strategies should also work. 
-
 ![](./img/cluster.png)
-
 * ***Cluster Deferred shading***
 
 For the method above, we can continue optimizing it. In the traditional OpenGL or WebGL rendering pipeline, all the geomtries will be shaded in the fragment shader, whether it can be seen or not. Since in most cases we only one or a few light sources in the scene(like sun), this method works well and since we compute and save shading result at different depth, we can easily create many special visual effect like transparency, blending and so on.  But for the scene with hundreds of lights, the performance of this method is not ideal. For each light, we need to unnecessarily compute the shading  
