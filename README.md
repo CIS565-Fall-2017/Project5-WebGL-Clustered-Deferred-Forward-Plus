@@ -13,7 +13,7 @@ ___
   * **Cluster Shading**: https://docs.google.com/presentation/d/18yvym_tmSDnVC-mXRO9ykgP0RnBPoS5xgkzPt9EZNUk/edit#slide=id.p3
 * The following are the results of **Clustered-Deferred Shading** with different shaders:
   
- | **Regular Shading (200 lights)** |
+| **Regular Shading (200 lights)** |
 |---|
 |<img src="./results/regular.gif" width="1200" height="500">|
 
@@ -60,32 +60,46 @@ ___
     * G-buffer[1] = v_position.x, v_position.y, v_position.z, normal_sph.fi
   * **Other Methods**: there are also some other methods on compression of g-buffers, for example, compress the normal from 32-bit to 8-bit storage. I didn't do more things on that.
 
-| **Cluster Lights Distribution(200 lights)** | **Normal Display** |
-|---|---|
-|<img src="./results/regular.gif" width="600" height="250">|<img src="./results/regular.gif" width="600" height="250">
-
 ___
 ### Performance Analysis
-* ***Num of Lights***: According to the results above, we can find that the rendering time per frame is increasing with the number of the lights growing. Also, with the number of lights increasing, the difference between these three methods becomes more obvious. The reason I've already mentioned on the former part and the slides I provided before.
+* ***Num of Lights***: 
+  
+| **Comparision Between Forward/Clustered Forward+/Clustered Deferred** |
+|---|
+|<img src="./results/form1.JPG" width="800" height="600">|
 
-* ***Num of Clusters***: According to the results above, we can find that at first, with the number of clusters growing, the rendering of both these 2 methods becomes faster, this is because the cluster becomes smaller than before, then for each fragment, we will examine less lights than before, this will save lots of time. But when the number of clusters reaches some levels, the speed reduce than before, this is because even though we decrease the time on lights shading, we also increase lots of time on cluster update.
+  * According to the results above, we can find that the rendering time per frame is increasing with the number of the lights growing. Also, with the number of lights increasing, the difference between these three methods becomes more obvious. The reason I've already mentioned on the former part and the slides I provided before.
 
-* ***G-buffer Compression***: As I said before, using 3 buffers can save the time of encoding and decoding the normals, but will add an extra buffer on G-buffer.
+* ***Num of Clusters***: 
+
+| **Comparision Between Different Number of Clusters** |
+|---|
+|<img src="./results/plot1.JPG" width="800" height="600">|
+
+  * According to the results above, we can find that at first, with the number of clusters growing, the rendering of both these 2 methods becomes faster, this is because the cluster becomes smaller than before, then for each fragment, we will examine less lights than before, this will save lots of time. But when the number of clusters reaches some levels, the speed reduce than before, this is because even though we decrease the time on lights shading, we also increase lots of time on cluster update.
+
+* ***G-buffer Compression***:
+
+| **Comparision Between Different Number of G-buffers** |
+|---|
+|<img src="./results/form2.JPG" width="800" height="600">|
+
+  * As I said before, using 3 buffers can save the time of encoding and decoding the normals, but will add an extra buffer on G-buffer.
 
 ___
-### Debugging 
+### Debugging Screenshots
 
 | **Cluster Lights Number Distribution(200 lights)** | **Lights Color Distribution(200 lights)** |
 |---|---|
-|<img src="./results/regular.gif" width="600" height="250">|<img src="./results/regular.gif" width="600" height="250">
+|<img src="./results/lightDistribution.JPG" width="600" height="250">|<img src="./results/LightColor.JPG" width="600" height="250">
 
 | **Albedo Display** | **Normal Display** |
 |---|---|
-|<img src="./results/regular.gif" width="600" height="250">|<img src="./results/regular.gif" width="600" height="250">
+|<img src="./results/Albedo.JPG" width="600" height="250">|<img src="./results/Normal.JPG" width="600" height="250">
 
 | **XSlices Display** | **ZSlices Display** |
 |---|---|
-|<img src="./results/regular.gif" width="600" height="250">|<img src="./results/regular.gif" width="600" height="250">
+|<img src="./results/XSlice.JPG" width="600" height="250">|<img src="./results/ZSlice.JPG" width="600" height="250">
 
 ### Credits
 
