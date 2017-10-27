@@ -154,6 +154,9 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    // gl.uniformMatrix4fv(this._progShade.u_invViewMatrix, false, this._invViewMatrix);
+
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
