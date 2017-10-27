@@ -8,6 +8,7 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import * as ClusteredConstants from './clustered';
 
 export const NUM_GBUFFERS = 4;
 
@@ -31,6 +32,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       xSlices: xSlices,
       ySlices: ySlices,
       zSlices: zSlices,
+      lightsPerCluster: ClusteredConstants.MAX_LIGHTS_PER_CLUSTER,
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_clusterbuffer', 'u_invProjectionMatrix'],
       attribs: ['a_uv'],

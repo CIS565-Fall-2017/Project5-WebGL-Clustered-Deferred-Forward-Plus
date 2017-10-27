@@ -82,7 +82,7 @@ export default function(params) {
     ivec3 slicePos = ivec3(min(floor(ndcPos.xyz * sliceCount), vec3(14.0)));
     int index = slicePos.x + slicePos.y * ${params.xSlices} + slicePos.z * ${params.xSlices} * ${params.ySlices};
 
-    int clusterBufferStride = int(ceil(float(${params.numLights} + 1) / 4.0));
+    int clusterBufferStride = int(ceil(float(${params.lightsPerCluster} + 1) / 4.0));
     int lightCount = int(ExtractFloat(u_clusterbuffer, totalSliceCount, clusterBufferStride, index, 0));
     vec3 fragColor = vec3(0.0);
 
