@@ -21,9 +21,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Forward Shading Model
 
-![](readmeImages/NumLights_table.png)
-
 ![](readmeImages/NumLightsComparison.png)
+
+![](readmeImages/NumLights_table.png)
 
 ### Clustered Forward+ Shading Model
 
@@ -31,7 +31,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Clustering
 
-![](readmeImages/Clustering_depth Slicing.png)
+![](readmeImages/Clustering_depth_Slicing.png)
 
 ![](readmeImages/false-positive-diagram.jpg)
 
@@ -39,9 +39,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Optimizations
 
-![](readmeImages/OptimizationComparison_table.png)
-
 ![](readmeImages/OptimizationComparison.png)
+
+![](readmeImages/OptimizationComparison_table.png)
 
 #### Using Two G-buffers (use total 8 channels) - Pack values together into vec4s
 #### 2 Component Normals
