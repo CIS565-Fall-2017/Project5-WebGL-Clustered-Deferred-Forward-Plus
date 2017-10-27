@@ -13,7 +13,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](gif/final.gif)]
+![](gif/final.gif)
 
 Project Introduction
 ======================
@@ -52,14 +52,27 @@ Performance Analysis
 
 ###	Different running time for different render techniques
 
-[![](charts/1.png)]
+![](charts/1.png)
 
+* Maximum number of lights in a cluster: 1000
+* Total lights number in the scene: 1500
+* Points light radius: 3.0
 
 Naive Forward rendering will go through all the lights in every fragment to calculate the render result.
 
 Clustered Forward+ rendering gives a much better performance than the naive methods. This difference becomes even more obvious when the lights reaches a huge amount.
 
 Comparing to Clustered Forward+, Cluster Deferred rendering will not apply light computation to those fragments that locates behind, but requires extra time to transfer the data using g-buffer. When the light is pretty complex, the performance of deferred rendering will becomes better then cluster forward+.
+
+###	Packed normal VS not packed normal
+
+![](charts/2.png)
+
+* Maximum number of lights in a cluster: 1000
+* Total lights number in the scene: 1500
+* Points light radius: 3.0
+
+Packed normal will require less bandwidth to transfer data, but requires more ALU periods to calculate the true normal. Also all ways of packing normal will somehow lose accuracy comparing to the original normal. Running time is not saved too much, but the transfer bandwidth is greately decreased.
 
 ### Credits
 
@@ -68,3 +81,4 @@ Comparing to Clustered Forward+, Cluster Deferred rendering will not apply light
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
+* [Encode normals](https://aras-p.info/texts/CompactNormalStorage.html#method03spherical) by [Aras Pranckevičius](https://aras-p.info/)
