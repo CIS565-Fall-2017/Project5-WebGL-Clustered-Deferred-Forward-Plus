@@ -21,9 +21,6 @@ export default class ClusteredRenderer
     //find bounding x and y values of the camera frustum    
     this.vertical_FoV = camera.fov;
     this.tan_Vertical_FoV_by_2 = Math.tan(this.vertical_FoV * (Math.PI/180.0) * 0.5);
-    // this.tan_Horizontal_FoV_by_2 = camera.aspect * this.tan_Vertical_FoV_by_2;    
-    // this.horizontal_FoV = 2 * Math.atan(this.tan_Horizontal_FoV_by_2) * (180.0/Math.PI);
-
     this.zStride = (camera.far-camera.near)/this._zSlices;
 
     /*
@@ -96,22 +93,22 @@ export default class ClusteredRenderer
       var lightAABB = new AABB();
       lightAABB.calcAABB_PointLight(lightPos, lightRadius);
 
-      h_lightFrustum = Math.abs(this.tan_Vertical_FoV_by_2*Math.abs(lightPos[2])*2);
+      h_lightFrustum = Math.abs(this.tan_Vertical_FoV_by_2*lightPos[2]*2);
       w_lightFrustum = Math.abs(camera.aspect*h_lightFrustum);
 
       xStride = w_lightFrustum/this._xSlices;
       yStride = h_lightFrustum/this._ySlices;
 
-      zStartIndex = Math.floor(lightAABB.min[2]/this.zStride) - 1; // Need to extend this by -1 and +1 to avoid edge cases where light 
+      zStartIndex = Math.floor(lightAABB.min[2]/this.zStride); // Need to extend this by -1 and +1 to avoid edge cases where light 
                                                                    //technically could fall outside the bounds we make because the planes themeselves are tilted by some angle
                                                                    // the effect is exaggerated the steeper the angle the plane makes is
-      zEndIndex = Math.floor(lightAABB.max[2]/this.zStride) + 1;
+      zEndIndex = Math.floor(lightAABB.max[2]/this.zStride);
 
       yStartIndex = Math.floor((lightAABB.min[1] + h_lightFrustum*0.5)/yStride);
       yEndIndex = Math.floor((lightAABB.max[1] + h_lightFrustum*0.5)/yStride);
 
-      xStartIndex = Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride);
-      xEndIndex = Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride);
+      xStartIndex = Math.floor((lightAABB.min[0] + w_lightFrustum*0.5)/xStride)-1;
+      xEndIndex = Math.floor((lightAABB.max[0] + w_lightFrustum*0.5)/xStride)+1;
 
       //Culling
       if((zStartIndex < 0 && zEndIndex < 0) ||

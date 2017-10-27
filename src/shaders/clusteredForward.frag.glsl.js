@@ -28,6 +28,8 @@ export default function(params) {
   const int maxLightsPerCluster = int(${params.maxLightsPerCluster});
   const int numTexelsInColumn = int(ceil(float(${params.maxLightsPerCluster}+1) * 0.25)); 
 
+  const float screenGamma = 2.2; // Assume the monitor is calibrated to the sRGB color space
+
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) 
   {
     normap = normap * 2.0 - 1.0;
@@ -138,7 +140,12 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    // Gamma Correction
+    vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
+    gl_FragColor = vec4(colorGammaCorrected, 1.0);
+
+    // No Gamma Correction
+    // gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
 }

@@ -10,6 +10,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
   
   uniform mat4 u_viewMatrix;
+  uniform mat4 u_inverseViewMatrix;
   uniform float u_screenWidth;
   uniform float u_screenHeight;
   uniform float camNear;
@@ -25,6 +26,10 @@ export default function(params) {
   const int maxLightsPerCluster = int(${params.maxLightsPerCluster});
   const int numTexelsInColumn = int(ceil(float(${params.maxLightsPerCluster}+1) * 0.25)); 
   
+  const vec3 specColor = vec3(0.1, 0.1, 0.1);
+  const float shininess = 600.0;
+  const float screenGamma = 2.2; // Assume the monitor is calibrated to the sRGB color space
+
   struct Light {
     vec3 position;
     float radius;
@@ -75,35 +80,95 @@ export default function(params) {
     }
   }
 
+  vec3 calcCompressedNormal_z(vec2 compressedNormal)
+  {
+    //we know that the normal has a magnitude of 1, therefore if we know x and y we can caluculate z
+    compressedNormal -= 0.5;
+    compressedNormal *= 2.0;
+
+    float newZ = sqrt(1.0 - (compressedNormal.x*compressedNormal.x) - (compressedNormal.y*compressedNormal.y));
+
+    vec3 result = vec3(compressedNormal.x, compressedNormal.y, newZ);
+    return normalize(result);
+  }
+
   void main() {
     // extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], f_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], f_uv);
-    vec4 gb2 = texture2D(u_gbuffers[2], f_uv);
+    // vec4 gb2 = texture2D(u_gbuffers[2], f_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], f_uv);
-
+    
     vec3 f_position = gb0.rgb;
     vec3 albedo = gb1.rgb;
-    vec3 normal = vec3(gb0.a, gb1.a, gb2.r);
+
+    //if using compressed normals
+    vec2 compressedNormal = vec2(gb0.a, gb1.a);
+    vec3 result = calcCompressedNormal_z(compressedNormal);
+    vec3 normal = vec3(u_inverseViewMatrix*vec4(result, 0.0));
+
+    // //if using uncompressed normals
+    // vec3 g_buf_normal = vec3(gb2.r, gb2.g, gb2.b);
+    // g_buf_normal -= 0.5;
+    // g_buf_normal *= 2.0;
+    // vec3 normal = vec3(u_inverseViewMatrix*vec4(g_buf_normal, 0.0));
 
     vec3 fragColor = vec3(0.0);
 
+    vec3 fpos = vec3(u_viewMatrix*vec4(f_position, 1.0)); //f_position in viewspace
+    fpos.z = -fpos.z;
+
+    float xStride = float(u_screenWidth)/float(numXSlices);
+    float yStride = float(u_screenHeight)/float(numYSlices);
+    float zStride = float(u_zStride);
+
+    int clusterX_index = int( floor(gl_FragCoord.x/ xStride) );
+    int clusterY_index = int( floor(gl_FragCoord.y/ yStride) );
+    int clusterZ_index = int( floor( (fpos.z-camNear) / zStride ) );
+
+    int clusterID = clusterX_index + 
+                    clusterY_index * numXSlices + 
+                    clusterZ_index * numXSlices * numYSlices;
+
+    float u = float(clusterID+1)/float(totalClusters+1);
+    int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
+
     for (int i = 0; i < numLights; ++i) 
     {
-      Light light = UnpackLight(i);
+      if(i >= clusterNumLights)
+      {
+        break;
+      }
+
+      int lightIndex = int( ExtractFloat(u_clusterbuffer, totalClusters, numTexelsInColumn, clusterID, i+1) );
+
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, f_position);
       vec3 L = (light.position - f_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      //blinn-phong specular
+      // float specular;
+      // if(lambertTerm > 0.0)
+      // {        
+      //   vec3 viewDir = normalize(-f_position);
+      //   vec3 halfDir = normalize(L + viewDir);
+      //   float specAngle = max(dot(halfDir, normal), 0.0);
+      //   specular = pow(specAngle, shininess);
+      // }
+
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);// + specular*specColor;
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    // gl_FragColor = vec4(fragColor, 1.0);
+
+    vec3 colorGammaCorrected = pow(fragColor, vec3(1.0/screenGamma));
+    gl_FragColor = vec4(colorGammaCorrected, 1.0);
   }
   `;
 }
