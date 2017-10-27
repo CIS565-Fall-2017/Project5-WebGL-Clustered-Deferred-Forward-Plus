@@ -25,7 +25,24 @@ WebGL Clustered Deferred and Forward+ Shading
 
 This project implements both a forward+ and a clustered deferred rendering pipeline. The clustering is done in frustum space, by using the lights' bounding volumes to find the intersecting cluster cells.
 
+![](images/grids.png)
+
 It also implements a simple Phong shader in the deferred pipeline.
+
+There's no optimization regarding light spheres and cluster collision, so there is a lot of unnecesary iterations -- this is the main probable reason for the following performance results:
+
+![](images/perf.png)
+
+Although different grid sizes may improve these results, the lack of intersection refinement makes each pipeline very iteration dependent, making the advantage that deferred rendering has over forward+ infinitesimal compared to the amount of iterations per pixel.
+
+## G Buffer description
+
+The deferred renderer uses only two buffers:
+
+G1: [albedo | depth]
+G2: [NormalXY | specularValue | specularExponent]
+
+In the accumulation pass, the view space position is reconstructed from the depth, and the normal is also rebuilt from the encoded XY values.
 
 ### Credits
 
