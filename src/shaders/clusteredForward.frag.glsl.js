@@ -148,8 +148,20 @@ export default function(params) {
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
+      
+      //TODO
+      //the blinn-phong code taking reference from WIKI:https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model
+      vec3 specColor = vec3(1.0);
+      if(lambertTerm>0.0)
+      {
+        vec3 viewDir = normalize(-v_position);
+        vec3 halfDir = normalize(light.position+viewDir);
+        float specAngle = max(dot(halfDir,normal),0.0);
+        float specular = pow(specAngle, 2.0);
+        specColor = specular*specColor;
+      }
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += albedo * (lambertTerm*0.5+specColor*0.5)  * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
