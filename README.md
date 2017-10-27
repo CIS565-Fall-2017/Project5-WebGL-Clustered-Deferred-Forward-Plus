@@ -6,7 +6,7 @@ WebGL Clustered Deferred and Forward+ Shading
 * Jiawei Wang
 * Tested on: **Google Chrome 62.0.3202.75 (Official Build) (64-bit)** on
   Windows 10, i7-6700 @ 2.60GHz 16.0GB, GTX 970M 3072MB (Personal)
-___
+
 ### Overview
 * Realized a demo of ** Clustered Forward Plus Shading **and** Clustered Deferred Shading ** based on WebGL. Here are the more thorough explanations of the Deferred Shading and Clustered Shading.
   * **Deferred Shading**: https://docs.google.com/presentation/d/1W-Gp9mWvZ8DlppiNFJu_RngFVB34r9CXq4BhQEPbJYM/edit#slide=id.p3
@@ -66,7 +66,7 @@ ___
   
 | **Comparision Between Forward/Clustered Forward+/Clustered Deferred** |
 |---|
-|<img src="./results/form1.JPG" width="800" height="600">|
+|<img src="./results/form1.JPG" width="1000" height="220">|
 
   * According to the results above, we can find that the rendering time per frame is increasing with the number of the lights growing. Also, with the number of lights increasing, the difference between these three methods becomes more obvious. The reason I've already mentioned on the former part and the slides I provided before.
 
@@ -74,7 +74,7 @@ ___
 
 | **Comparision Between Different Number of Clusters** |
 |---|
-|<img src="./results/plot1.JPG" width="800" height="600">|
+|<img src="./results/plot1.JPG" width="800" height="550">|
 
   * According to the results above, we can find that at first, with the number of clusters growing, the rendering of both these 2 methods becomes faster, this is because the cluster becomes smaller than before, then for each fragment, we will examine less lights than before, this will save lots of time. But when the number of clusters reaches some levels, the speed reduce than before, this is because even though we decrease the time on lights shading, we also increase lots of time on cluster update.
 
@@ -82,7 +82,7 @@ ___
 
 | **Comparision Between Different Number of G-buffers** |
 |---|
-|<img src="./results/form2.JPG" width="800" height="600">|
+|<img src="./results/form2.JPG" width="1000" height="130">|
 
   * As I said before, using 3 buffers can save the time of encoding and decoding the normals, but will add an extra buffer on G-buffer.
 
@@ -91,7 +91,7 @@ ___
 
 | **Cluster Lights Number Distribution(200 lights)** | **Lights Color Distribution(200 lights)** |
 |---|---|
-|<img src="./results/lightDistribution.JPG" width="600" height="250">|<img src="./results/LightColor.JPG" width="600" height="250">
+|<img src="./results/LightDistribution.JPG" width="600" height="250">|<img src="./results/LightColor.JPG" width="600" height="250">
 
 | **Albedo Display** | **Normal Display** |
 |---|---|
