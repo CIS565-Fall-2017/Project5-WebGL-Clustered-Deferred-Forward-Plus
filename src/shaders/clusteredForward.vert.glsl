@@ -8,6 +8,7 @@ attribute vec3 a_normal;
 attribute vec2 a_uv;
 
 varying vec3 v_position;
+varying vec3 e_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
 

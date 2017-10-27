@@ -8,9 +8,14 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-
-  // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform mat4 u_viewMatrix;
+  uniform vec3 u_slices;
+  uniform vec2 u_res;
+  uniform float u_cameranear;
+  uniform float u_camerafar;
+  uniform vec3 u_camerapos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -77,19 +82,40 @@ export default function(params) {
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
-    vec3 normal = applyNormalMap(v_normal, normap);
+    vec3 normal = applyNormalMap(v_normal, normap);    
+
+    // determine cluster for fragment
+    float x = floor(gl_FragCoord.x * u_slices.x  / u_res.x);
+    float y = floor(gl_FragCoord.y * u_slices.y / u_res.y); 
+
+    vec4 fragViewSpace = u_viewMatrix * vec4(v_position, 1.0);
+    float z = floor((-fragViewSpace.z - u_cameranear) * u_slices.z / (u_camerafar - u_cameranear));
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    float cluster_idx = x + y * u_slices.x + z * u_slices.x * u_slices.y;
+    float numclusters = u_slices.x * u_slices.y * u_slices.z;
+    float u = (cluster_idx + 1.0) / (numclusters + 1.0);
+    int count = int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0]);
+    for (int i = 0; i < ${params.numLightsPerCluster}; ++i) {  
+      if (i >= count) {
+        break;
+      }
+
+      float j = ExtractFloat(u_clusterbuffer, int(numclusters), ${Math.floor((params.numLightsPerCluster + 1) / 4)}, int(cluster_idx), i + 1);
+      Light light = UnpackLight(int(j));
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      vec3 viewDir = normalize(u_camerapos - v_position);
+      vec3 halfVec = normalize(L + viewDir);
+      float specularTerm = pow(max(dot(normal, halfVec), 0.0), 100.0);
+
+      fragColor += (albedo + vec3(specularTerm)) * lambertTerm * light.color * lightIntensity;
+      //fragColor += vec3(specularTerm);
     }
 
     const vec3 ambientLight = vec3(0.025);
