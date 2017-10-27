@@ -24,7 +24,9 @@ export default class ClusteredRenderer {
     if (posZ > -5) {
       return 0;
     } else {
-      return Math.floor(Math.sqrt(Math.abs(posZ) - 5.0)) + 1.0;
+      let logPosZ = Math.log2(Math.abs(posZ) - 5.0);
+      if (logPosZ < 0.0) return 1;
+      return Math.floor(logPosZ) + 1.0;
     }
   }
   /*
@@ -151,6 +153,7 @@ export default class ClusteredRenderer {
 
     for (let l = 0; l < scene.lights.length; ++l) {
       let light = scene.lights[l];
+      let radius = light.radius * 1.2;
       vec3.copy(lightPositionScratch, light.position);
       vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
       let posX = lightPositionScratch[0];
@@ -158,14 +161,14 @@ export default class ClusteredRenderer {
       let posZ = lightPositionScratch[2];
       let height = Math.abs(posZ) * this.getTanDeg(camera.fov / 2) * 2;
       let width = height * camera.aspect;
-      let minX = Math.max(0, Math.floor(((posX - light.radius + 0.5 * width) / width) * this._xSlices));
-      let maxX = Math.min(this._xSlices - 1, Math.floor(((posX + light.radius + 0.5 * width) / width) * this._xSlices));
-      let minY = Math.max(0, Math.floor(((posY - light.radius + 0.5 * height) / height) * this._ySlices));
-      let maxY = Math.min(this._ySlices - 1, Math.floor(((posY + light.radius + 0.5 * height) / height) * this._ySlices));
+      let minX = Math.max(0, Math.floor(((posX - radius + 0.5 * width) / width) * this._xSlices));
+      let maxX = Math.min(this._xSlices - 1, Math.floor(((posX + radius + 0.5 * width) / width) * this._xSlices));
+      let minY = Math.max(0, Math.floor(((posY - radius + 0.5 * height) / height) * this._ySlices));
+      let maxY = Math.min(this._ySlices - 1, Math.floor(((posY + radius + 0.5 * height) / height) * this._ySlices));
 
-      //Simple Z for now
-      let minZ = 0;
-      let maxZ = 14;
+      //Exponential zplaes
+      let minZ = Math.max(0, this.getContainingZPlane(posZ + radius));
+      let maxZ = Math.min(this._zSlices, this.getContainingZPlane(posZ - radius));
       for (let cz = minZ; cz < maxZ + 1; ++cz) {
         for (let cy = minY; cy < maxY + 1; ++cy) {
           for (let cx = minX; cx < maxX + 1; ++cx) {

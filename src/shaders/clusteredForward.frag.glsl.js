@@ -78,6 +78,17 @@ export default function(params) {
     }
   }
 
+  int getContainingZPlane(float posZ) {
+    bool firstPlane = posZ > -5.0;
+    if (firstPlane) {
+      return 0;
+    } else {
+      float logPosZ = log2(abs(posZ) - 5.0);
+      if (logPosZ < 0.0) return 1;
+      return int(floor(logPosZ) + 1.0);
+    }
+  }
+
   int getClusterID(vec3 position) {
     //useWidth ratio and multiply the z coordinate by that ratio to obtain the width where the
     //fragment is, and then find the 
@@ -86,7 +97,7 @@ export default function(params) {
     vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
     int clusterXID = int(floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x));
     int clusterYID = int(floor((0.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y));
-    int clusterZID = int(floor((abs(position.z) - u_nearFar.x) / (u_nearFar.y - u_nearFar.x) * sliceDimensions.z));
+    int clusterZID = getContainingZPlane(position.z);
     return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.z);
   }
 
@@ -96,22 +107,12 @@ export default function(params) {
     vec3 sliceDimensions = vec3(float(${params.xSliceNum}), float(${params.ySliceNum}), float(${params.zSliceNum}));
     float clusterXID = floor((0.5 * frustrumWidth + position.x)/frustrumWidth * sliceDimensions.x);
     float clusterYID = floor((.5 * frustrumHeight + position.y)/frustrumHeight * sliceDimensions.y);
-    float clusterZID = (abs(position.z) - u_nearFar.x) / (20.0 - u_nearFar.x) * sliceDimensions.z;
+    float clusterZID = float(getContainingZPlane(position.z));
     if (clusterXID < 0.0 || clusterXID > 14.5) clusterXID = 0.0;
     if (clusterYID < 0.0 || clusterYID > 14.5) clusterYID = 0.0;
     if (clusterZID < 0.0 || clusterZID > 14.5) clusterZID = 0.0;
     
     return vec3(clusterXID / sliceDimensions.x, clusterYID / sliceDimensions.y, clusterZID / sliceDimensions.z);
-  }
-
-  int getContainingZPlane(float posZ) {
-    bool firstPlane = posZ > -5.0;
-    if (firstPlane) {
-      return 0;
-    } else {
-      return int(floor(sqrt(abs(posZ) - 5.0)) + 1.0);
-    }
-    return 0;
   }
 
   void main() {
@@ -141,7 +142,11 @@ export default function(params) {
     }
 
     const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;    
+    fragColor += albedo * ambientLight;  
+
+    fragColor = 0.6 * fragColor;
+    
+    fragColor += 0.4 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
