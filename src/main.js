@@ -8,10 +8,10 @@ const FORWARD = 'Forward';
 const CLUSTERED_FORWARD_PLUS = 'Clustered Forward+';
 const CLUSTERED_DEFFERED = 'Clustered Deferred';
 
-const MAX_LIGHTS_PER_CLUSTER = 500;
+const MAX_LIGHTS_PER_CLUSTER =  100;
 
 const params = {
-  renderer: CLUSTERED_DEFFERED,
+  renderer: CLUSTERED_FORWARD_PLUS,
   _renderer: null,
 };
 

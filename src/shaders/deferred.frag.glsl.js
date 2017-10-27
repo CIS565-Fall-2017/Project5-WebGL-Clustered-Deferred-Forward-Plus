@@ -111,10 +111,7 @@ export default function(params) {
     vec3 normal = vec3(u_inverseViewMatrix*vec4(result, 0.0));
 
     // //if using uncompressed normals
-    // vec3 g_buf_normal = vec3(gb2.r, gb2.g, gb2.b);
-    // g_buf_normal -= 0.5;
-    // g_buf_normal *= 2.0;
-    // vec3 normal = vec3(u_inverseViewMatrix*vec4(g_buf_normal, 0.0));
+    // vec3 normal = vec3(gb2.r, gb2.g, gb2.b);
 
     vec3 fragColor = vec3(0.0);
 
@@ -197,7 +194,7 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     //----------- No Gamma Correction -------------
-    //gl_FragColor = vec4(fragColor, 1.0);
+    // gl_FragColor = vec4(fragColor, 1.0);
     //-------------------------------------------
 
     //----------- Gamma Correction ----------------

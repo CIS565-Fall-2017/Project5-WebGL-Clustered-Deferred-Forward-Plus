@@ -121,7 +121,7 @@ export default function(params) {
     for (int i = 0; i < numLights; ++i) 
     {
       if(i >= clusterNumLights)
-      {
+      {        
         break;
       }
 
