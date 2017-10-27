@@ -6,6 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import * as ClusteredConstants from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -13,9 +14,13 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
-    
+
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
+      lightsPerCluster: ClusteredConstants.MAX_LIGHTS_PER_CLUSTER,
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
@@ -34,7 +39,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewProjectionMatrix, scene);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {

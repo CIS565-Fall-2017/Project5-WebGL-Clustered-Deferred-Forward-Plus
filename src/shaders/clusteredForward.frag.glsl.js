@@ -1,15 +1,14 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
 
+  uniform mat4 u_viewProjectionMatrix;
+
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
-
-  // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
 
   varying vec3 v_position;
@@ -79,21 +78,43 @@ export default function(params) {
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
+    vec4 ssPos = u_viewProjectionMatrix * vec4(v_position, 1.0);
+    ssPos /= ssPos.w;
+    ssPos.xy = ssPos.xy *.5 + vec2(.5);
+
+    int totalSliceCount = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+
+    ivec3 slicePos = ivec3(min(floor(ssPos.xyz * vec3(${params.xSlices}, ${params.ySlices}, ${params.zSlices})), vec3(14.0)));
+    int index = slicePos.x + slicePos.y * ${params.xSlices} + slicePos.z * ${params.xSlices} * ${params.ySlices};
+
+    int clusterBufferStride = int(ceil(float(${params.lightsPerCluster} + 1) / 4.0));
+    int lightCount = int(ExtractFloat(u_clusterbuffer, totalSliceCount, clusterBufferStride, index, 0));
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    for(int i = 0; i < ${params.numLights}; ++i) {
+
+      if(i >= lightCount)
+        break;
+
+      int lightIndex = int(ExtractFloat(u_clusterbuffer, totalSliceCount, clusterBufferStride, index, i + 1));
+
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += albedo * lambertTerm * light.color * vec3(max(0.0, lightIntensity));
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
+
+    // Uncomment to see grid lines
+    // vec3 gridLines = step(.05, fract(ssPos.xyz * vec3(${params.xSlices}, ${params.ySlices}, ${params.zSlices})));
+    // float grid = 1.0 - (gridLines.x * gridLines.y * gridLines.z);
+    // fragColor += vec3(grid);
 
     gl_FragColor = vec4(fragColor, 1.0);
   }

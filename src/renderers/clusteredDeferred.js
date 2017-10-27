@@ -8,6 +8,7 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import * as ClusteredConstants from './clustered';
 
 export const NUM_GBUFFERS = 4;
 
@@ -21,15 +22,19 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
+      lightsPerCluster: ClusteredConstants.MAX_LIGHTS_PER_CLUSTER,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_clusterbuffer', 'u_invProjectionMatrix'],
       attribs: ['a_uv'],
     });
 
@@ -124,14 +129,21 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
+    gl.uniformMatrix4fv(this._progCopy.u_viewMatrix, false, this._viewMatrix);
+
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
+
+      // Light positions in viewspace to simplify code later
+      var vsPos = vec4.fromValues(scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2], 1);
+      vec4.transformMat4(vsPos, vsPos, this._viewMatrix);
+
+      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = vsPos[0];
+      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = vsPos[1];
+      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = vsPos[2];
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
 
       this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
@@ -142,7 +154,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture.update();
 
     // Update the clusters for the frame
-    this.updateClusters(camera, this._viewMatrix, scene);
+    this.updateClusters(camera, this._viewProjectionMatrix, scene);
 
     // Bind the default null framebuffer which is the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -162,6 +174,21 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
     }
+
+    var invProj = mat4.create();
+    invProj = mat4.invert(invProj, this._projectionMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_invProjectionMatrix, false, invProj);
+
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
 
     renderFullscreenQuad(this._progShade);
   }
