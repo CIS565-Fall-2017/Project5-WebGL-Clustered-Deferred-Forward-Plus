@@ -7,13 +7,13 @@ Sarah Forcier
 
 Tested on GeForce GTX 1070
 
-[![](img/final.gif)](http://sarahforcier.github.io/Project5B-WebGL-Deferred-Shading)
+### Live Demo(http://sarahforcier.github.io/Project5B-WebGL-Deferred-Shading)
+
+[![](img/final.png)](https://youtu.be/QgfXGOQ58Ss)
 
 ### Overview
 
 This project implements clustered forward+ and deferred shading. These methods improve performance for scenes with many dynamic lights. Typical forward shading is slow in this case because each fragments is shaded for each light in the scene even if the light does not affect the fragment or the fragment is occluded. Deferred shading solves the latter problem by only shading non-occluded fragments. Clustered forward+ shading solves the other problem by computing which lights effect each fragment and only shading with those lights.   
-
-![](img/final.png)
 
 ### Clustered Forward +
 
