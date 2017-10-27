@@ -110,22 +110,30 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+    int numClusters = ${params.xSliceNum} * ${params.ySliceNum} * ${params.zSliceNum};
+    int clusterBufferHeight = int(ceil((float(${params.numLights}) + 1.0) / 4.0));
+    int clusterIndex = getClusterID(vec3(u_viewMatrix * vec4(v_position, 1.0)));
+
+    float numAffectingLights = ExtractFloat(u_clusterbuffer, numClusters, clusterBufferHeight, clusterIndex, 0);
 
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+      if (i < int(numAffectingLights)) {
+        int lid = int(ExtractFloat(u_clusterbuffer, numClusters, clusterBufferHeight, clusterIndex, i));
+        Light light = UnpackLight(lid);
+        float lightDistance = distance(light.position, v_position);
+        vec3 L = (light.position - v_position) / lightDistance;
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      }
     }
 
     const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
+    fragColor += albedo * ambientLight;    
 
-    gl_FragColor = vec4(getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0))), 1.0);
+    gl_FragColor = vec4(fragColor, 1.0);
   }
   `;
 }
