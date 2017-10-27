@@ -117,11 +117,12 @@ export default function(params) {
     int clusterYID = int(floor(clusterUVD.y * sliceDimensions.y));
     
     float pd = clusterUVD.z;
-    pd = pd * pd * (3.0 - .0 * pd);
+    pd = pd * pd * (3.0 - 2.0 * pd);
     pow(pd, 0.25);
+
     int clusterZID = int(floor(pd * sliceDimensions.z));
 
-    return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.x);
+    return clusterXID + clusterYID * int(sliceDimensions.x) + clusterZID * int(sliceDimensions.y * sliceDimensions.z);
   }
 
   vec3 getClusterColor(vec3 position) {
@@ -133,8 +134,6 @@ export default function(params) {
     float clusterYID = floor(clusterUVD.y * sliceDimensions.y);
     
     float pd = clusterUVD.z;
-    pd = pd * pd * (3.0 - .0 * pd);
-    pow(pd, 0.25);
     float clusterZID = floor(pd * sliceDimensions.z);
 
     if (clusterUVD.x == 0.999) clusterXID = 0.0;
@@ -156,7 +155,7 @@ export default function(params) {
 
     float numAffectingLights = ExtractFloat(u_clusterbuffer, numClusters, clusterBufferHeight, clusterIndex, 0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
+    for (int i = 1; i < ${params.numLights}; ++i) {
       if (i < int(numAffectingLights)) {
         int lid = int(ExtractFloat(u_clusterbuffer, numClusters, clusterBufferHeight, clusterIndex, i));
         Light light = UnpackLight(lid);
@@ -173,9 +172,9 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;  
 
-    fragColor = 0.75 * fragColor;
+    // fragColor = 0.75 * fragColor;
     
-    fragColor += 0.25 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
+    // fragColor += 0.25 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
 
     gl_FragColor = vec4(fragColor, 1.0);
   }

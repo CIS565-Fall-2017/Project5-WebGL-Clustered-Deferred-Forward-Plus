@@ -68,25 +68,30 @@ export default class ClusteredRenderer {
   //Calculate the normalized frustrum space coordinates given a position
   getClusterUVD(options) {
     let absZ = Math.abs(options.position[2]);
+    let radius = options.radius;
 
     let height = options.fovTan * absZ * 2;
     let pHeight = (options.position[1] + height / 2);
-    let pv = pHeight / height;
+
+    let pv1 = (pHeight - radius) / height;
+    let pv2 = (pHeight + radius) / height;
 
     let width = height * options.aspect;
     let pWidth = (options.position[0] + width / 2);
-    let pu = pWidth / width;
 
-    let pd = ((absZ - options.near) / (options.far - options.near));
+    let pu1 = (pWidth - radius) / width;
+    let pu2 = (pWidth + radius) / width;
 
-    // pu = this.clamp(pu, 0, 0.999);
-    // pv = this.clamp(pv, 0, 0.999);
-    // pd = this.clamp(pd, 0, 0.999);
+    let pd1 = ((absZ - radius) - options.near) / (options.far - options.near);
+    let pd2 = ((absZ + radius) - options.near) / (options.far - options.near);
 
     return {
-      x : pu,
-      y : pv,
-      z : pd
+      x1 : pu1,
+      y1 : pv1,
+      z1 : pd1,
+      x2 : pu2,
+      y2 : pv2,
+      z2 : pd2
     };
 
     //vec3.set(options.output, pu, pv, pd);
@@ -127,26 +132,13 @@ export default class ClusteredRenderer {
 
     for (let l = 0; l < scene.lights.length; ++l) {
       let light = scene.lights[l];
-      let radius = light.radius + 0.001;
+      let radius = light.radius * 1.5;
       let outOfView = false;
       vec3.copy(lightPositionScratch, light.position);
       vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
 
-      lightPositionScratch[2] += radius;
-      lightPositionScratch[1] -= radius;
-      lightPositionScratch[0] -= radius;
-      let minUVD = this.getClusterUVD({
-        position : lightPositionScratch, 
-        fovTan : fovTan, 
-        aspect : camera.aspect, 
-        near : camera.near, 
-        far : camera.far
-      });
-
-      lightPositionScratch[2] -= 2 * radius;
-      lightPositionScratch[1] += 2 * radius;
-      lightPositionScratch[0] += 2 * radius;
-      let maxUVD = this.getClusterUVD({
+      let boundingBox = this.getClusterUVD({
+        radius : radius,
         position : lightPositionScratch, 
         fovTan : fovTan, 
         aspect : camera.aspect, 
@@ -154,40 +146,41 @@ export default class ClusteredRenderer {
         far : camera.far
       });
       
-      if (minUVD.x > 0.999 && maxUVD.x > 0.999) {
+      if (boundingBox.x1 > 0.999 && boundingBox.x2 > 0.999) {
         outOfView = true;
-      } else if (minUVD.y > 0.999 && maxUVD.y > 0.999) {
+      } else if (boundingBox.y1 > 0.999 && boundingBox.y2 > 0.999) {
         outOfView = true;
-      } else if (minUVD.z > 0.999 && maxUVD.z > 0.999) {
+      } else if (boundingBox.z1 > 0.999 && boundingBox.z2 > 0.999) {
         outOfView = true;
-      } else if (minUVD.x < 0 && maxUVD.x < 0) {
+      } else if (boundingBox.x1 < 0 && boundingBox.x2 < 0) {
         outOfView = true;
-      } else if (minUVD.y < 0 && maxUVD.y < 0) {
+      } else if (boundingBox.y1 < 0 && boundingBox.y2 < 0) {
         outOfView = true;
-      } else if (minUVD.z < 0 && maxUVD.z < 0) {
+      } else if (boundingBox.z1 < 0 && boundingBox.z2 < 0) {
         outOfView = true;
       }
 
       if (!outOfView) {
-        let pu1 = this.clamp(minUVD.x, 0, 0.999);
-        let pu2 = this.clamp(maxUVD.x, 0, 0.999);
+        let pu1 = this.clamp(boundingBox.x1, 0, 0.999);
+        let pu2 = this.clamp(boundingBox.x2, 0, 0.999);
 
         let minX = Math.floor(pu1 * this._xSlices);
         let maxX = Math.floor(pu2 * this._xSlices);
 
-        let pv1 = this.clamp(minUVD.y, 0, 0.999);
-        let pv2 = this.clamp(maxUVD.y, 0, 0.999);
+        let pv1 = this.clamp(boundingBox.y1, 0, 0.999);
+        let pv2 = this.clamp(boundingBox.y2, 0, 0.999);
         
         let minY = Math.floor(pv1 * this._ySlices);
         let maxY = Math.floor(pv2 * this._ySlices);
 
         //Exponential zplanes
-        let pd1 = this.clamp(minUVD.z, 0, 0.999);
-        pd1 = pd1 * pd1 * (3 - 2 * pd1);
+        let pd1 = this.clamp(boundingBox.z1, 0, 0.999);
+        let pd2 = this.clamp(boundingBox.z2, 0, 0.999);
+
+        pd1 = pd1 * pd1 * (3.0 - 2.0 * pd1);
         Math.pow(pd1, 0.25);
 
-        let pd2 = this.clamp(maxUVD.z, 0, 0.999);
-        pd2 = pd2 * pd2 * (3 - 2 * pd2);
+        pd2 = pd2 * pd2 * (3.0 - 2.0 * pd2);
         Math.pow(pd2, 0.25);
 
         let minZ = Math.floor(pd1 * this._zSlices);
