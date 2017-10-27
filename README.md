@@ -27,7 +27,7 @@ In this project, I implemented 2 different rendering methods, including Clustere
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[https://githublsx.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus](https://githublsx.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
