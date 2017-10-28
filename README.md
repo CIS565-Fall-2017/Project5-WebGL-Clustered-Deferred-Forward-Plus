@@ -13,7 +13,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ## Demo Video/GIF
 
-[![](readmeImages/video.png)](TODO)
+[![](readmeImages/VideoLinkImage.png)](https://vimeo.com/240254058)
 
 ## OverView
 //2050 lights at 60 FPS
