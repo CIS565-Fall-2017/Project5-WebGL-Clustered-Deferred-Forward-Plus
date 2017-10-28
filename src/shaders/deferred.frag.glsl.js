@@ -90,11 +90,13 @@ export default function(params) {
     float depth    = texture2D(u_depthbuffer, v_uv).x;
     vec4 gbuffer0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gbuffer1 = texture2D(u_gbuffers[1], v_uv);
+    //vec4 gbuffer2 = texture2D(u_gbuffers[2], v_uv);
     vec3 v_position = gbuffer0.xyz;
     vec3 albedo     = gbuffer1.rgb;
     float n_x = gbuffer0.w;
     float n_y = gbuffer1.w;
     vec3 normal     = vec3(n_x, n_y, sqrt(abs(1.0 - (n_x*n_x) - (n_y*n_y))));
+   // vec3 normal = gbuffer2.xyz;
 
 
     // get frag position

@@ -2,7 +2,7 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 250;
+export const MAX_LIGHTS_PER_CLUSTER = 500;
 
 //Gets the normal for x cluster calculations
 function set_normal_x(plane_normal, cluster_plane_x) {
@@ -117,8 +117,8 @@ export default class ClusteredRenderer {
         * Z CLUSTER STUFF:
       */
       let light_z = light_pos[2] - camera.near;
-      z_0 = Math.floor((light_z - light_radius)  / cluster_z); 
-      z_1 = Math.floor((light_z + light_radius)  / cluster_z); 
+      z_0 = Math.floor((light_z - light_radius)  / parseFloat(cluster_z)); 
+      z_1 = Math.floor((light_z + light_radius)  / parseFloat(cluster_z)); 
 
       if(z_0 < this._zSlices && z_1 >= 0) {
          // Assign lights to their clusters
