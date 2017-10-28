@@ -13,7 +13,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-![](images/video.gif)
+![](images/video2.gif)
 
 ### Overview
 In this project, I worked on implementing Clustered Forward+ and Clustered Deferred renderers. Clustered Forward+ renderer works in a similar way as a Forward rendered, but with one optimization. Here, we divide the view frustum in slices in three axes and bin the lights into the clusters. So in the fragment, only the lights in the cluster of the fragment need to be iterated through. Clustered Deferred takes this one step further by changing the way the scene is rendered. A Deferred shader postpones shading until the end. So we do per-pixel shading and not per-fragment. When shading is the heaviest stage, this is highly efficient than forward methods.
