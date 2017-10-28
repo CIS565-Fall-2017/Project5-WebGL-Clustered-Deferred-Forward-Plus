@@ -11,6 +11,7 @@ export default function(params) {
   uniform vec2 u_frustrumRatios;
   uniform mat4 u_viewMatrix;
   uniform vec2 u_nearFar;
+  uniform vec3 u_camerapos;
   
   varying vec2 v_uv;
 
@@ -133,7 +134,8 @@ export default function(params) {
 
     int numClusters = ${params.xSliceNum} * ${params.ySliceNum} * ${params.zSliceNum};
     int clusterBufferHeight = int(ceil((float(${params.numLights}) + 1.0) / 4.0));
-    int clusterIndex = getClusterID(vec3(u_viewMatrix * position));
+    vec3 viewSpacePosition = vec3(u_viewMatrix * position);
+    int clusterIndex = getClusterID(viewSpacePosition);    
 
     float numAffectingLights = ExtractFloat(u_clusterbuffer, numClusters, clusterBufferHeight, clusterIndex, 0);
 
@@ -148,6 +150,17 @@ export default function(params) {
         float lambertTerm = max(dot(L, vec3(normal)), 0.0);
 
         fragColor += vec3(albedo) * lambertTerm * light.color * vec3(lightIntensity);
+
+        //Calculate specular
+        vec3 viewSpaceL = vec3(u_viewMatrix * vec4(L, 1.0));
+        vec3 viewSpaceNormal = vec3(u_viewMatrix * normal);
+        float cameraDistance = length(viewSpacePosition);
+        vec3 cameraVector = (-viewSpacePosition) / cameraDistance;
+        vec3 halfVector = (viewSpaceL + cameraVector) / length(viewSpaceL + cameraVector);
+        float blinnPhongTerm = max(0.0, dot(viewSpaceNormal, halfVector));
+
+        fragColor += 2.0 * vec3(albedo) * blinnPhongTerm * light.color * vec3(lightIntensity);
+
       }
     }
 
