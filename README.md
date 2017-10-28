@@ -12,21 +12,13 @@ WebGL Clustered Deferred and Forward+ Shading
 
 
 ## Project Overview
-The goal of this project was to get an introduction to Clustered Deferred and Forward+ Shading in WebGL. 
-
-This algorithm is 
+The goal of this project was to get an introduction to Clustered Deferred and Clustered Forward+ Shading in WebGL. 
 
 ### Live Online
 
 [![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
-
-
-
 ### Demo Video/GIF
-
-[![](img/video.png)](TODO)
-
 #### Forward+
 ![](./renders/cluster-1.gif)
 
@@ -46,11 +38,49 @@ This algorithm is
 ### Algorithm Descriptions
 
 #### Forward Rendering
+Forward rendering works by rasterizing each geometric object in the scene. For each light in the scene, each object is shaded according to their material/light-type, which means there is one shader per material/light-type. This means that every geometric object has to consider every light in the scene. 
+
+One optimization is to remove geometric objects that are occluded or do not appear in the view frustum of the camera. This can also be applied to lights as well. You can perform frustum culling on the light volumes before rendering the scene geometry. 
+
+Object culling and light volume culling provide limited optimizations for this technique and light culling is often not practiced when using a forward rendering pipeline. It is better to limit the number of lights that affect the entire object.
 
 #### Clustered Forward+
 
+Clustered Forward+ is a rendering technique that combines forward rendering with tiled light culling to reduce the number of lights that must be considered during shading. Forward+ primarily consists of two stages: light culling and forward rendering.
+
+The first pass of the Forward+ rendering technique uses a uniform grid of tiles in screen space to partition the lights into per-tile lists.
+
+Rather than using 2D tiles, we use 3D versions of them called "clusters". Lights in the scene are divided into these clusters. Each cluster represents a portion of the camera frustum that we currently see as we move around in the scene. Each cluster is stored as a 2D texture, which holds information about how many lights each cluster contains, and a list of which lights they are. 
+
+The second pass uses a standard forward rendering pass to shade the objects in the scene but instead of looping over every dynamic light in the scene, the current pixel’s screen-space position is used to look-up the list of lights in the cluster that was computed in the previous pass. The light culling provides a significant performance improvement over the standard forward rendering technique as it greatly reduces the number of lights that must be iterated to correctly light the pixel. 
+
 #### Clustered Deferred
 
+Clustered deferred works by rasterizing all of the scene objects (without lighting) into a series of 2D image buffers (g-buffers) that store the geometric information that is required to perform the lighting calculations in a later pass. The information that is stored into the 2D image buffers can be things like:
+
+* screen space depth
+* surface normals
+* diffuse color
+
+After the g-buffer has been generated, the geometric information can then be used to compute the lighting information in the lighting pass. The lighting pass is performed by rendering each light source as a geometric object in the scene. Each pixel that is touched by the light’s geometric representation is shaded using the desired lighting equation. This is done using the same clustering technique as described in the Forward+ section above.
+
+Advantages compared to forward rendering:
+
+- It decouples lighting from the scene complexity 
+- You only transform and rasterize each object once 
+- The expensive lighting calculations are only computed once per light per covered pixel. 
+
+Disadvantages:
+- Memory bandwidth usage: must read g-buffer for each light
+- Must recalculate full lighting equation for each light
+- Can't handle transparent objects because only have g-buffers for front-most fragment
+
+More on transparency (from [Rendering Technique Comparisons](https://www.3dgep.com/forward-plus/)): 
+One of the disadvantage of using deferred shading is that only opaque objects can be rasterized into the G-buffers. The reason for this is that multiple transparent objects may cover the same screen pixels but it is only possible to store a single value per pixel in the G-buffers. In the lighting pass the depth value, surface normal, diffuse and specular colors are sampled for the current screen pixel that is being lit. Since only a single value from each G-buffer is sampled, transparent objects cannot be supported in the lighting pass. 
+
+To circumvent this issue, transparent geometry must be rendered using the standard forward rendering technique which limits either the amount of transparent geometry in the scene or the number of dynamic lights in the scene. A scene which consists of only opaque objects can handle about 2000 dynamic lights before frame-rate issues start appearing.
+
+Another disadvantage of deferred shading is that only a single lighting model can be simulated in the lighting pass. This is due to the fact that it is only possible to bind a single pixel shader when rendering the light geometry. This is usually not an issue for pipelines that make use of übershaders as rendering with a single pixel shader is the norm, however if your rendering pipeline takes advantage of several different lighting models implemented in various pixel shaders then it will be problematic to switch your rendering pipeline to use deferred shading.
 
 
 ## Performance Analysis
@@ -111,6 +141,7 @@ TALK ABOUT --> DOING VIEW MATRIX * VPOS IS BETTER IN VERTEX SHADER THAN IN FRAGM
 * [glMatrix Documentation](http://glmatrix.net/docs/module-vec3.html)
 * [Intro to real-time shading of many lights SIGGRAPH course notes](https://newq.net/dl/pub/SA2014ManyLightIntro.pdf)
 * [Practical Clustered Shading - Avalanche Studios](http://www.humus.name/Articles/PracticalClusteredShading.pdf)
+* [Rendering Technique Comparisons](https://www.3dgep.com/forward-plus/)
 
 **Normal Compression** 
 * [Compact Normals for g-buffers](https://aras-p.info/texts/CompactNormalStorage.html)
