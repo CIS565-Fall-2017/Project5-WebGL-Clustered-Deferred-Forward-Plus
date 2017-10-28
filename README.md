@@ -9,7 +9,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ## Live Online
 
-[![](img/thumb.PNG)](http://msoudy.github.io/Project5B-WebGL-Deferred-Shading)
+[![](img/thumb.PNG)](http://msoudy.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus)
 
 ## Demo Video/GIF
 
@@ -17,7 +17,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ## Overview
 
-Implementations of forward, forward clustering and deferred clustering with Blinn-Phong shading and G-buffer optimizations.
+Implementations of forward, forward clustering, and deferred clustering with Blinn-Phong shading and G-buffer optimizations.
 
 ## Analysis
 
