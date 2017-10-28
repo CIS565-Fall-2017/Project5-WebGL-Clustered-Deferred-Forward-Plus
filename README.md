@@ -44,6 +44,7 @@ Deferred Shading is when you simply store the fragment data in a separate g-buff
   - [ ] Recreate world_position using nothing but depth and camera matrices (the code currently supports this being added, I just haven't had the time to do the math)
 
 ![lights](img/lights.gif)
+Sponza Scene with 1500 Lights (sped up 3x for demo purposes)
 
 
 ### In-Depth:
@@ -54,11 +55,11 @@ Clustering took me forever to get right. I initially started with Avalanche's re
 
 ###### Debug Views!
 
-Albedo:
+Albedo (with absolute normal view to compare):
 
 ![albedo](img/albedo.gif)
 
-Absolute Normal View:
+Just Absolute Normal View:
 
 ![normals](img/normals.gif)
 
