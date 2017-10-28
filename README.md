@@ -24,10 +24,39 @@ In this project, I worked on implementing Clustered Forward+ and Clustered Defer
 * Blinn-Phong shading (diffuse + specular) for point lights (in Clustered Deferred)
 * Simple Toon shading (in Clustered Forward+)
 * Optimizations
-    * Pack values together into vec4s
-    * Use 2-component normals
+ * Pack values together into vec4s
+ * Use 2-component normals
 
 ### Performance Analysis
+
+#### Forward vs. Forward+ vs Deferred
+
+![](images/chart.png)
+
+As expected, Deferred shading is the fastest followed by Forward+ followed by Forward. The tests were performed using 100 lights in the sponza model.
+
+#### 3-Buffers vs 2-Buffers
+
+![](images/chart1.png)
+
+Deferred shading requires passing all the data between shaders using g-buffers. For this implementation, I tried reducing the number of g-buffers by packing position, color and normals in 2 vec4s. This can be done by storing the x and y components of the normal in the 4th position of the 2 g-buffers, and computing the z in the fragment shader. This is known as screen-space normals. But the method gives low performance advantage, and causes artefacts as seen below. So the deployed version does not contain that code. But it can be found in the files in comments.
+
+![](images/2cn_artefacts.gif)
+
+
+#### Lambertian Shading
+
+![](images/diffuse.gif)
+
+#### Blinn-Phong Shading
+
+![](images/blinn_phong.gif)
+
+#### Toon Shading
+
+![](images/toon.gif)
+
+
 
 ### Credits
 
