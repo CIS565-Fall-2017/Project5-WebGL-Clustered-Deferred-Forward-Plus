@@ -8,7 +8,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 In this project, I have implemented Clustered Forward+ shading and Clustered Deferred shading and added Blinn-Phong shading effect.
 
-[![](images/y.gif)]
+![](images/y.gif)
 
 ### Features:
 * Clustered Forward+ Shading
@@ -26,9 +26,9 @@ In this project, I have implemented Clustered Forward+ shading and Clustered Def
 
 All analysis done on 1366x768 with default cluster size of 15x15x15.
 
-[![](images/table.jpg)]
+![](images/table.jpg)
 
-[![](images/graph.jpg)]
+![](images/graph.jpg)
 
 ### Bloopers
 
@@ -37,6 +37,7 @@ Different views to check correctness:
 |  Albedo | Normal |
 | ----------- | ----------- |
 | ![](img/albedo.jpg) | ![](img/normal.jpg) |
+
 | Depth | Z-Slices |
 | ----------- | ----------- |
 | ![](img/depth.jpg) | ![](img/z.jpg) |
