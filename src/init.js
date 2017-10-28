@@ -100,7 +100,7 @@ export function makeRenderLoop(render) {
     accTime += end - start;
     accCount++;
     if (accCount >= 20) {
-      console.log(accTime / accCount);
+      //console.log(accTime / accCount);
       accTime = 0;
       accCount = 0;
     }

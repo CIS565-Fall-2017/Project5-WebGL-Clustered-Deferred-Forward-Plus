@@ -109,6 +109,36 @@ export default function(params) {
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
+      // To enable ramp shading, uncomment the block below.
+      // RAMP SHADING ===================================================
+      /*
+      if (lambertTerm < 0.25) {
+        lambertTerm = 0.25;
+      }
+      else if (lambertTerm < 0.5) {
+        lambertTerm = 0.5;
+      }
+      else if (lambertTerm < 0.75) {
+          lambertTerm = 0.75;
+      }
+      else {
+          lambertTerm = 0.85;
+      }
+      if (lightIntensity > 0.0 && lightIntensity < 0.05) {
+        lightIntensity = 0.05;
+      }
+      else if (lightIntensity > 0.0 && lightIntensity < 0.15) {
+        lightIntensity = 0.15;
+      }
+      else if (lightIntensity > 0.0 && lightIntensity < 0.35) {
+          lightIntensity = 0.35;
+      }
+      else if (lightIntensity > 0.0) {
+          lightIntensity = 0.65;
+      }
+      */
+      // RAMP SHADING ===================================================
+
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }

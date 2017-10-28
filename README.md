@@ -13,7 +13,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+![](img/toon.gif)
+
+Ramp shading enabled, 100 lights
 
 ### Overview
 
@@ -62,6 +64,80 @@ So it is unusual that both have the same performance. I have three hypotheses fo
 * As mentioned in the preface, my measurements might just be incorrect due to some hardware/software fault out of my control.
 
 In general terms, the benefit of using the deferred pipeline would be its better performance in scenes with a high number of lights. However, there is one tradeoff: the additional memory needed for the g-buffer. An environment with a memory-starved GPU may not be able to run a deferred pipeline.
+
+#### G-buffer optimization
+
+Below is how my g-buffers are organized. I use two in total.
+
+![](img/gbuf.png)
+
+In summary, values are packed into vec4s, and 2-component normals are used.
+
+The normals are converted to camera space to make the Z coordinate redundant -- we can compute its absolute value from X and Y, since we know the normal's length is 1. We also know the normal in camera space has Z > 0, otherwise the geometry would not be visible.
+
+Below is a performance comparison between the final clustered deferred pipeline and its "lazy" version, which uses 3 g-buffers instead.
+
+![](img/gbuf-graph.png)
+
+As we can see, there is a roughly constant and small improvement (of about 2 ms) to using 2 g-buffers instead of 3. This is probably due to not needing to copy the data of the 3rd g-buffer, as well as not needing to read a 3rd g-buffer value (which is essentially reading a pixel from a texture). There is an additional computational cost to using two g-buffers, such as computing the world space normal from the two camera space normal coordinates. This additional cost probably prevents the g-buffer optimization from being too effective.
+
+#### Clustered vs. Plain Forward
+
+Below is a graph comparing both clustered pipelines to the original, plain forward pipeline:
+
+![](img/CvsF.png)
+
+As we can see, the clustering optimization definitely improves performance. This makes sense, since fewer lights have to be checked for each piece of geometry that is shaded.
+
+### Additional Effects
+
+#### Blinn-Phong
+
+Blinn-Phong lighting is enabled by default on the clustered deferred pipeline (the measurements above were taken without it enabled). This has the effect of making surfaces look "shiny" or specular when light hits them in a specific direction relative to the camera. My implementation is based off Penn's CIS 460 slides.
+
+Below is a GIF of it in action:
+
+![](blinn.gif)
+
+Below is a comparison of runtime with Blinn-Phong enabled vs. disabled:
+
+![](img/blinn-graph.png)
+
+As we can see, there is a small hit to performance due to the additional computation that must be performed for Blinn-Phong. I suspect the call to `pow()` is contributing a fair amount to this.
+
+#### Ramp shading
+
+This is a simple technique where we limit our Lambert shading factor to a discrete set of values, making our image look more cartoon-ish. I did the same to the Gaussian component to improve this effect.
+
+The effect can be seen in the "Demo GIF" at the top of this README. It is disabled by default -- it can be enabled in `clusteredForward.frag.glsl.js`.
+
+Below is a graph comparing the runtime with ramp shading enabled vs. disabled:
+
+![](img/graph-ramp.png)
+
+As we can see, it impacts our performance, but not significantly.
+
+### Debug Views
+
+Clustering along X:
+
+![](img/clusterX.png)
+
+Clustering along Y:
+
+![](img/clusterY.png)
+
+Clustering along Z:
+
+![](img/clusterZ.png)
+
+Absolute values of normals (absolute values taken in order to show normals with negative X coordinates):
+
+![](img/absnor.png)
+
+Specular contribution only (Blinn-Phong):
+
+![](img/spec.png)
 
 ### Credits
 

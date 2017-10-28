@@ -104,7 +104,8 @@ export default function(params) {
     int idx = int(clusterCoords.x + (clusterCoords.y * u_sliceCount.x) + (clusterCoords.z * u_sliceCount.x * u_sliceCount.y)); 
     int lightCount = int(ExtractFloat(u_clusterbuffer, int(u_texDims[0]), int(u_texDims[1]), idx, 0));
     //lightCount = 100;
-
+    vec3 V =  normalize(eyePos - v_position);
+    
     for (int i = 0; i < ${params.numLights}; ++i) {
       if (i == lightCount) {
         break;
@@ -113,11 +114,10 @@ export default function(params) {
       Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
-      //vec3 V =  normalize(eyePos - v_position);
       //vec3 V = normalize(viewSpacePos);
-      //vec3 H = normalize(V + normalize(L));
-      //float specular = 0.6 * pow(max(dot(H, normal), 0.0), 500.0);
-      float specular = 0.0;
+      vec3 H = normalize(V + normalize(L));
+      float specular = 1.0 * pow(max(dot(H, normal), 0.0), 500.0);
+      //float specular = 0.0;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
@@ -142,16 +142,10 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
-    
-    //gl_FragColor = vec4((normal - gb3.xyz + vec3(0.0)) / 2.0, 1.0);//normal.z, gb1.z, 0.0, 1.0);
-    /*
-    if (abs(dot(normalize(eyePos - v_position), normal)) < 0.2) {
-      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    }
-    else {
-      gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-    }*/
 
+    gl_FragColor = vec4(albedo, 1.0);
+    //gl_FragColor = vec4(clusterCoords.y / u_sliceCount.y, clusterCoords.y / u_sliceCount.y, clusterCoords.y / u_sliceCount.y, 1.0);
+    //gl_FragColor = vec4(abs(normal), 1.0);
     //gl_FragColor = vec4(length(viewSpacePos) / 100.0, length(viewSpacePos) / 100.0, length(viewSpacePos) / 100.0, 1.0);
     //gl_FragColor = vec4(distance(eyePos, v_position) / 100.0, distance(eyePos, v_position) / 100.0, distance(eyePos, v_position) / 100.0, 1.0);
     //gl_FragColor = gb1;//vec4(v_uv, 0.0, 1.0);
