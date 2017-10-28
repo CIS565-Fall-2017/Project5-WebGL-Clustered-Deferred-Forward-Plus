@@ -90,10 +90,7 @@ Another disadvantage of deferred shading is that only a single lighting model ca
 
 ![](./renders/renderer-comparison-graph.png)
 
-Is one of them faster?
-Is one of them better at certain types of workloads?
-What are the benefits and tradeoffs of using one over the other?
-For any differences in performance, briefly explain what may be causing the difference.
+As can be seen in the graph above, deferred shading is drastically faster than forward+ and forward rendering, starting from 10 lights in the scene. As explained in the section above, by decoupling lights from the scene complexity and storing geometry information in g-buffers, rasterization is done only once per object and expensive lighting calculations are only computed once per light per covered pixel. Light culling through cluster organization also offers a huge time advantage.
 
 
 ### Effects Analysis: Blinn-Phong shading with gamma correction
@@ -107,22 +104,22 @@ As can be seen in the graph above, the extra computations needed to accomplish a
 
 ### Optimization Analysis 
 
-Performance Features:
-Concise overview write-up of the feature.
-Detailed performance improvement analysis of adding the feature
-    What is the best case scenario for your performance improvement? What is the worst? Explain briefly.
-    Are there tradeoffs to this performance feature? Explain briefly.
-    How do parameters (such as number of lights, tile size, etc.) affect performance? Show data with graphs.
-        Show timing in milliseconds, not FPS.
-    Show debug views when possible.
-        If the debug view correlates with performance, explain how.
-
-
-TALK ABOUT ---> Optimization for normals to get more correct output: utilizing octahedron normal encoding instead
-TALK ABOUT --> DOING VIEW MATRIX * VPOS IS BETTER IN VERTEX SHADER THAN IN FRAGMENT SHADER???
-
+In the first pass of the deferred shader, you want to send over the color, normals, and fragment position data. Rather than using 3 g-buffers, you can use 2 by compacting the x and y values of the normal into the first 2 buffers. Make sure to multiply the normal by the view matrix Using the e
 
 ![](./renders/optimization-graph.png)
+
+![](./renders/optimization-chart.png)
+
+As can be seen in the graph and chart above, compacting normals creates somewhat of advantage (about 10ms faster) especially when rendering above 500 lights in the scene.
+
+
+#### Other optimizations to consider
+
+Some other optimizations that I would like to implement would be:
+
+* Using octahedron normal encoding
+* Calculating the fragment position in view/camera space in the vertex shader by multiplying it with the view matrix
+
 
 ### Credits and Resources
 
