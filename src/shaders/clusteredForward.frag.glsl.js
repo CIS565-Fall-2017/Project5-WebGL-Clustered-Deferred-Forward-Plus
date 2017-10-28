@@ -31,6 +31,7 @@ export default function (params) {
   varying vec3 v_normal;
   varying vec2 v_uv;
 
+
   // ==========================================================================
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
@@ -101,22 +102,22 @@ export default function (params) {
 
   // --------------------------------------------------------------------------
   
-  float ExtractLightInfoFromCluster(int u, int lightIdx) 
-  {
-    int v = int(  floor(  (float(lightIdx) + 1.0) / 4.0  )  );
-    vec4 pixelComponent = texture2D(u_clusterbuffer, vec2(u, v));   
-    int lightIdxInTexture = int(mod(float(lightIdx) + 1.0, 4.0));
+  // float ExtractLightInfoFromCluster(int u, int lightIdx) 
+  // {
+  //   int v = int(  floor(  (float(lightIdx) + 1.0) / 4.0  )  );
+  //   vec4 pixelComponent = texture2D(u_clusterbuffer, vec2(u, v));   
+  //   int lightIdxInTexture = int(mod(float(lightIdx) + 1.0, 4.0));
     
-    if (lightIdxInTexture == 0) {
-      return pixelComponent[0];
-    } else if (lightIdxInTexture == 1) {
-      return pixelComponent[1];
-    } else if (lightIdxInTexture == 2) {
-      return pixelComponent[2];
-    } else if (lightIdxInTexture == 3) {
-      return pixelComponent[3];
-    }
-  }
+  //   if (lightIdxInTexture == 0) {
+  //     return pixelComponent[0];
+  //   } else if (lightIdxInTexture == 1) {
+  //     return pixelComponent[1];
+  //   } else if (lightIdxInTexture == 2) {
+  //     return pixelComponent[2];
+  //   } else if (lightIdxInTexture == 3) {
+  //     return pixelComponent[3];
+  //   }
+  // }
   
   // --------------------------------------------------------------------------
 

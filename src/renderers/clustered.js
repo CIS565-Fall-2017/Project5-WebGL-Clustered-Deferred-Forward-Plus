@@ -91,13 +91,13 @@ export default class ClusteredRenderer {
       // console.log("xstride: ", x_stride);
 
       // Divide height and width by 2 because we have 0,0 in the middle
-      // Note: Make sure to clamp b/c you might get a light that's outside of frustum, hence index out of bounds
-      var z_min = Math.floor(minBB[2] / z_stride) - 1;
-      var z_max = Math.floor(maxBB[2] / z_stride) + 1;
+      // ADDING -1 and +1 TO MIN AND MAX TO Z OR X?
+      var z_min = Math.floor(minBB[2] / z_stride);// - 1;
+      var z_max = Math.floor(maxBB[2] / z_stride);// + 1;
       var y_min = Math.floor((minBB[1] + (light_frustum_height / 2.0)) / y_stride);
       var y_max = Math.floor((maxBB[1] + (light_frustum_height / 2.0)) / y_stride);
-      var x_min = Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride);
-      var x_max = Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride);
+      var x_min = Math.floor((minBB[0] + (light_frustum_width / 2.0)) / x_stride) - 1;
+      var x_max = Math.floor((maxBB[0] + (light_frustum_width / 2.0)) / x_stride) + 1;
 
       // console.log("z_min to max: ", z_min, ", ", z_max);
       // console.log("y_min to max: ", y_min, ", ", y_max);
@@ -108,6 +108,7 @@ export default class ClusteredRenderer {
       // if((y_min < 0 && y_max < 0) || (y_min > this._ySlices - 1 && y_max > this._ySlices - 1))    continue;
       // if((x_min < 0 && x_max < 0) || (x_min > this._xSlices - 1 && x_max > this._xSlices - 1))    continue;
 
+      // Note: Make sure to clamp b/c you might get a light that's outside of frustum, hence index out of bounds
       if((z_min < 0 && z_max < 0) || (z_min >= this._zSlices && z_max >= this._zSlices))    continue;
       if((y_min < 0 && y_max < 0) || (y_min >= this._ySlices && y_max >= this._ySlices))    continue;
       if((x_min < 0 && x_max < 0) || (x_min >= this._xSlices && x_max >= this._xSlices))    continue;
