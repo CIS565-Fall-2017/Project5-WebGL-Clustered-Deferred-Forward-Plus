@@ -67,7 +67,7 @@ If applicable, how do parameters (such as number of lights, etc.) affect perform
 If you did something to accelerate the feature, what did you do and why?
 How might this feature be optimized beyond your current implementation?
 
-![](./renders/effects-graph.PNG)
+![](./renders/effects-graph.png)
 
 
 ==================================================================================================================
@@ -87,7 +87,7 @@ TALK ABOUT ---> Optimization for normals to get more correct output: utilizing o
 TALK ABOUT --> DOING VIEW MATRIX * VPOS IS BETTER IN VERTEX SHADER THAN IN FRAGMENT SHADER???
 
 
-![](./renders/optimization-graph)
+![](./renders/optimization-graph.png)
 
 ### Credits and Resources
 
