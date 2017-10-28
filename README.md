@@ -41,17 +41,21 @@ Once partitioned as such, this structure allows an updated fragment shader to mo
 
 ### Clustered Deferred Shading
 
-
+The second shading strategy implemented here is a Clustered Deferred shader, whereby fragment data and lighting calculations are performed in two separate passes, with lighting coming second.
 
 ### Optimization
+
+Passing data to the lighting calculation of the Deferred clustered shader requires some number of buffers, as seen moving data from "deferredToTexture.frag.glsl" to "deferred.frag.glsl.js." I was able to optimize this from the four buffers provided down to just three: the information I needed is the color, normal, position, and normalized world view data. This required a total of 12 floats in three four-element buffers.
 
 ### Performance Analysis
 
 These benchmarks were taken with the scene's camera in the standard, starting position across a variable number of lights. They measure in milliseconds the average time across 10 seconds taken to render a particular frame. Blinn-Phong was disabled for the deferred clustering for these tests. These comparisons illustrate the performance changes seen when adding the new features.
 
 <p align="center">
-  <img src="img/stratChart.png"/>
+  <img src="img/stratChart1.png"/>
 </p>
+
+As we can see, the deferred clustered shading approach offers the best performance. Surprisingly, the Forward+ clustered shading does not perform as well as the naive forward implementation provided. While this could possibly be a quirk of the scene or my hardware, I am afraid that it's more likely an issue with my implementation. Using three additional buffers to pass data to the Deferred clustered shader yields significant performance improvements. By deferring the lighting calculations until after some of the scene's data has been processed, we can minimize the cost of the shading operation as a whole.
 
 ### Blinn-Phong Shading
 
