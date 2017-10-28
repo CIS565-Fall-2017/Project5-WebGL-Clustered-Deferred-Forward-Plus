@@ -71,8 +71,8 @@ export default class ClusteredRenderer {
 
       //if (hInterp > 1 || vInterp > 1 || dInterp > 1) continue; //out of bounds minima
 
-      dInterp = dInterp * dInterp * (3.0 - 2.0 * dInterp); // smoothstep
-      dInterp = Math.pow(dInterp, 0.25); // more clusters towards camera
+      //dInterp = dInterp * dInterp * (3.0 - 2.0 * dInterp); // smoothstep
+      //dInterp = Math.pow(dInterp, 0.25); // more clusters towards camera
 
       let xMin = Math.floor(hInterp * this._xSlices);
       let yMin = Math.floor(vInterp * this._ySlices);
@@ -84,8 +84,8 @@ export default class ClusteredRenderer {
 
       // out of bounds maxima
 
-      dInterpMax = dInterpMax * dInterpMax * (3.0 - 2.0 * dInterpMax); // smoothstep
-      dInterpMax = Math.pow(dInterpMax, 0.25); // more clusters towards camera
+      //dInterpMax = dInterpMax * dInterpMax * (3.0 - 2.0 * dInterpMax); // smoothstep
+      //dInterpMax = Math.pow(dInterpMax, 0.25); // more clusters towards camera
 
 
       if (hInterpMax <= 0 && hInterp <= 0|| 
