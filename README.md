@@ -4,7 +4,7 @@ WebGL Clustered Deferred and Forward+ Shading
 **Course project #5 for CIS 565: GPU Programming and Architecture, University of Pennsylvania**
 
 * (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 62.0.3202.62** on
+* Tested on: **Google Chrome 62.0.3202.62** on:
   - Mac OSX 10.10.5
   - Processor: 2.5 GHz Intel Core i7
   - Memory: 16 GB 1600 MHz DDR3
@@ -16,13 +16,13 @@ The goal of this project was to get an introduction to Clustered Deferred and Cl
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](./renders/scene.png)](http://MegSesh.github.io/Project5B-WebGL-Deferred-Shading)
 
 ### Demo Video/GIF
-#### Forward+
+#### Forward+ (100 lights)
 ![](./renders/cluster-1.gif)
 
-#### Deferred 
+#### Deferred (250 lights, with Blinn-Phong shading and gamma correction)
 ![](./renders/deferred-1.gif)
 
 ### Features and Optimizations
