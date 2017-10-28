@@ -84,7 +84,7 @@ As you can see, that is almost as packed as it gets (more on that later). For th
 
 Blinn-Phong shading was fairly straightforward. I took the formulas straight from the 560 Slides. I had to do slight modifications to deal with the stuff in view space but other than that, it took like 4-5 hours to do, which considering how long it took to do any other feature is nothing. Here is what the highlights look. Quick note though, this is in pure white and not the *exact* same as how it contribute in the final image because I change a lot from this view to the final shading calculation. It is still very cool though!!
 
-![blinn](img/blinn-phong highlights.gif)
+![blinn](img/blinn-phong\ highlights.gif)
 
 ### Time Analysis
 
