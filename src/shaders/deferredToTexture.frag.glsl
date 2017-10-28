@@ -4,10 +4,12 @@ precision highp float;
 
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
+uniform mat4 u_viewMatrix;
 
 varying vec3 v_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
+
 
 vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -21,9 +23,14 @@ void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+    // <Optimization> Uncomment this region and the respective region in the `deferred.frag.glsl.js` shader and `clusterDeferred.js` for using optimized 2 component normals
+    // Encoding the vec3 normal into a vec2 normal saving the x and y and reconstructing the z later.
+    // gl_FragData[0] = vec4(v_position, norm.x);
+    // gl_FragData[1] = vec4(col, norm.y);
+    // </Optimization>
+
+    // populate g buffer the normal way
+    gl_FragData[0] = vec4(v_position, 1.0);
+    gl_FragData[1] = vec4(norm, 0.0);
+    gl_FragData[2] = vec4(col, 1.0);
 }

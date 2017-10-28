@@ -74,7 +74,7 @@ export default function(params) {
       return 0.25 * pow(2.0 - h, 3.0) - pow(1.0 - h, 3.0);
     } else if (h < 2.0) {
       return 0.25 * pow(2.0 - h, 3.0);
-    } else {
+    } else {    
       return 0.0;
     }
   }
@@ -85,12 +85,12 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
-
+    
     // Fisrt the start position of the fragmnets
     int clusterPosX = int( gl_FragCoord.x / (u_screenDimension.x / float(${params.xSlices})) );
     int clusterPosY = int( gl_FragCoord.y / (u_screenDimension.y / float(${params.ySlices})) );
     int clusterPosZ = int( ((-(u_viewMatrix * vec4(v_position, 1.0)).z) - u_cameraClipPlanes.x) / ((u_cameraClipPlanes.y - u_cameraClipPlanes.x) / float(${params.zSlices})) );
-
+    
     // Cluster Index
     int clusterIndex = clusterPosX + clusterPosY * ${params.xSlices} + clusterPosZ * ${params.xSlices} * ${params.ySlices};
     int clusterSize = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};

@@ -102,7 +102,7 @@ export default class ClusteredRenderer {
       let zlightViewPosWRTzPlane = lightPos[2] - camera.near;
       let zlightViewPosWRTzPlaneRadiusLeftOffset = zlightViewPosWRTzPlane - lightRadius;
       let zlightViewPosWRTzPlaneRadiusRightOffset = zlightViewPosWRTzPlane + lightRadius;
-      zMinIndex = Math.floor(zlightViewPosWRTzPlaneRadiusLeftOffset / zPerFragmentWidth);
+      zMinIndex = Math.floor(zlightViewPosWRTzPlaneRadiusLeftOffset / zPerFragmentWidth) - 1;
       zMaxIndex = Math.floor(zlightViewPosWRTzPlaneRadiusRightOffset / zPerFragmentWidth) + 1;
       if(zMinIndex > this._zSlices-1 || zMaxIndex < 0) { 
         continue; 

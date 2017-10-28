@@ -1,5 +1,5 @@
 import { gl, WEBGL_draw_buffers, canvas } from '../init';
-import { mat4, vec4 } from 'gl-matrix';
+import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
@@ -9,7 +9,14 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
-export const NUM_GBUFFERS = 4;
+// <Optimized>
+// export const NUM_GBUFFERS = 2;
+// </Optimized>
+
+export const NUM_GBUFFERS = 3;
+
+// Newly added
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -21,15 +28,23 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_viewMatrix'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      maxLightsPerCluster: MAX_LIGHTS_PER_CLUSTER,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      // <Optimization>
+      // uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_screenDimension', 'u_cameraClipPlanes', 'u_cameraPos'],
+      // </Optimization>
+
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_screenDimension', 'u_cameraClipPlanes', 'u_cameraPos'],
       attribs: ['a_uv'],
     });
 
@@ -154,6 +169,25 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+
+    // Attach light buffer
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 5);
+
+    // Attach cluster buffer
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
+    let screenDimension = vec2.fromValues(canvas.width, canvas.height);
+    let cameraClipPlane = vec2.fromValues(camera.near, camera.far);
+    gl.uniform2fv(this._progShade.u_screenDimension, screenDimension);
+    gl.uniform2fv(this._progShade.u_cameraClipPlanes, cameraClipPlane);
+
+    // Bind camera position for Blinn-Phong
+    gl.uniform3f(this._progShade.u_cameraPos, camera.position.x, camera.position.y, camera.position.z);
 
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
