@@ -22,7 +22,7 @@ export default function(params) {
 
   varying vec2 v_uv;
 
-  #define BLINN true
+  #define BLINN false
   const float shininess = 500.0;
   const vec3 specularColor = vec3(.2, .2, .2);
   

@@ -5,7 +5,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 * Jonathan Lee
 * Tested on: **Google Chrome 61.0.3163.100** on
-  Windows 10, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (SigLab)
+  Windows 10, Xeon ES-1630 @ 3.70GHz 32GB, GTX 1070 24GB (SigLab)
 
 # Overview
 
@@ -13,17 +13,17 @@ In this project, I was able to explore **Clustered Forward+ and Deferred Shading
 
 ### Live Online
 
-[![](images/blinn.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](images/blinn.PNG)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
 ### Demo
 
 ![](images/shading.gif)
 
-## Clustered Forward+
+# Clustered Forward+
 
 ![](images/forward+.gif)
 
-## Clustered Deferred
+# Clustered Deferred
 
 ![](images/deferred.gif)
 
@@ -32,6 +32,11 @@ In this project, I was able to explore **Clustered Forward+ and Deferred Shading
 | 100 Shininess             | 200 Shininess              | 500 Shininess            | 
 |---------------------------|----------------------------|--------------------------|
 | ![](images/100shine.gif)  | ![](images/200shine.gif)   | ![](images/500shine.gif) |  
+
+
+| Without Blinn             | With Blinn                       | 
+|---------------------------|----------------------------------|
+| ![](images/500lights.gif) | ![](images/500lightsblinn.gif)   |
 
 # Analysis
 
