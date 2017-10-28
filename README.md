@@ -1,28 +1,45 @@
 WebGL Clustered Deferred and Forward+ Shading
-======================
+=============================================
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Yash Vardhan
+* Tested on: Windows 10 Pro, Intel i5-4200U (4) @ 2.600GHz 4GB, NVIDIA GeForce 840M 2048MB
 
-### Live Online
+In this project, I have implemented Clustered Forward+ shading and Clustered Deferred shading and added Blinn-Phong shading effect.
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](images/y.gif)]
 
-### Demo Video/GIF
+### Features:
+* Clustered Forward+ Shading
+* Clustered Deferred Shading
 
-[![](img/video.png)](TODO)
+### Effects:
+* Deferred Blinn-Phong shading (diffuse + specular) for point lights.
 
-### (TODO: Your README)
+### Optimizations:
+* Optimized g-buffer format - reduces the number and size of g-buffers: 
+  - Used 2-component normals
+  - Reduced number of properties passed via g-buffer by reconstructing world space position using camera matrices and X/Y/depth
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+# Performance Analysis:
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+All analysis done on 1366x768 with default cluster size of 15x15x15.
 
+[![](images/table.jpg)]
+
+[![](images/graph.jpg)]
+
+### Bloopers
+
+Different views to check correctness:
+
+|  Albedo | Normal |
+| ----------- | ----------- |
+| ![](img/albedo.jpg) | ![](img/normal.jpg) |
+| Depth | Z-Slices |
+| ----------- | ----------- |
+| ![](img/depth.jpg) | ![](img/z.jpg) |
 
 ### Credits
 
