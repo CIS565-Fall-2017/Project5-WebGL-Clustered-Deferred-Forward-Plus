@@ -10,9 +10,7 @@ In this project, I have implemented Clustered Forward+ shading and Clustered Def
 
 ![](images/y.gif)
 
-### Features:
-* Clustered Forward+ Shading
-* Clustered Deferred Shading
+# Features:
 
 ### Effects:
 * Deferred Blinn-Phong shading (diffuse + specular) for point lights.
