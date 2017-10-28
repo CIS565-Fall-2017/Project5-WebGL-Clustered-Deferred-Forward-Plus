@@ -15,6 +15,7 @@ Tested on: Windows 10, Intel Core i7-7700HQ CPU @ 2.80 GHz, 8GB RAM, NVidia GeFo
 
 - [Time Analysis](#time_analysis)
  
+- [Final Thoughts](#final_thougts)
 
  
 
@@ -85,6 +86,16 @@ Blinn-Phong shading was fairly straightforward. I took the formulas straight fro
 
 ### Time Analysis
 
-For the timing analysis I first compare the different shading techniques. We first have the Forward Shader. That's just normal shading. It's also very slow (comparitively). We then have the clusterred forward plus. This is basically Forward shading but the lights in the scene are distributed into clusters. Then we finally have Clustered Deferred Shading. That's where you have lights that are split into clustered but instead of doing the shading per light and fragment, you just store the fragment's values in a g-buffer and read from that at the end. This makes your code scale linearly with respect to light count. As opposed to forward where it scales exponentially. Here is a timing graph comparing all three types with diffrerent light counts (in ms).
+For the timing analysis I first compare the different shading techniques. We first have the Forward Shader. That's just normal shading. It's also very slow (comparitively). It also breaks my timing measurer so it's omitted from these results. We then have the clusterred forward plus. This is basically Forward shading but the lights in the scene are distributed into clusters. Then we finally have Clustered Deferred Shading. That's where you have lights that are split into clustered but instead of doing the shading per light and fragment, you just store the fragment's values in a g-buffer and read from that at the end. This makes your code scale linearly with respect to light count. As opposed to forward where it scales exponentially. Here is a timing graph comparing all three types with diffrerent light counts (in ms). 
 
+![timing for different shaders](img/ms_frame.PNG)
 
+Then I made the g-buffer optimization. Since I sorta built my code to be two vec4's from the start I actually had to make my code less optimized to measure it and compare. Below are the measurements:
+
+![timing for different shaders](img/deferred.PNG)
+
+Overall, you can see a consistent gain for each light count, but as expected since this is essentially a "constant" change, that amount gradually becomes less and less relevant as the light count increases.
+
+### Final Thoughts
+
+I did not enjoy this project. It was less enjoyable than the rest as I felt that it was too niche of a field. Real time rasterization is one of the fields in graphics which I am settled on not liking. I'm sure people who are into gaming may have enjoyed this. But I did not.
