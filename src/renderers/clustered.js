@@ -136,7 +136,7 @@ export default class ClusteredRenderer {
           let zint=Math.round(light_pos4[2]*this._zSlices);
           */
 
-/*
+
           //Loop all clusters within bounding box
           for(let i=xmin_int;i<=xmax_int;i++)
           {
@@ -165,7 +165,7 @@ export default class ClusteredRenderer {
                   }
               }
           }
-          */
+
 
 
           let index2= xint + yint * this._xSlices + zint * this._xSlices * this._ySlices;

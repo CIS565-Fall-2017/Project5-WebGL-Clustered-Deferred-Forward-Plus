@@ -104,11 +104,13 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
- 
-    int numclusters=xsegment*ysegment*zsegment;
     
+    //How many clusters we have?
+    int numclusters=xsegment*ysegment*zsegment;
+     
     vec3 world_pos;
-        
+    
+    //which cluster is this fragment in?  
     int index=getCluster( vec3(gl_FragCoord.x,gl_FragCoord.y,gl_FragCoord.z) ); //Get cluster index
     
     if(index<0)
@@ -121,6 +123,8 @@ export default function(params) {
     }
     
      float u = float(index + 1) / float(numclusters + 1);
+     
+     //How many lights is in this cluster?
      int NumLightsInCluster = int(texture2D(u_clusterbuffer, vec2(u, 0.0))[0]);
 
     for(int i=1; i<maxlights; i++)
@@ -132,7 +136,7 @@ export default function(params) {
       }     
       
       //WEBGL HAS NO % OPERATION!!!!!!
-      
+     
       int clusterTexelIndex = i / 4;  
       int reminder = i - 4 * clusterTexelIndex;
               
@@ -140,9 +144,9 @@ export default function(params) {
      
       vec4 clusterTexel = texture2D(u_clusterbuffer, vec2(u, v));
 
+       //Get light index
        int light_index=1;
        
- 
        //fetch
        if (reminder == 0)      
          light_index = int(clusterTexel[0]);      
@@ -174,7 +178,7 @@ export default function(params) {
     
     //Toon Shader
     //This isn't toon at all !!!
-    /*
+    
      int color_r;
      int color_g;
      int color_b;
@@ -193,7 +197,7 @@ export default function(params) {
 
     gl_FragColor = vec4(fragColor/10.0, 1.0);
     
-    */
+    
     
   }
   `;
