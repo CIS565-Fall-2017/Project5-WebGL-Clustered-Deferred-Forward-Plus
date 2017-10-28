@@ -143,7 +143,7 @@ export default function(params) {
 
     gl_FragColor = vec4(fragColor, 1.0);
 
-    gl_FragColor = vec4(albedo, 1.0);
+    //gl_FragColor = vec4(albedo, 1.0);
     //gl_FragColor = vec4(clusterCoords.y / u_sliceCount.y, clusterCoords.y / u_sliceCount.y, clusterCoords.y / u_sliceCount.y, 1.0);
     //gl_FragColor = vec4(abs(normal), 1.0);
     //gl_FragColor = vec4(length(viewSpacePos) / 100.0, length(viewSpacePos) / 100.0, length(viewSpacePos) / 100.0, 1.0);
