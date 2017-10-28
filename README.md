@@ -3,26 +3,34 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* JuYang
+* ### Tested on: Windows 7, i7-4710MQ @ 2.50GHz 8GB, GTX 870M 6870MB (Hasee Notebook K770E-i7)
 
-### Live Online
+Well after almost 2 weeks, I decided to give up on this project. 
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+The only thing that has the right result is the forward+ glsl. Currently it can extract light clusters in a right way, and I added a "toon" shader which is not toon at all. 
 
-### Demo Video/GIF
+![result](a.png)
 
-[![](img/video.png)](TODO)
+If you wanna see this feature, you can de-comment the "TEST GLSL" part in culster.js, line 193.
 
-### (TODO: Your README)
+Other from that, the cluster.js is where the problem is. 
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+What I think is to divide the space using angels instead of positions. 
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+All positions are world based, and I can calculate which cluster the light is using angles*segments/(2*FOV);
 
+![result](cluster.png)
+
+Well, in javascript, I don't have something that's as accurate as int, float or vec3, vec4. 
+
+All I have is var or let, which is unstable and unperdictable. 
+
+I have to open the web page and debug each line to see if there's some trouble, for example, passing data from light.position(Float32 Array) into a vec3 or vec4. 
+
+Besides, in webgl, it is not real glsl, we don't have %, and not while (That's necessery for light looping, my way is to give a large int in for loop, and break when we met the condition). Even a basic goto would be better, I think. 
+
+After this bad experience using javascript and webgl, I'm not suprised if people tell me that they don't like webgl, nor do I like it. 
 
 ### Credits
 
