@@ -62,7 +62,7 @@ Absolute Normal View:
 
 ![normals](img/normals.gif)
 
-Depth:
+Depth (Gradient Quantization due to GIF Recording software):
 
 ![deep](img/depth.gif)
 
