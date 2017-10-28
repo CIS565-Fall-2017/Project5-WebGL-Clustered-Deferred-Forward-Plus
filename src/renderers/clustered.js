@@ -61,6 +61,10 @@ export default class ClusteredRenderer {
       let startZ = Math.floor((lightPosZ - radius) / sliceZstride);
       let endZ = Math.floor((lightPosZ + radius) / sliceZstride);
 
+      if((startZ < 0 && endZ < 0) || (startZ >= this._zSlices && endZ >= this._zSlices)) continue;
+      if((startY < 0 && endY < 0) || (startY >= this._ySlices && endY >= this._ySlices)) continue;
+      if((startX < 0 && endX < 0) || (startX >= this._xSlices && endX >= this._xSlices)) continue;
+
       startX = startX.clamp(0, this._xSlices-1);
       endX = endX.clamp(0, this._xSlices-1);
       startY = startY.clamp(0, this._ySlices-1);

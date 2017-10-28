@@ -8,6 +8,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
 
   uniform mat4 u_viewMatrix;
+  uniform mat4 u_inverseViewMatrix;
   uniform float u_screenWidth;
   uniform float u_screenHeight;
   uniform float u_near;
@@ -69,14 +70,16 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    // vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
     vec3 v_position = gb0.rgb;
     vec3 albedo = gb1.rgb;
-    vec3 normal = gb2.rgb;
-
-    vec3 fragColor = vec3(0.0);
+    //vec3 normal = gb2.rgb;
+    vec3 normal = vec3(gb0.a - 1.0, gb1.a - 1.0, 0.0);
+    normal.z = sqrt(1.0 - (normal.x*normal.x) - (normal.y*normal.y));
+    normal = normalize(normal);
+    normal = vec3(u_inverseViewMatrix*vec4(normal, 0.0));
 
     vec4 viewPos = u_viewMatrix * vec4(v_position, 1.0);
     viewPos.z = -viewPos.z;
@@ -96,12 +99,10 @@ export default function(params) {
     int textureHeight = int(ceil(float(${params.maxLightsPerCluster}+1) / 4.0));
     int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
 
+    vec3 fragColor = vec3(0.0);
+
     for (int i = 0; i < ${params.numLights}; ++i) {
-
-      if (i >= clusterNumLights) {
-        break;
-      }
-
+      if (i >= clusterNumLights) break;
       Light light = UnpackLight(int(ExtractFloat(u_clusterbuffer, numClusters, textureHeight, clusterIndex, i+1)));
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
@@ -109,7 +110,13 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      // Blinn
+      vec3 viewDirection = normalize(-vec3(viewPos));
+      vec3 halfDirection = normalize(L + viewDirection);
+      float angle = max(dot(halfDirection, normal), 0.0);
+      float specular = pow(angle, 16.0);
+
+      fragColor += albedo * (lambertTerm + specular) * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);

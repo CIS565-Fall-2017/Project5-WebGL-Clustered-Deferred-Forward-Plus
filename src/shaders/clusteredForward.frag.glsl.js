@@ -106,10 +106,7 @@ export default function(params) {
     vec3 fragColor = vec3(0.0);
 
     for (int i = 0; i < ${params.numLights}; ++i) {
-      if (i >= clusterNumLights) {
-        break;
-      }      
-
+      if (i >= clusterNumLights) break;
       Light light = UnpackLight(int(ExtractFloat(u_clusterbuffer, numClusters, textureHeight, clusterIndex, i+1)));
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
