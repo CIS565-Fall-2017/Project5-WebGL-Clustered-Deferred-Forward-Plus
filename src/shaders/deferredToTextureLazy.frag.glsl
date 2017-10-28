@@ -26,8 +26,12 @@ void main() {
 
     //gl_FragData[0] = vec4(col, v_position.z);
     //gl_FragData[1] = vec4(norm.x, norm.y, v_position.x, v_position.y);
-    gl_FragData[0] = vec4(col, v_position.z);
+    gl_FragData[0] = vec4(col, 0.0);
     // view-space normals
     vec4 viewNormal = normalize(u_viewMatrix * vec4(norm, 0.0));
-    gl_FragData[1] = vec4(viewNormal.x, viewNormal.y, v_position.x, v_position.y);
+    gl_FragData[1] = vec4(viewNormal.x, viewNormal.y, 0.0, 0.0);
+    gl_FragData[2] = vec4(v_position, 1.0);
+    gl_FragData[3] = vec4(norm, 1.0);
+    // gl_FragData[2] = vec4(v_position, 1.0);
+    // gl_FragData[3] = ??
 }

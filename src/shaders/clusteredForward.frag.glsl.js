@@ -7,8 +7,8 @@ export default function(params) {
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
   // u_dims: X and Y are screen dims (divide gl_FragCoord by this)
-  //         Z is camera near plane
-  //         W is camera far - near
+  //         Z is log(camera near plane)
+  //         W is log(camera far) - log(camera near)
   uniform vec4 u_dims;
   // number of slices in each dimension
   uniform vec3 u_sliceCount;
@@ -30,7 +30,7 @@ export default function(params) {
     vec3 up = normalize(vec3(0.001, 1, 0.001));
     vec3 surftan = normalize(cross(geomnor, up));
     vec3 surfbinor = cross(geomnor, surftan);
-    return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
+    return normalize(normap.y * surftan + normap.x * surfbinor + normap.z * geomnor);
   }
 
   struct Light {
@@ -93,7 +93,7 @@ export default function(params) {
     // use v_pos to compute Z slice
     vec3 viewSpacePos = vec3(u_viewMatrix * vec4(v_position, 1.0));
     viewSpacePos.z *= -1.0;
-    vec3 clusterCoords = vec3(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x), floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y), floor((viewSpacePos.z - u_dims.z) / u_dims.w * u_sliceCount.z));
+    vec3 clusterCoords = vec3(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x), floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y), floor((log(viewSpacePos.z) - u_dims.z) / u_dims.w * u_sliceCount.z));
     int idx = int(clusterCoords.x + (clusterCoords.y * u_sliceCount.x) + (clusterCoords.z * u_sliceCount.x * u_sliceCount.y)); 
     int lightCount = int(ExtractFloat(u_clusterbuffer, int(u_texDims[0]), int(u_texDims[1]), idx, 0));
     //lightCount = 100;
@@ -118,8 +118,10 @@ export default function(params) {
 
     gl_FragColor = vec4(fragColor, 1.0);
 
-    //gl_FragColor = vec4(float(lightCount) / 100.0, float(lightCount) / 100.0, float(lightCount) / 100.0, 1.0);
 
+    //gl_FragColor = vec4(float(lightCount) / 100.0, float(lightCount) / 100.0, float(lightCount) / 100.0, 1.0);
+    // Z cluster coord
+    //gl_FragColor = vec4(clusterCoords.z / u_sliceCount.z, clusterCoords.z / u_sliceCount.z, clusterCoords.z / u_sliceCount.z, 1.0);
     //gl_FragColor = vec4((gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,1.0);//gl_FragCoord.x / u_dims.x, gl_FragCoord.y / u_dims.y, 0.0, 1.0);
     //gl_FragColor = vec4(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x) / u_sliceCount.x, floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y) / u_sliceCount.y, 0.0, 1.0);
   }

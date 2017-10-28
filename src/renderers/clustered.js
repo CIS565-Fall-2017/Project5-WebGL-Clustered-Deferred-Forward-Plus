@@ -64,20 +64,17 @@ export default class ClusteredRenderer {
     // Ignore denominator when computing d because it is 1
     // If d > R, skip light if light is "behind" plane
     // Determine this by checking sign of t?
-    let accCount = 0;
-    let accComp = 0;
-    let leftCt = 0;
-    let rightCt = 0;
-    let bottomCt = 0;
-    let topCt = 0;
-    let nearCt = 0;
-    let farCt = 0;
-    let minComp = 1000;
-    let maxComp = -1;
+
+    let logNear = Math.log(camera.near);
+    let logGap = Math.log(camera.far) - logNear;
+    
     for (let z = 0; z < this._zSlices; ++z) {
       // planes defined by vec4s which contain (A, B, C, D) as per link above
-      let nearPlane = vec4.fromValues(0, 0, 1, zStart + zGap * z / this._zSlices);
-      let farPlane = vec4.fromValues(0, 0, -1,  zStart + zGap * (z + 1) / this._zSlices);
+      let logInterpNear = logNear + logGap * z / this._zSlices;
+      let logInterpFar = logNear + logGap * (z + 1) / this._zSlices;
+      let actualNear = Math.exp(logInterpNear);
+      let actualFar = Math.exp(logInterpFar);
+      //console.log("raw Z: %d\nexp Z: %f", z, actualNear);
       for (let y = 0; y < this._ySlices; ++y) {
         let bottomPlaneNormal = vec3.create();
         // not sure why it's (-1, 0, 0) instead of (1, 0, 0), but...!!
@@ -116,61 +113,37 @@ export default class ClusteredRenderer {
             let pos = vec4.fromValues(projectedLights[lightIdx][0], projectedLights[lightIdx][1], projectedLights[lightIdx][2], 1);
             // "AABB" culling
             let r = scene.lights[lightIdx].radius;
-            let AcheckZ = pos[2] + r;
-            let AnearZ = (zStart + zGap * z / this._zSlices);
-            let AfarZ = zStart + zGap * (z + 1) / this._zSlices;
             if (
-                (pos[2] + r < (zStart + zGap * z / this._zSlices)) ||
-                (pos[2] - r > zStart + zGap * (z + 1) / this._zSlices)) {
+                (pos[2] + r < actualNear) ||//(zStart + zGap * z / this._zSlices)) ||
+                (pos[2] - r > actualFar)) {// zStart + zGap * (z + 1) / this._zSlices)) {
               continue;
             }
             let t = vec4.dot(pos, leftPlane);
-            // TODO: less hacky solution
-            let radiusSqrd = scene.lights[lightIdx].radius * 1.0025;//Math.sqrt(scene.lights[lightIdx].radius);//scene.lights[lightIdx].radius;// * scene.lights[lightIdx].radius;
+            let radiusSqrd = r * 1.0025;//Math.sqrt(scene.lights[lightIdx].radius);//scene.lights[lightIdx].radius;// * scene.lights[lightIdx].radius;
             // TODO: if d < rr, keep going
             // d = Math.abs(t)
             // TODO: else, skip light if t < 0
             // skip light if light does not intersect plane AND light is "behind" plane
             if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
               //console.log("culled by left");
-              leftCt++;
               continue;
             }
 
             t = vec4.dot(pos, rightPlane);
             if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
               //console.log("culled by right");
-              rightCt++;
               continue;
             }
 
             t = vec4.dot(pos, bottomPlane);
             if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
               //console.log("culled by bottom");
-              bottomCt++;
               continue;
             }
 
             t = vec4.dot(pos, topPlane);
             if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
               //console.log("culled by top");
-              topCt++;
-              continue;
-            }
-
-            t = vec4.dot(pos, nearPlane);
-            t = 0;
-            if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
-              //console.log("culled by near");
-              nearCt++;
-              continue;
-            }
-
-            t = vec4.dot(pos, farPlane);
-            t = 0;
-            if (Math.abs(t) >= radiusSqrd && t < BEHIND_PLANE_EPSILON) {
-              //console.log("culled by far");
-              farCt++;
               continue;
             }
 
@@ -191,10 +164,6 @@ export default class ClusteredRenderer {
             console.log(component);
           }
           */
-          accComp += component;
-          minComp = Math.min(minComp, component);
-          maxComp = Math.max(maxComp, component);
-          accCount++;
           //console.log(component);
         }
       }

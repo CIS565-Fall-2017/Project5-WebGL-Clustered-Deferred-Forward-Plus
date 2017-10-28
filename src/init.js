@@ -1,5 +1,5 @@
 // TODO: Change this to enable / disable debug mode
-export const DEBUG = true && process.env.NODE_ENV === 'development';
+export const DEBUG = false && process.env.NODE_ENV === 'development';
 
 import DAT from 'dat-gui';
 import WebGLDebug from 'webgl-debug';
@@ -85,13 +85,25 @@ if (DEBUG) {
   spector.displayUI();
 }
 
+let accTime = 0;
+let accCount = 0;
+
 // Creates a render loop that is wrapped with camera update and stats logging
 export function makeRenderLoop(render) {
   return function tick() {
     cameraControls.update();
     stats.begin();
+    let start = Date.now();
     render();
+    let end = Date.now();
     stats.end();
+    accTime += end - start;
+    accCount++;
+    if (accCount >= 20) {
+      console.log(accTime / accCount);
+      accTime = 0;
+      accCount = 0;
+    }
     if (!ABORTED) {
       requestAnimationFrame(tick)
     }

@@ -3,15 +3,15 @@ import { mat4, vec4, vec3, vec2 } from 'gl-matrix';
 import { loadShaderProgram, renderFullscreenQuad } from '../utils';
 import { NUM_LIGHTS } from '../scene';
 import toTextureVert from '../shaders/deferredToTexture.vert.glsl';
-import toTextureFrag from '../shaders/deferredToTexture.frag.glsl';
+import toTextureFrag from '../shaders/deferredToTextureLazy.frag.glsl';
 import QuadVertSource from '../shaders/quad.vert.glsl';
-import fsSource from '../shaders/deferred.frag.glsl.js';
+import fsSource from '../shaders/deferredLazy.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
-export const NUM_GBUFFERS = 2;
+export const NUM_GBUFFERS = 4;
 
-export default class ClusteredDeferredRenderer extends ClusteredRenderer {
+export default class ClusteredDeferredRendererLazy extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     super(xSlices, ySlices, zSlices);
     
@@ -29,7 +29,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount', 'u_viewMatrix', 'u_texDims', 'u_invViewMatrix'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_clusterbuffer', 'u_dims', 'u_sliceCount', 'u_viewMatrix', 'u_texDims', 'u_invViewMatrix'],
       attribs: ['a_uv'],
     });
 

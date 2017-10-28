@@ -77,7 +77,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
     // bind u_dims
-    gl.uniform4fv(this._shaderProgram.u_dims, vec4.fromValues(canvas.width, canvas.height, camera.near, camera.far - camera.near));
+    gl.uniform4fv(this._shaderProgram.u_dims, vec4.fromValues(canvas.width, canvas.height, Math.log(camera.near), Math.log(camera.far) - Math.log(camera.near)));
 
     // bind u_sliceCount
     gl.uniform3fv(this._shaderProgram.u_sliceCount, vec3.fromValues(this._xSlices, this._ySlices, this._zSlices));

@@ -81,8 +81,8 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    //vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
-    //vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
+    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
     vec3 albedo = gb0.xyz;
     // sqrt(1 - x^2 - y^2); assume Z > 0 because camera looks down -Z
@@ -91,7 +91,7 @@ export default function(params) {
     //normal.z *= (dot(normal, vec3(v_position - eyePos)) > 0.0) ? -1.0 : 1.0;
     //normal.z *= (u_viewMatrix * vec4(normal, 0.0)).z < 0.0 ? -1.0 : 1.0; 
     //normal = gb1.xyz;
-    vec3 v_position = vec3(gb1.z, gb1.w, gb0.w);
+    vec3 v_position = vec3(gb2);
 
     vec3 fragColor = vec3(0.0);
 
@@ -99,6 +99,7 @@ export default function(params) {
     vec3 viewSpacePos = vec3(u_viewMatrix * vec4(v_position, 1.0));
     viewSpacePos.z *= -1.0;
     // eye position for Blinn-Phong
+    vec3 lookDir = normalize(vec3(u_viewMatrix * vec4(0.0, 0.0, 1.0, 0.0)));
     vec3 eyePos = vec3(u_invViewMatrix * vec4(vec4(0.0, 0.0, 0.0, 1.0)));//-1.0 * vec3(vec4(0.0, 0.0, 0.0, 1.0) * u_viewMatrix);
     vec3 clusterCoords = vec3(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x), floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y), floor((log(viewSpacePos.z) - u_dims.z) / u_dims.w * u_sliceCount.z));
     int idx = int(clusterCoords.x + (clusterCoords.y * u_sliceCount.x) + (clusterCoords.z * u_sliceCount.x * u_sliceCount.y)); 
@@ -113,11 +114,14 @@ export default function(params) {
       Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
-      //vec3 V =  normalize(eyePos - v_position);
+      vec3 refl = reflect(L, normal);
+    vec3 viewRefl = vec3(u_viewMatrix * vec4(refl, 0.0));
+      vec3 viewL = vec3(u_viewMatrix * vec4(L, 0.0));
+      vec3 V =  normalize(eyePos - v_position);
       //vec3 V = normalize(viewSpacePos);
-      //vec3 H = normalize(V + normalize(L));
-      //float specular = 0.6 * pow(max(dot(H, normal), 0.0), 500.0);
-      float specular = 0.0;
+      vec3 H = normalize(V + normalize(L));
+      float specular = 0.6 * pow(max(dot(H, normal), 0.0), 500.0);
+
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
