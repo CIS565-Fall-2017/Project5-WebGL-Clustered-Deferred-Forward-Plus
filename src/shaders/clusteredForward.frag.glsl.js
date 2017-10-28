@@ -5,6 +5,12 @@ export default function(params) {
   #version 100
   precision highp float;
 
+  uniform mat4 u_viewMatrix;
+  uniform float u_width;
+  uniform float u_height;
+  uniform float u_near;
+  uniform float u_far;
+
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
@@ -80,9 +86,30 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+    vec4 c_pos = u_viewMatrix * vec4(v_position, 1.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    float xSlices = float(${params.xSlices});
+    float ySlices = float(${params.ySlices});
+    float zSlices = float(${params.zSlices});
+    int x = int(float(gl_FragCoord.x)/(u_width/xSlices)); 
+
+    float xf = float(x)/xSlices;
+    int y = int(float(gl_FragCoord.y)/(u_height/ySlices)); 
+    float yf = float(y)/ySlices;
+    int z = int((-c_pos.z - u_near)/((u_far-u_near)/zSlices));
+
+    int cluster_index = x + y * int(xSlices) + z * int(xSlices) * int(ySlices);
+    int cluster_texture_h = int((100.0 + 1.0) / 4.0) + 1;
+    int numClusters = int(xSlices * ySlices * zSlices);
+    int num_lights = int(ExtractFloat(u_clusterbuffer, numClusters, cluster_texture_h, cluster_index, 0));
+    float zf = float(z)/zSlices;
+    int numLightsInCluster = 0;
+
+    for (int i = 1; i <= ${params.numLights}; ++i) {
+      if(i > num_lights) {break;}
+      numLightsInCluster++;
+      int light_idx = int(ExtractFloat(u_clusterbuffer, numClusters, cluster_texture_h, cluster_index, i));
+      Light light = UnpackLight(light_idx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -96,6 +123,13 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
+    float test_col = float(num_lights)/20.0;
+    //test_col = float(num_lights)/1.0;
+    //test_col = float(numLightsInCluster)/110.0;
+    //test_col = zf;
+    //gl_FragColor = vec4(test_col,test_col,test_col,1.0);
+    //gl_FragColor.b += zf;
   }
   `;
 }
