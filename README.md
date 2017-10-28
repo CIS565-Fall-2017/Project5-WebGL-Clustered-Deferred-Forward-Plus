@@ -21,7 +21,7 @@ In this project, a scene with some alterable number of lights is provided. The g
 
 ### Live Online
 
-[![](img/blinn_100)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![An online demo of this implemntation is available here.](img/blinn_100)](https://timtinkers.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo GIF
 
