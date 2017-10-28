@@ -55,7 +55,7 @@ Clustering is the binning technique used to store lights in a spatial data struc
 
 ![](readmeImages/false-positive-diagram.jpg)
 
-[Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
+#### [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
 
 ![](readmeImages/Clustering_depth_Slicing.png)
 
@@ -101,7 +101,7 @@ Fragment u coordinate | Lights Per Cluster | Arbitray Light Value Per Cluster
 ![](readmeImages/fragment_u.png) | ![](readmeImages/lightsPerCluster.png) | ![](readmeImages/arbitrarylightColorPerCluster.png)
 
 Fragment Depth | Fragment World Space Position | Normals | Albedo
------------------- | ------------------ | ------------------
+-------------- | ----------------------------- | ------- | ------
 ![](readmeImages/fragmentdepth.png) | ![](readmeImages/fragmentWorldSpacePositions.png) | ![](readmeImages/worldspacenormals.png) | ![](readmeImages/albedo.png)
 
 ## Credits
