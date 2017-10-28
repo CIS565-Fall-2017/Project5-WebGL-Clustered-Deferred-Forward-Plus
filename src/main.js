@@ -2,11 +2,13 @@ import { makeRenderLoop, camera, cameraControls, gui, gl } from './init';
 import ForwardRenderer from './renderers/forward';
 import ClusteredForwardPlusRenderer from './renderers/clusteredForwardPlus';
 import ClusteredDeferredRenderer from './renderers/clusteredDeferred';
+import ClusteredDeferredRendererLazy from './renderers/clusteredDeferredLazy';
 import Scene from './scene';
 
 const FORWARD = 'Forward';
 const CLUSTERED_FORWARD_PLUS = 'Clustered Forward+';
 const CLUSTERED_DEFFERED = 'Clustered Deferred';
+const CLUSTERED_DEFERRED_LAZY = 'Clustered Deferred Lazy';
 
 const params = {
   renderer: CLUSTERED_FORWARD_PLUS,
@@ -26,10 +28,13 @@ function setRenderer(renderer) {
     case CLUSTERED_DEFFERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
       break;
+    case CLUSTERED_DEFERRED_LAZY:
+      params._renderer = new ClusteredDeferredRendererLazy(15, 15, 15);
+      break;
   }
 }
 
-gui.add(params, 'renderer', [FORWARD, CLUSTERED_FORWARD_PLUS, CLUSTERED_DEFFERED]).onChange(setRenderer);
+gui.add(params, 'renderer', [FORWARD, CLUSTERED_FORWARD_PLUS, CLUSTERED_DEFFERED, CLUSTERED_DEFERRED_LAZY]).onChange(setRenderer);
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');

@@ -1,13 +1,22 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
   #version 100
   precision highp float;
 
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  // u_dims: X and Y are screen dims (divide gl_FragCoord by this)
+  //         Z is log(camera near plane)
+  //         W is log(camera far) - log(camera near)
+  uniform vec4 u_dims;
+  // number of slices in each dimension
+  uniform vec3 u_sliceCount;
+
+  uniform mat4 u_viewMatrix;
+  // index 0: texture width
+  // index 1: texture height
+  uniform vec2 u_texDims;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -21,7 +30,7 @@ export default function(params) {
     vec3 up = normalize(vec3(0.001, 1, 0.001));
     vec3 surftan = normalize(cross(geomnor, up));
     vec3 surfbinor = cross(geomnor, surftan);
-    return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
+    return normalize(normap.y * surftan + normap.x * surfbinor + normap.z * geomnor);
   }
 
   struct Light {
@@ -57,7 +66,7 @@ export default function(params) {
     // LOOK: This extracts the 4th float (radius) of the (index)th light in the buffer
     // Note that this is just an example implementation to extract one float.
     // There are more efficient ways if you need adjacent values
-    light.radius = ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
+    light.radius = v1.w;//ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
 
     light.color = v2.rgb;
     return light;
@@ -81,13 +90,55 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
+    // use v_pos to compute Z slice
+    vec3 viewSpacePos = vec3(u_viewMatrix * vec4(v_position, 1.0));
+    viewSpacePos.z *= -1.0;
+    vec3 clusterCoords = vec3(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x), floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y), floor((log(viewSpacePos.z) - u_dims.z) / u_dims.w * u_sliceCount.z));
+    int idx = int(clusterCoords.x + (clusterCoords.y * u_sliceCount.x) + (clusterCoords.z * u_sliceCount.x * u_sliceCount.y)); 
+    int lightCount = int(ExtractFloat(u_clusterbuffer, int(u_texDims[0]), int(u_texDims[1]), idx, 0));
+    //lightCount = 100;
+
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      if (i == lightCount) {
+        break;
+      } 
+      int lightIdx = int(ExtractFloat(u_clusterbuffer, int(u_texDims[0]), int(u_texDims[1]), idx, i + 1));
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
+      // To enable ramp shading, uncomment the block below.
+      // RAMP SHADING ===================================================
+      /*
+      if (lambertTerm < 0.25) {
+        lambertTerm = 0.25;
+      }
+      else if (lambertTerm < 0.5) {
+        lambertTerm = 0.5;
+      }
+      else if (lambertTerm < 0.75) {
+          lambertTerm = 0.75;
+      }
+      else {
+          lambertTerm = 0.85;
+      }
+      if (lightIntensity > 0.0 && lightIntensity < 0.05) {
+        lightIntensity = 0.05;
+      }
+      else if (lightIntensity > 0.0 && lightIntensity < 0.15) {
+        lightIntensity = 0.15;
+      }
+      else if (lightIntensity > 0.0 && lightIntensity < 0.35) {
+          lightIntensity = 0.35;
+      }
+      else if (lightIntensity > 0.0) {
+          lightIntensity = 0.65;
+      }
+      */
+      // RAMP SHADING ===================================================
+
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
@@ -96,6 +147,13 @@ export default function(params) {
     fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+
+
+    //gl_FragColor = vec4(float(lightCount) / 100.0, float(lightCount) / 100.0, float(lightCount) / 100.0, 1.0);
+    // Z cluster coord
+    //gl_FragColor = vec4(clusterCoords.z / u_sliceCount.z, clusterCoords.z / u_sliceCount.z, clusterCoords.z / u_sliceCount.z, 1.0);
+    //gl_FragColor = vec4((gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,(gl_FragCoord.z - 0.8) * 5.0,1.0);//gl_FragCoord.x / u_dims.x, gl_FragCoord.y / u_dims.y, 0.0, 1.0);
+    //gl_FragColor = vec4(floor(gl_FragCoord.x / u_dims.x * u_sliceCount.x) / u_sliceCount.x, floor(gl_FragCoord.y / u_dims.y * u_sliceCount.y) / u_sliceCount.y, 0.0, 1.0);
   }
   `;
 }
