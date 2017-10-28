@@ -13,7 +13,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-![](img/gif_FP_20L.gif)
+![](img/gif_FP_100L.gif)
 
 __Features:__
 
