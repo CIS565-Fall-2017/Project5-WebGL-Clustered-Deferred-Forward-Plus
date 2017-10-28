@@ -22,7 +22,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       ySlices: ySlices,
       zSlices: zSlices
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_screenW', 'u_screenH', 'u_camN', 'u_camF'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix', 'u_screenW', 'u_screenH', 'u_camN', 'u_camF', 'u_camPos'],
       attribs: ['a_position', 'a_normal', 'a_uv']
     });
 
@@ -88,6 +88,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1f(this._shaderProgram.u_screenH, canvas.height);
     gl.uniform1f(this._shaderProgram.u_camN, camera.near);
     gl.uniform1f(this._shaderProgram.u_camF, camera.far);
+    gl.uniform3f(this._shaderProgram.u_camPos, camera.position.x, camera.position.y, camera.position.z);
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }

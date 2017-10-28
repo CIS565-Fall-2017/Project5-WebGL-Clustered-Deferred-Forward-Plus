@@ -5,6 +5,8 @@ precision highp float;
 uniform sampler2D u_colmap;
 uniform sampler2D u_normap;
 
+uniform mat4 u_viewMatrix;
+
 varying vec3 v_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
@@ -22,8 +24,13 @@ void main() {
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
     // TODO: populate your g buffer
-    gl_FragData[0] = vec4(col, 1.0);
-    gl_FragData[1] = vec4(norm, 1.0);
-    gl_FragData[2] = vec4(v_position, 1.0);
-    // gl_FragData[3] = ??
+
+    gl_FragData[0] = vec4(v_position, 1.0);
+    gl_FragData[1] = vec4(col, 1.0);
+    gl_FragData[2] = vec4(norm, 1.0);
+    
+    // save space using screen space normals
+    // https://computergraphics.stackexchange.com/questions/3942/screenspace-normals-creation-normal-maps-and-unpacking -> z = sqrt(1-x2-y2);
+    // gl_FragData[0] = vec4(v_position, norm.x);
+    // gl_FragData[1] = vec4(col, norm.y);
 }

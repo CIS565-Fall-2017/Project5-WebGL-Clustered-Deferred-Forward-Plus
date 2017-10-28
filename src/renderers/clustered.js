@@ -282,6 +282,3 @@ export default class ClusteredRenderer {
   }
 
 }
-
-
-

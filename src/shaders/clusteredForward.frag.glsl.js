@@ -15,6 +15,7 @@ export default function(params) {
   uniform float u_screenH;
   uniform float u_camN;
   uniform float u_camF;
+  uniform vec3 u_camPos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -99,7 +100,6 @@ export default function(params) {
     // show perf. comparison..
 
     // use UnpackLight() logic to read lightIdx, and then use UnpackLight() to read light from that idx..
-
     int clusterIdx = clusterPos.x + clusterPos.y * ${params.xSlices} + clusterPos.z * ${params.xSlices} * ${params.ySlices};
     int clusterWidth = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
     int clusterHeight = int(float(${params.maxLights}+1) / 4.0) + 1;
@@ -111,10 +111,6 @@ export default function(params) {
       if(i >= numLights) {
         break;
       }
-      // int clusterTex = (i) / 4; // floors by default..
-      // int lightIdx = int(ExtractFloat(u_clusterbuffer, slicesSize, ${params.maxLights}+1, clusterIdx, clusterTex));
-
-      //int lightIdx = getLightIdx(u_clusterbuffer, slicesSize, ${params.maxLights}, clusterIdx, clusterTex);
 
       int clusterPixel = int(float(i+1) / 4.0); // FIXED BUG: offset by 1
       float clusterV = float(clusterPixel+1) / float(clusterHeight+1);
@@ -137,9 +133,17 @@ export default function(params) {
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+      float lambertTerm = floor(max(dot(normalize(u_camPos-v_position), normal), 0.0) * 4.0) / 4.0;
+      //float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      float specular = 0.0;
+      // blinn-phong shading... https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model
+      // vec3 viewDir = normalize(u_camPos-v_position);
+      // vec3 halfDir = normalize(L + viewDir);
+      // float specAngle = max(dot(halfDir, normal), 0.0);
+      // specular = pow(specAngle, 100.0); // 100 -> shininess
+
+      fragColor += (albedo + vec3(specular)) * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
