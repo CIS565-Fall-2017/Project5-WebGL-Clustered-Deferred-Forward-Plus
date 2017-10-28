@@ -55,7 +55,7 @@ Clustering is the binning technique used to store lights in a spatial data struc
 
 ![](readmeImages/false-positive-diagram.jpg)
 
-#### [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
+### [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
 
 ![](readmeImages/Clustering_depth_Slicing.png)
 
