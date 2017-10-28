@@ -92,7 +92,7 @@ export default function(params) {
     //numLights /= 10.0;//float(${params.numLights});
     for (int i = 0; i < ${params.numLights}; i+=4) {
       if (i > int(numLights)) break;
-      float cl_v = float(i/4 + 1)/ (26.0 + 1.0);
+      float cl_v = float(i/4 + 1)/ (ceil(float(100 + 1) / 4.0) + 1.0);
       vec2 uv = vec2(cl_u, cl_v);
       vec4 sample = texture2D(u_clusterbuffer, uv);
 
@@ -120,14 +120,12 @@ export default function(params) {
       }
     }
 
-
     const vec3 ambientLight = vec3(0.025);
     fragColor += col * ambientLight;
-
-    
-    
+   
     //gl_FragColor = vec4(clamp(pos, vec3(0), vec3(1)), 1.0);
     gl_FragColor = vec4(fragColor.xyz, 1.0);
+    //gl_FragColor = vec4(vec3(numLights / 500.0), 1.0);
   }
   `;
 }

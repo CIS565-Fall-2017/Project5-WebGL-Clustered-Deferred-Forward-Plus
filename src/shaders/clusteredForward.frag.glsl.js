@@ -117,7 +117,7 @@ export default function(params) {
     //numLights /= 10.0;//float(${params.numLights});
     for (int i = 0; i < ${params.numLights}; i+=4) {
       if (i > int(numLights)) break;
-      float cl_v = float(i/4 + 1)/ (26.0 + 1.0);
+      float cl_v = float(i/4 + 1)/ (ceil(float(100 + 1) / 4.0) + 1.0);
       vec2 uv = vec2(cl_u, cl_v);
       vec4 sample = texture2D(u_clusterbuffer, uv);
 
