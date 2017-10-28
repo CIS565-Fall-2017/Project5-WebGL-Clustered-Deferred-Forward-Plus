@@ -1,7 +1,5 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
-
   #version 100
   precision highp float;
 
@@ -11,6 +9,13 @@ export default function(params) {
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform mat4 u_viewMatrix;
+  uniform float u_screenW;
+  uniform float u_screenH;
+  uniform float u_camN;
+  uniform float u_camF;
+  uniform vec3 u_camPos;
 
   varying vec3 v_position;
   varying vec3 v_normal;
@@ -81,19 +86,68 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    // Determine the cluster for a fragment
+    // Read in the lights in that cluster from the populated data
+    // Do shading for just those lights
+
+    ivec3 clusterPos = ivec3(
+      int(gl_FragCoord.x / u_screenW * float(${params.xSlices})),
+      int(gl_FragCoord.y / u_screenH * float(${params.ySlices})),
+      int((-(u_viewMatrix * vec4(v_position,1.0)).z - u_camN) / (u_camF - u_camN) * float(${params.zSlices}))
+    );
+    
+    // optimize z using non linear scale once linear works..
+    // show perf. comparison..
+
+    // use UnpackLight() logic to read lightIdx, and then use UnpackLight() to read light from that idx..
+    int clusterIdx = clusterPos.x + clusterPos.y * ${params.xSlices} + clusterPos.z * ${params.xSlices} * ${params.ySlices};
+    int clusterWidth = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int clusterHeight = int(float(${params.maxLights}+1) / 4.0) + 1;
+    float clusterU = float(clusterIdx + 1) / float(clusterWidth + 1); // like u in UnpackLight()..
+
+    int numLights = int(texture2D(u_clusterbuffer, vec2(clusterU, 0.0)).x); // clamp to max lights in scene if this misbehaves..
+
+    for (int i = 0; i < ${params.numLights}; i++) {
+      if(i >= numLights) {
+        break;
+      }
+
+      int clusterPixel = int(float(i+1) / 4.0); // FIXED BUG: offset by 1
+      float clusterV = float(clusterPixel+1) / float(clusterHeight+1);
+      vec4 texel = texture2D(u_clusterbuffer, vec2(clusterU, clusterV));
+      int lightIdx;
+      int clusterPixelComponent = (i+1) - (clusterPixel * 4);
+      if (clusterPixelComponent == 0) {
+          lightIdx = int(texel[0]);
+      } else if (clusterPixelComponent == 1) {
+          lightIdx = int(texel[1]);
+      } else if (clusterPixelComponent == 2) {
+          lightIdx = int(texel[2]);
+      } else if (clusterPixelComponent == 3) {
+          lightIdx = int(texel[3]);
+      } 
+
+      // shading
+      Light light = UnpackLight(lightIdx);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+      float lambertTerm = floor(max(dot(normalize(u_camPos-v_position), normal), 0.0) * 4.0) / 4.0;
+      //float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      float specular = 0.0;
+      // blinn-phong shading... https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_shading_model
+      // vec3 viewDir = normalize(u_camPos-v_position);
+      // vec3 halfDir = normalize(L + viewDir);
+      // float specAngle = max(dot(halfDir, normal), 0.0);
+      // specular = pow(specAngle, 100.0); // 100 -> shininess
+
+      fragColor += (albedo + vec3(specular)) * lambertTerm * light.color * vec3(lightIntensity);
     }
 
     const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
+    fragColor += albedo * ambientLight; // float(numLights) // vec3(float(u_slices.x)/2.0, float(u_slices.y)/2.0, float(u_slices.z)/2.0)
 
     gl_FragColor = vec4(fragColor, 1.0);
   }

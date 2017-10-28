@@ -13,10 +13,10 @@ export default class ForwardRenderer {
 
     // Initialize a shader program. The fragment shader source is compiled based on the number of lights
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS,
+      numLights: NUM_LIGHTS
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer'],
-      attribs: ['a_position', 'a_normal', 'a_uv'],
+      attribs: ['a_position', 'a_normal', 'a_uv']
     });
 
     this._projectionMatrix = mat4.create();
