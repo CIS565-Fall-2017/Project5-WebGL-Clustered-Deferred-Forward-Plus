@@ -55,7 +55,7 @@ What are the benefits and tradeoffs of using one over the other?
 For any differences in performance, briefly explain what may be causing the difference.
 
 
-![](https://github.com/MegSesh/Project5-WebGL-Clustered-Deferred-Forward-Plus/tree/master/renders/renderer-comparison-graph)
+![](/renders/renderer-comparison-graph)
 
 ==================================================================================================================
 
@@ -67,7 +67,7 @@ If applicable, how do parameters (such as number of lights, etc.) affect perform
 If you did something to accelerate the feature, what did you do and why?
 How might this feature be optimized beyond your current implementation?
 
-![](https://github.com/MegSesh/Project5-WebGL-Clustered-Deferred-Forward-Plus/tree/master/renders/effects-graph)
+![](/renders/effects-graph)
 
 
 ==================================================================================================================
@@ -87,7 +87,7 @@ TALK ABOUT ---> Optimization for normals to get more correct output: utilizing o
 TALK ABOUT --> DOING VIEW MATRIX * VPOS IS BETTER IN VERTEX SHADER THAN IN FRAGMENT SHADER???
 
 
-![](https://github.com/MegSesh/Project5-WebGL-Clustered-Deferred-Forward-Plus/tree/master/renders/optimization-graph)
+![](/renders/optimization-graph)
 
 ### Credits and Resources
 
