@@ -96,6 +96,14 @@ Fragment X Cluster | Fragment Y Cluster | Fragment Z Cluster
 ------------------ | ------------------ | ------------------
 ![](readmeImages/fragmentXcluster.png) | ![](readmeImages/fragmentYcluster.png) | ![](readmeImages/fragmentZcluster.png)
 
+Fragment u coordinate | Lights Per Cluster | Arbitray Light Value Per Cluster
+------------------ | ------------------ | ------------------
+![](readmeImages/fragment_u.png) | ![](readmeImages/lightsPerCluster.png) | ![](readmeImages/arbitrarylightColorPerCluster.png)
+
+Fragment Depth | Fragment World Space Position | Normals | Albedo
+------------------ | ------------------ | ------------------
+![](readmeImages/fragmentdepth.png) | ![](readmeImages/fragmentWorldSpacePositions.png) | ![](readmeImages/worldspacenormals.png) | ![](readmeImages/albedo.png)
+
 ## Credits
 
 * [Three.js](https://github.com/mrdoob/three.js) by [@mrdoob](https://github.com/mrdoob) and contributors
