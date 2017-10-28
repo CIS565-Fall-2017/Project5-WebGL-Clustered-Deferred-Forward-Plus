@@ -13,6 +13,8 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](readmeImages/VideoLinkImage.png)](https://vimeo.com/240254058)
 
+#### _The demo above has about 300 dynamic lights. The Clustered Deferred Shading model implemented here can handle more than 2100 lights at 60 FPS but this over saturates the scene._
+
 ## OverView
 
 This project implements Clustered Deferred and Clustered Forward Shading Techniques. These techniques improve performance for scenes with many dynamic lights. Typical forward shading involves looping over every object and then looping over every single light in the scene to accumulate the light energy on the object. If the number of lights is high, this can lead to a drastic drop in performance. We need to cull lights so that only those lights which actually contribute energy on a fragment are looped over. Clustering is a solution that bins lights into 3D buckets based on what the light can influence. Deferred shading is an improvement over this by only dealing with the fragments with the smallest z-depth, which is accomplished via a culling stage and using a "g-buffer".
@@ -51,11 +53,11 @@ The performance of both clustered forward plus and deffered shading is heavily d
 
 Clustering is the binning technique used to store lights in a spatial data structure based on their area of influence. Clusters arent simply called grids because they are made y slicing up the camera view frustum, which makes each cluster a tiny frustum. Frustum based culling is hard (false positives are easy) but there are many ways to go about it based on how accurate you need to be.
 
+#### [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
+
 ![](readmeImages/PointLightCulling.png)
 
 ![](readmeImages/false-positive-diagram.jpg)
-
-### [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
 
 ![](readmeImages/Clustering_depth_Slicing.png)
 
