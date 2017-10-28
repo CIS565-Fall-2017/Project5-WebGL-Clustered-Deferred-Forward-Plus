@@ -134,13 +134,15 @@ export default function(params) {
     float clusterYID = floor(clusterUVD.y * sliceDimensions.y);
     
     float pd = clusterUVD.z;
+    pd = pd * pd * (3.0 - 2.0 * pd);
+    pow(pd, 0.25);
     float clusterZID = floor(pd * sliceDimensions.z);
 
     if (clusterUVD.x == 0.999) clusterXID = 0.0;
     if (clusterUVD.y == 0.999) clusterYID = 0.0;
     
     
-    return vec3(clusterXID / sliceDimensions.x, clusterYID / sliceDimensions.y, clusterZID / sliceDimensions.z);
+    return vec3(0.0 / sliceDimensions.x, 0.0 / sliceDimensions.y, (15.0 - clusterZID) / sliceDimensions.z);
   }
 
   void main() {
@@ -172,9 +174,8 @@ export default function(params) {
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;  
 
-    // fragColor = 0.75 * fragColor;
-    
-    // fragColor += 0.25 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
+    // fragColor = 0.5 * fragColor;
+    // fragColor += 0.5 * getClusterColor(vec3(u_viewMatrix * vec4(v_position, 1.0)));
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
