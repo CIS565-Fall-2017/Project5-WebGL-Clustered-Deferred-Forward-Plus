@@ -5,7 +5,7 @@ import { NUM_LIGHTS } from '../scene';
 import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
-import ClusteredRenderer from './clustered';
+import ClusteredRenderer, {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -15,7 +15,17 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS,
+
+      numLights: NUM_LIGHTS, //草泥马在这传的值啊
+        Xsegment: xSlices,
+        Ysegment: ySlices,
+        Zsegment: zSlices,
+        MAXLIGHTSPERCLUSTER: MAX_LIGHTS_PER_CLUSTER,
+        PIXELSPERELEMENT: this._clusterTexture._pixelsPerElement,
+        SCREENWIDTH: screen.width,
+        SCREENHEIGHT: screen.height,
+
+
     }), {
       uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
