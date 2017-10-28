@@ -6,6 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -14,11 +15,31 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
+	// Provide additional data for cluster slice dimensions and maximum light count.
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
-      numLights: NUM_LIGHTS,
+		numLights: NUM_LIGHTS,
+		maxClusterLights: MAX_LIGHTS_PER_CLUSTER,
+		numSliceX: xSlices,
+		numSliceY: ySlices,
+		numSliceZ: zSlices,
+		width: canvas.width,
+		height: canvas.height
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
-      attribs: ['a_position', 'a_normal', 'a_uv'],
+		uniforms: [
+			'u_viewProjectionMatrix',
+			'u_colmap',
+			'u_normap',
+			'u_lightbuffer',
+			'u_clusterbuffer',
+			'u_viewMatrix',
+			'u_cameraNear',
+			'u_cameraFar'
+		],
+		attribs: [
+			'a_position',
+			'a_normal',
+			'a_uv'
+		],
     });
 
     this._projectionMatrix = mat4.create();
@@ -75,8 +96,11 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
-    // TODO: Bind any other shader inputs
-
+	// TODO: Bind any other shader inputs
+	gl.uniform1f(this._shaderProgram.u_cameraNear, camera.near);
+	gl.uniform1f(this._shaderProgram.u_cameraFar, camera.far);
+	gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+		
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
   }
