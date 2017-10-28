@@ -36,11 +36,11 @@ Different views to check correctness:
 
 |  Albedo | Normal |
 | ----------- | ----------- |
-| ![](img/albedo.jpg) | ![](img/normal.jpg) |
+| ![](images/albedo.jpg) | ![](images/normal.jpg) |
 
 | Depth | Z-Slices |
 | ----------- | ----------- |
-| ![](img/depth.jpg) | ![](img/z.jpg) |
+| ![](images/depth.jpg) | ![](images/z.jpg) |
 
 ### Credits
 
