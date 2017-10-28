@@ -16,7 +16,6 @@ export default class ClusteredRenderer {
   {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
-
     for (let z = 0; z < this._zSlices; ++z) {
       for (let y = 0; y < this._ySlices; ++y) {
         for (let x = 0; x < this._xSlices; ++x) {

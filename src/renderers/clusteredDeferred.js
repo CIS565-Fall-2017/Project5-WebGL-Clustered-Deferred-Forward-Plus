@@ -87,7 +87,6 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Tell the WEBGL_draw_buffers extension which FBO attachments are
     // being used. (This extension allows for multiple render targets.)
     WEBGL_draw_buffers.drawBuffersWEBGL(attachments);
-
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 

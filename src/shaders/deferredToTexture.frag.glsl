@@ -36,6 +36,7 @@ void main() {
     // gl_FragData[1] = ??
     // gl_FragData[2] = ??
     // gl_FragData[3] = ??
+    
     gl_FragData[0] = vec4(col, depth);
     gl_FragData[1] = vec4(norm.x, norm.y, 0.0, v_position.z);
 }

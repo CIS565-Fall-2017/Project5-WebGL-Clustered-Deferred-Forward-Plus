@@ -90,6 +90,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform4f(this._shaderProgram.u_screenbuffer, canvas.width, canvas.height, camera.near, camera.far);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
+    
     scene.draw(this._shaderProgram);
   }
 };
