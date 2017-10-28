@@ -71,6 +71,13 @@ The clusters used in this project were uniformly spaces in z, and were slicing t
 
 Reducing the number of g-buffers helps make deferred shading faster which can be done by compactly storing data in them. Colors often dont need the alph component, normals can be reconstructed simply from 2 of their components, data can be stored in 24bit floats instead of 32 bits, are just some of the ways to achieve this compression.
 
+This project implemented the following layout for the 2 g-buffers used:
+
+R-Channel | G-Channel | B-Channel | A-Channel
+--------- | --------- | --------- | ---------
+Position.x | Position.y | Position.z | Normal.x
+Color.x | Color.y | Color.z | Normal.y
+
 #### 2 Component Normals
 
 If we assume the magnitude of a normal is one, which it usually is because its simply a direction vector. We can reconstruct the z-value of the normal from its x and y values. The magnitude of a vector is defined as the square root of x squared + y squared + z squared. This formula gives us the magnitude of z. The sign of z is positive in camera space for all the fragments that we can see. Using these 2 bits of information we can easily reconstruct the normal from only its x and y components.
