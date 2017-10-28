@@ -55,7 +55,7 @@ What are the benefits and tradeoffs of using one over the other?
 For any differences in performance, briefly explain what may be causing the difference.
 
 
-![](./renders/renderer-comparison-graph)
+![](./renders/renderer-comparison-graph.png)
 
 ==================================================================================================================
 
@@ -67,7 +67,7 @@ If applicable, how do parameters (such as number of lights, etc.) affect perform
 If you did something to accelerate the feature, what did you do and why?
 How might this feature be optimized beyond your current implementation?
 
-![](./renders/effects-graph)
+![](./renders/effects-graph.PNG)
 
 
 ==================================================================================================================
