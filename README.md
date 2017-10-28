@@ -76,6 +76,7 @@ Disadvantages:
 - Can't handle transparent objects because only have g-buffers for front-most fragment
 
 More on transparency (from [Rendering Technique Comparisons](https://www.3dgep.com/forward-plus/)): 
+
 One of the disadvantage of using deferred shading is that only opaque objects can be rasterized into the G-buffers. The reason for this is that multiple transparent objects may cover the same screen pixels but it is only possible to store a single value per pixel in the G-buffers. In the lighting pass the depth value, surface normal, diffuse and specular colors are sampled for the current screen pixel that is being lit. Since only a single value from each G-buffer is sampled, transparent objects cannot be supported in the lighting pass. 
 
 To circumvent this issue, transparent geometry must be rendered using the standard forward rendering technique which limits either the amount of transparent geometry in the scene or the number of dynamic lights in the scene. A scene which consists of only opaque objects can handle about 2000 dynamic lights before frame-rate issues start appearing.
@@ -85,7 +86,9 @@ Another disadvantage of deferred shading is that only a single lighting model ca
 
 ## Performance Analysis
 
-Compare your implementations of Clustered Forward+ and Clustered Deferred shading and analyze their differences.
+### Rendering Analysis: Forward vs. Clustered Forward+ vs. Clustered Deferred
+
+![](./renders/renderer-comparison-graph.png)
 
 Is one of them faster?
 Is one of them better at certain types of workloads?
@@ -93,22 +96,16 @@ What are the benefits and tradeoffs of using one over the other?
 For any differences in performance, briefly explain what may be causing the difference.
 
 
-![](./renders/renderer-comparison-graph.png)
+### Effects Analysis: Blinn-Phong shading with gamma correction
 
-==================================================================================================================
-
-Effect Features:
-Concise overview write-up of the feature.
-Performance change due to adding the feature.
-If applicable, how do parameters (such as number of lights, etc.) affect performance? Show data with simple graphs.
-    Show timing in milliseconds, not FPS.
-If you did something to accelerate the feature, what did you do and why?
-How might this feature be optimized beyond your current implementation?
+This reflection model uses a combination of diffuse reflection, specular reflection (shiny surfaces), and ambient lighting (lighting in places which aren't lightened by direct light rays). This is model of local lighting of points on a surface, where result of lighting doesn't depend on other objects in the scene or on repeatedly reflected light rays. [More info here](http://sunandblackcat.com/tipFullView.php?l=eng&topicid=30&topic=Phong-Lighting)
 
 ![](./renders/effects-graph.png)
 
+As can be seen in the graph above, the extra computations needed to accomplish a Blinn-Phong shading model add time as the number of lights increases.
 
-==================================================================================================================
+
+### Optimization Analysis 
 
 Performance Features:
 Concise overview write-up of the feature.
