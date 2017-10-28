@@ -7,11 +7,9 @@ WebGL Clustered Deferred and Forward+ Shading
 * Tested on: Windows 10, Intel(R) Xeon(R) CPU E5-1630 v4 @ 3.7GHz (8 CPUs) 32GB RAM, 
 			GTX 1070 8081MB (Lab Machine)
 
-## Live Online
+## [Try it Live!](http://amansachan.com/WebGL-Clustered-Deferred-Forward-Plus/)
 
-[![](readmeImages/LiveDemoImage.png)](http://amansachan.com/WebGL-Clustered-Deferred-Forward-Plus/)
-
-## Demo Video/GIF
+## Demo Video
 
 [![](readmeImages/VideoLinkImage.png)](https://vimeo.com/240254058)
 
@@ -51,15 +49,15 @@ The performance of both clustered forward plus and deffered shading is heavily d
 
 ### Clustering
 
-![](readmeImages/Clustering_depth_Slicing.png)
-
-![](readmeImages/false-positive-diagram.jpg)
+Clustering is the binning technique used to store lights in a spatial data structure based on their area of influence. Clusters arent simply called grids because they are made y slicing up the camera view frustum, which makes each cluster a tiny frustum. Frustum based culling is hard (false positives are easy) but there are many ways to go about it based on how accurate you need to be.
 
 ![](readmeImages/PointLightCulling.png)
 
-Clustering is the binning technique used to store lights in a spatial data structure based on their area of influence. Clusters arent simply called grids because they are made y slicing up the camera view frustum, which makes each cluster a tiny frustum. Frustum based culling is hard and there are many ways to go about it based on how accurate you need to be.
+![](readmeImages/false-positive-diagram.jpg)
 
 [Fast Frustum Culling](http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf)
+
+![](readmeImages/Clustering_depth_Slicing.png)
 
 The clusters used in this project were uniformly spaces in z, and were slicing the view frustum into 15 sections along each dimension. The number of slices per plane affects the size of the cluster buffer and so is a good number to play around with. Additionally it may be beneficially to have exponential or some other way of splitting up the z dimension, because usually in real-time applications things in the distance are sampled at lower resolutions. This is something that can and has been taken advantage of, for example the game doom implemented an exponential divisioning of the z dimension.
 
@@ -80,11 +78,23 @@ If we assume the magnitude of a normal is one, which it usually is because its s
 ### Effects
 #### Toon Shading
 
-
+![](readmeImages/toonShadingExample.png)
 
 #### Blinn-Phong
 
+![](readmeImages/BlinnPhongShadingExample.png)
+
+#### Gamma Correction
+
+With | Without
+---- | -------
+![](readmeImages/gammaCorrection.png) | ![](readmeImages/nogammaCorrection.png)
+
 ## Debug Views
+
+Fragment X Cluster | Fragment Y Cluster | Fragment Z Cluster
+------------------ | ------------------ | ------------------
+![](readmeImages/fragmentXcluster.png) | ![](readmeImages/fragmentYcluster.png) | ![](readmeImages/fragmentZcluster.png)
 
 ## Credits
 
