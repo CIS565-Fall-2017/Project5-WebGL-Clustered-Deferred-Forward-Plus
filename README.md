@@ -8,6 +8,8 @@ WebGL Clustered Deferred and Forward+ Shading
 
 In this project, I have implemented Clustered Forward+ shading and Clustered Deferred shading and added Blinn-Phong shading effect.
 
+Checkout this [live demo](https://yashv28.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+
 ![](images/y.gif)
 
 # Features:
