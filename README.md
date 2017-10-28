@@ -97,7 +97,7 @@ Blinn-Phong lighting is enabled by default on the clustered deferred pipeline (t
 
 Below is a GIF of it in action:
 
-![](blinn.gif)
+![](img/blinn.gif)
 
 Below is a comparison of runtime with Blinn-Phong enabled vs. disabled:
 
@@ -134,6 +134,10 @@ Clustering along Z:
 Absolute values of normals (absolute values taken in order to show normals with negative X coordinates):
 
 ![](img/absnor.png)
+
+Albedo only:
+
+![](img/albedo.png)
 
 Specular contribution only (Blinn-Phong):
 
