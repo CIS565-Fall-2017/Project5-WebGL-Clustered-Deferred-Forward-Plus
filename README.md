@@ -3,28 +3,51 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Mohamed Soudy
+* Tested on: **Google Chrome 62.0.3202.75**
+  Windows 10, Intel(R) Xeon(R) CPU E5-2687W v3 @ 3.10GHz 32GB, GTX 980 8GB (SIG Lab)
 
-### Live Online
+## Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](img/thumb.PNG)](http://msoudy.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus)
 
-### Demo Video/GIF
+## Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/video.gif)](TODO)
 
-### (TODO: Your README)
+## Overview
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+Implementations of forward, forward clustering, and deferred clustering with Blinn-Phong shading and G-buffer optimizations.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+## Analysis
+
+When comparing the performance of all three implementations, deferred clustering proves to be much faster than forward
+and forward clustering as can be seen in the table and chart below. Forward crashes with 3000 plus lights because without
+clustering all the lights are checked for every fragment. With forward clustering however, only the lights that are within
+a cluster are checked which significantly improves performance.
+
+Clustered deferred is the fastest because it only deals with one fragment per pixel read from the G-buffer, whereas with 
+the other two implementations all the fragments of a specific pixel are shaded.
+
+![](img/all_table.PNG)
+
+![](img/all_chart.PNG)
+
+The following chart compares the performance difference of using 2 vs 3 G-buffers in deferred shading. By compressing normals
+to only store the x and y value, we can fit all the required data (position, color and normal) in only 2 G-buffers.
+We can then reconstruct the normal in the shader to get the z value using the magnitude function. This is possible because we 
+know that the total sum of the components of a normal should be 1 and since we have the x and y we can easily derive the z value
+of the normal.
+
+The performance difference is not very significant but using 2 G-buffers instead of the 3 definitely improves performance as can 
+be seen in the chart below. I predict the difference will be larger when tested with a larger number of lights.
 
 
-### Credits
+![](img/deferred_table.PNG)
+
+![](img/deferred_chart.PNG)
+
+## Credits
 
 * [Three.js](https://github.com/mrdoob/three.js) by [@mrdoob](https://github.com/mrdoob) and contributors
 * [stats.js](https://github.com/mrdoob/stats.js) by [@mrdoob](https://github.com/mrdoob) and contributors
