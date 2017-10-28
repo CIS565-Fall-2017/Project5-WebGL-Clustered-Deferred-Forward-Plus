@@ -141,7 +141,6 @@ export default function(params) {
     if (clusterUVD.x == 0.999) clusterXID = 0.0;
     if (clusterUVD.y == 0.999) clusterYID = 0.0;
     
-    
     return vec3(0.0 / sliceDimensions.x, 0.0 / sliceDimensions.y, (15.0 - clusterZID) / sliceDimensions.z);
   }
 

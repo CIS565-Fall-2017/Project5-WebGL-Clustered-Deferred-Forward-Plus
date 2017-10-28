@@ -132,7 +132,7 @@ export default class ClusteredRenderer {
 
     for (let l = 0; l < scene.lights.length; ++l) {
       let light = scene.lights[l];
-      let radius = light.radius * 1.5;
+      let radius = light.radius * 1.4;
       let outOfView = false;
       vec3.copy(lightPositionScratch, light.position);
       vec3.transformMat4(lightPositionScratch, lightPositionScratch, viewMatrix);
