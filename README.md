@@ -20,10 +20,18 @@ This algorithm is
 
 [![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
 
+
+
+
 ### Demo Video/GIF
 
 [![](img/video.png)](TODO)
 
+#### Forward+
+![](./renders/cluster-1.gif)
+
+#### Deferred 
+![](./renders/deferred-1.gif)
 
 ### Features and Optimizations
 * Clustered Forward+ shading
