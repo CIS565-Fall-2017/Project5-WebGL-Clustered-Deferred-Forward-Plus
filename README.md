@@ -104,7 +104,7 @@ As can be seen in the graph above, the extra computations needed to accomplish a
 
 ### Optimization Analysis 
 
-In the first pass of the deferred shader, you want to send over the color, normals, and fragment position data. Rather than using 3 g-buffers, you can use 2 by compacting the x and y values of the normal into the first 2 buffers. Make sure to multiply the normal by the view matrix Using the e
+In the first pass of the deferred shader, you want to send over the color, normals, and fragment position data. Rather than using 3 g-buffers, you can use 2 by compacting the x and y values of the normal into the first 2 buffers. Make sure to multiply the normal by the view matrix, which makes sure that the z value of the normal are all positive. You also know that then the magnitude of the vector is 1. With this information, you can use the equation of calculating the magnitude of a vector in order to decode the z value in the second shader pass.
 
 ![](./renders/optimization-graph.png)
 
