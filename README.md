@@ -27,6 +27,7 @@ The goal of this project was to create two shaders: - Clustered Forward Plus and
 
 Deferred Shading is when you simply store the fragment data in a separate g-buffer, and then perform computations at the end. Therefore the scene's shading is no longer dependent upon the number of lights. So combining both makes for a very efficient shader!
 
+### [LIVE DEMO](YoussefV.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus)
 
 
 ### Things Done
