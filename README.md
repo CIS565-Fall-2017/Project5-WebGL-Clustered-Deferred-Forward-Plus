@@ -3,10 +3,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
-
+* William Ho
+* Tested on: **Google Chrome** on 
+  OS X El Capitan, MacBook Pro 2013, 2.4, GHz Intel Core i5, Intel Iris 1536 MB
 ### Live Online
 
 [![](img/thumb.jpg)](https://williamkho.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
@@ -29,15 +28,31 @@ To further decrease the amount of unnecessary work done, a further solution is t
 
 ![](img/chart1.png)
 
+We can see here that as we increase the number of lights in the scene, our Clustered implementations are able to render at a higher frame rate than the basic Forward implementation, and our Deferred shader grants us extra wins on time.  Our Clustered Forward+ manages to eliminate the unnecessary lighting work by culling redundant lights from fragments. The Deferred renderer culls unnecessary fragments from being shaded. 
+
+It should be noted that utilizing the clustering technique has other costs. Clustering the scene must be done before the scene is processed by the vertex and fragment shaders, and this CPU-side preprocessing step can have potential downsides. If for, instance, clustering did not effectively cull lights, such as in a case where relevant lights span all clusters, clustering could prove detrimental. There is also the added overhead of generating clustering data. 
+
+Deferred shading similarly has an extra step that effectively culls unnecessary fragments, but in cases where such fragments are not as common, such as scenes with little occlusion, it could be ineffective. Additionally, deferred shading requires the ability to specify multiple render targets, which is not supported in all cases. The other drawback to deferred shading is the increased bandwidth requirements of passing the g-buffer from one render pass to the next.
+
+## Potential Improvements
+
+There are several improvements to these implementations that are worth exploring:
+
+* Improved cluster testing: my implementation currently calculates a conservative bounding frustrum per light to calculate its relevant clusters. It is possible that clusters could be more effectively culled from the light.
+
+* Optimized g-buffer: better packing of data in the g-buffer reduces bandwidth requirements.
 
 
 ### Debug Views
 
 ![](img/clusterDebug01.png)
+Debugging view of clustering in screen space. 
 
 ![](img/clusterDebug02.png)
+Debugging view to illustrate cluster plane calculation.
 
 ![](img/clusterDebug03.png)
+Debugging view of frozen clustering frustrum to visualize fragment cluster placement. 
 
 
 ### Credits
