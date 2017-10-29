@@ -92,6 +92,13 @@ export default class ClusteredRenderer {
       y_start = 0;
       //y_end = this._ySlices;
 
+            //Z BACK
+            let dist_zp = vec4.dot(light_c_pos,zp_plane);
+            if(dist_zp > LIGHT_RADIUS) {continue;}
+            //Z FRONT
+            let dist_zn = vec4.dot(light_c_pos,zn_plane);
+            if(dist_zn > LIGHT_RADIUS) {continue;}
+
       for (let y = y_start; y < y_end; ++y) {
         let y_slice = (y * y_stride) - (v_fov/2.0);
         let y_slice_p1 = ((y + 1) * y_stride) - (v_fov/2.0);
@@ -122,6 +129,14 @@ export default class ClusteredRenderer {
 
         //x_start = 0;
         //x_end = this._xSlices;
+
+            //Y LOWER
+            let dist_yp = vec4.dot(light_c_pos,yp_plane);
+            if(dist_yp > LIGHT_RADIUS) {continue;}
+
+            //Y UPPER
+            let dist_yn = vec4.dot(light_c_pos,yn_plane);
+            if(dist_yn > LIGHT_RADIUS) {continue;}
 
         for (let x = x_start; x < x_end; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
@@ -159,20 +174,7 @@ export default class ClusteredRenderer {
             let dist_xn = vec4.dot(light_c_pos,xn_plane);
             if(dist_xn > LIGHT_RADIUS) {continue;}
 
-            //Y LOWER
-            let dist_yp = vec4.dot(light_c_pos,yp_plane);
-            if(dist_yp > LIGHT_RADIUS) {continue;}
 
-            //Y UPPER
-            let dist_yn = vec4.dot(light_c_pos,yn_plane);
-            if(dist_yn > LIGHT_RADIUS) {continue;}
-
-            //Z BACK
-            let dist_zp = vec4.dot(light_c_pos,zp_plane);
-            if(dist_zp > LIGHT_RADIUS) {continue;}
-            //Z FRONT
-            let dist_zn = vec4.dot(light_c_pos,zn_plane);
-            if(dist_zn > LIGHT_RADIUS) {continue;}
 
             
             let num_lights_in_cluster = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)]

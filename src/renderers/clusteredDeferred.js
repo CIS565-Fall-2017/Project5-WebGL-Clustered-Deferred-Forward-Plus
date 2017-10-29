@@ -32,12 +32,13 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       xSlices: xSlices, ySlices: ySlices, zSlices: zSlices,
       maxLights : MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_viewMatrix','u_lightbuffer', 'u_clusterbuffer', 'u_height', 'u_width', 'u_near', 'u_far'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_viewMatrix','u_invViewMatrix','u_lightbuffer', 'u_clusterbuffer', 'u_height', 'u_width', 'u_near', 'u_far'],
       attribs: ['a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
+    this._invViewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
   }
 
@@ -109,6 +110,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Update the camera matrices
     camera.updateMatrixWorld();
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
+    mat4.invert(this._invViewMatrix, this._viewMatrix);
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
@@ -126,6 +128,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._progCopy.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._progCopy.u_viewMatrix, false, this._viewMatrix);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._progCopy);
@@ -176,6 +179,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.uniform1i(this._progShade.u_clusterbuffer, 3);
 
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    gl.uniformMatrix4fv(this._progShade.u_invViewMatrix, false, this._invViewMatrix);
+    
     gl.uniform1f(this._progShade.u_width, canvas.width);
     gl.uniform1f(this._progShade.u_height, canvas.height);
     gl.uniform1f(this._progShade.u_near, camera.near);

@@ -9,6 +9,7 @@ export default function(params) {
   uniform sampler2D u_clusterbuffer;
 
   uniform mat4 u_viewMatrix;
+  uniform mat4 u_invViewMatrix;
   uniform float u_width;
   uniform float u_height;
   uniform float u_near;
@@ -71,14 +72,17 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    //vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
 
-    vec3 normal = gb0.xyz;
-    vec3 albedo = gb1.rgb;
+    //vec3 normal = gb2.xyz;
+    vec3 albedo = gb0.rgb;
 
-    vec3 v_position = gb2.xyz;
+    vec3 v_position = gb1.xyz;
+    vec4 worldNorm = u_invViewMatrix * vec4(gb0.w,gb1.w,sqrt(1.0-gb0.w*gb0.w-gb1.w*gb1.w),0.0);
+    vec3 normal = normalize( worldNorm.xyz);
+
 
     vec3 fragColor = vec3(0.0);
     vec4 c_pos = u_viewMatrix * vec4(v_position, 1.0);
@@ -112,7 +116,15 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      float specular = 0.0;
+      vec3 specColor = vec3(1.0,1.0,1.0);
+
+      float shininess = 16.0;
+      vec3 halfDir = normalize((light.position - v_position) - v_position);
+      float specAngle = max(dot(halfDir, normal), 0.0);
+      specular = pow(specAngle, shininess);
+
+      fragColor += (albedo * lambertTerm * light.color  + specular * specColor) * vec3(lightIntensity);
 
       dist = lightDistance;
     }
@@ -134,6 +146,7 @@ export default function(params) {
     
     //gl_FragColor = vec4(v_uv, 0.0, 1.0);
     //gl_FragColor = vec4(v_position,1);
+    //gl_FragColor = viewNorm;
   }
   `;
 }
