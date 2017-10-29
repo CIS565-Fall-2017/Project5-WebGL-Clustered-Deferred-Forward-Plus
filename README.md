@@ -9,7 +9,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[![](img/thumb.jpg)](https://williamkho.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 ### Demo Video/GIF
 
@@ -31,3 +31,4 @@ to implementation work. Complete the implementation early to leave time!
 * [webgl-debug](https://github.com/KhronosGroup/WebGLDeveloperTools) by Khronos Group Inc.
 * [glMatrix](https://github.com/toji/gl-matrix) by [@toji](https://github.com/toji) and contributors
 * [minimal-gltf-loader](https://github.com/shrekshao/minimal-gltf-loader) by [@shrekshao](https://github.com/shrekshao)
+* [Practical Clustered Shading](http://www.humus.name/Articles/PracticalClusteredShading.pdf) by Emil Persson, Head of Research, Avalanche Studios
