@@ -60,7 +60,6 @@ stats.domElement.style.top = '0px';
 document.body.appendChild(stats.domElement);
 
 // Initialize camera
-// Changed camera far-clip to 50
 export const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 50);
 
 // Initialize camera controls

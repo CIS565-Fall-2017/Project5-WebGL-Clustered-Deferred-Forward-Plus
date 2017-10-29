@@ -5,16 +5,38 @@ import TextureBuffer from './textureBuffer';
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
 function getIndex(lightPos, min, max, numSlices) {
-  var z = lightPos;
-  var step = (max - min)/numSlices;
-  console.log("step: ", step);
-  console.log("light position z: ", z);
+  let z = lightPos;
+  let step = (max - min)/numSlices;
   if (z < min) {
     return -1;
   } else if (z > max) {
     return 15;
   } else {
     return (Math.floor((z - min)/ step));
+  }
+}
+
+// Unused attempt at getting z in NDC
+function getZIndex(z, lPos, camera, viewmat, numSlices) {
+  let min = camera.near;
+  let max = camera.far;
+  if (z < min) {
+    return -1;
+  } else if (z > max) {
+    return 15;
+  } else {
+    let ndc = vec4.create();
+    let pMat = mat4.create();
+    mat4.copy(pMat, camera.projectionMatrix.elements);
+    ndc[0] = lPos[0];
+    ndc[1] = lPos[1];
+    ndc[2] = lPos[2];
+    ndc[3] = lPos[3];
+    vec4.transformMat4(ndc, ndc, pMat);
+
+    let ndcZ = (ndc[2]/ndc[3])/2;
+    
+    return(Math.floor(ndcZ * numSlices));
   }
 }
 
@@ -56,6 +78,8 @@ export default class ClusteredRenderer {
       // Light position in camera space
       vec4.transformMat4(lightPos, lightPos, viewMatrix);
 
+      let projection = camera.projectionMatrix;
+
       let posZ = -lightPos[2]; 
       let posY = lightPos[1]; 
       let posX = lightPos[0];
@@ -89,21 +113,24 @@ export default class ClusteredRenderer {
       minZ = Math.max(minZ, 0);
       maxZ = Math.min(maxZ, this._zSlices - 1);
 
-      for (let k = minZ; k < maxZ; k++) {
-        for (let j = minY; j < maxY; j++) {
-          for (let i = minX; i < maxX; i++) {
-            let idx = i + j * this._xSlices + k * this._xSlices * this._ySlices;
-            this._clusterTexture[this._clusterTexture.bufferIndex(idx, 0)]+= 1;
-            let numLights = this._clusterTexture[this._clusterTexture.bufferIndex(idx, 0)];
-            this._clusterTexture[this._clusterTexture.bufferIndex(idx, numLights)] = l;
+      for (let p = minZ; p <= maxZ; p++) {
+        for (let q = minY; q <= maxY; q++) {
+          for (let r = minX; r <= maxX; r++) {
+            let idx = r + q * this._xSlices + p * this._xSlices * this._ySlices;
+            let lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)];
+            lightCount++;            
+            if (lightCount <= MAX_LIGHTS_PER_CLUSTER) {
+              let pixelNum = Math.floor(lightCount / 4.0);
+              let pixelIdx = lightCount % 4;
+              let clusterIdx = this._clusterTexture.bufferIndex(idx, pixelNum) + pixelIdx;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)] = lightCount;
+              this._clusterTexture.buffer[clusterIdx] = l;
+            }
           }
-        } 
+        }
       }
       
-
     }
-
-    
 
     this._clusterTexture.update();
   }
