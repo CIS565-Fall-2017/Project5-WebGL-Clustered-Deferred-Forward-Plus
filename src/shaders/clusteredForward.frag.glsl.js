@@ -108,29 +108,33 @@ export default function(params) {
     float clusterTotal = float(${params.xSlices} * ${params.ySlices} * ${params.zSlices});
     float clusterU = float(clusterIdx + 1) / (clusterTotal + 1.0);
 
-    int lightCount = int(texture2D(u_clusterbuffer, vec2(clusterU, 0.0))[0]);
+    float lightCount = texture2D(u_clusterbuffer, vec2(clusterU, 0.0))[0];
 
-    fragColor += vec3(float(index.z) / 15.0, float(index.z) / 15.0, float(index.z) / 15.0);
+    // fragColor += vec3(float(index.z) / 15.0, float(index.z) / 15.0, float(index.z) / 15.0);    
+    float numLights = float(${params.numLights});
+    // fragColor = vec3(lightCount/ numLights, lightCount/ numLights , lightCount/ numLights);
 
-    // fragColor = vec3(float(index.x) / 30.0, float(index.y) / 30.0, 0);
-    
+    for (int i = 0; i < ${params.numLights}; i++) {
+        
+      if (i > int(lightCount)) {
+        break;
+      }
+      int texHeight = int(float(${params.maxLights})*0.25);
 
-    // fragColor = vec3(lightCount, lightCount, lightCount);
+      int l = int (ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, i + 1));
 
+      Light light = UnpackLight(l);
+      float lightDistance = distance(light.position, v_position);
+      vec3 L = (light.position - v_position) / lightDistance;
 
-    // for (int i = 0; i < ${params.numLights}; ++i) {
-    //   Light light = UnpackLight(i);
-    //   float lightDistance = distance(light.position, v_position);
-    //   vec3 L = (light.position - v_position) / lightDistance;
+      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+      float lambertTerm = max(dot(L, normal), 0.0);
 
-    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-    //   float lambertTerm = max(dot(L, normal), 0.0);
-
-    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    // }
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    }
 
     const vec3 ambientLight = vec3(0.025);
-    //fragColor += albedo * ambientLight;
+    fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
