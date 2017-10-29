@@ -11,19 +11,33 @@ WebGL Clustered Deferred and Forward+ Shading
 
 [![](img/thumb.jpg)](https://williamkho.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
-### Demo Video/GIF
+### Overview
+
+This project consists of implementations of a **Clustered Forward+** renderer and a **Clustered Deferred** renderer, compared against a general case **Forward** renderer. 
+
+A forward renderer performs brute force lighting by shading fragments against every possible light in the scene. The unnecessary work is in the negligible effects a given light has on the majority of fragments. A solution to this is to divide our rendered area up into "clusters", where the fragments in a given cluster need only be shaded for the lights that affect that specific cluster. This involves a CPU side preprocessing of light information to map clusters to their relevant lights. This is what **Clustered Forward+** performs.
+
+To further decrease the amount of unnecessary work done, a further solution is to defer lighting to a second stage after fragment attributes have been computed. On a first pass, the scene is processed and attributes are passed to a g-buffer, which is then passed to a second pass render (in which we can again use our clustering technique). We are able to leverage the fact that the first render pass discards all unnecessary fragments (such as those occluded). This is what **Clustered Deferred** performs.
+
+### Comparisons of Implementation
 
 | Forward Renderer | Clustered Forward+ | Clustered Deferred  (w/ Blinn-Phong)|
 |:----:|:----:|:----:|
 | ![](img/forward.gif) | ![](img/clusteredforwardplus.gif) | ![](img/clustereddeferred.gif) |
 
-### (TODO: Your README)
+### Analysis
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+![](img/chart1.png)
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+
+
+### Debug Views
+
+![](img/clusterDebug01.png)
+
+![](img/clusterDebug02.png)
+
+![](img/clusterDebug03.png)
 
 
 ### Credits
