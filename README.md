@@ -13,7 +13,9 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+| Forward Renderer | Clustered Forward+ | Clustered Deferred |
+|:----:|:----:|:----:|
+| ![](img/forward.gif) | ![](img/clusteredforwardplus.gif) | ![](img/clustereddeferred.gif) |
 
 ### (TODO: Your README)
 
