@@ -28,71 +28,116 @@ export default class ClusteredRenderer {
     let h_fov = camera.fov;
     let v_fov = h_fov / camera.aspect;
     let z_range = camera.far - camera.near;
-    for (let z = 0; z < this._zSlices; ++z) {
-      for (let y = 0; y < this._ySlices; ++y) {
-        for (let x = 0; x < this._xSlices; ++x) {
-          let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
-          
-          let num_lights_in_cluster = 0;
-          //HI
+    let x_stride = h_fov/this._xSlices;
+    let y_stride = v_fov/this._ySlices;
+    let z_stride = z_range/this._zSlices;
+    let DEG2RAD = Math.PI / 180;
+    let z_vec = vec3.fromValues(0,0,1.0);
+    let y_vec = vec3.fromValues(0,1.0,0);
+    let x_vec = vec3.fromValues(1.0,0,0);
+    let origin = vec3.fromValues(0,0,0);
+    for(let l_idx = 0; l_idx < NUM_LIGHTS; ++l_idx) {
+      let pos = scene.lights[l_idx].position;
+      let light_w_pos = vec4.fromValues(pos[0],pos[1],pos[2],1);
+      let light_c_pos = vec4.create();
+      vec4.transformMat4(light_c_pos,light_w_pos,viewMatrix);
 
-          //BASED ON THE X, Y, Z, FIGURE OUT WHAT PLANES WE NEED
-          let DEG2RAD = Math.PI / 180;
-          let x_slice = (x/this._xSlices) * h_fov - (h_fov/2.0);
-          let x_slice_p1 = ((x + 1)/this._xSlices) * h_fov - (h_fov/2.0);
-          let y_slice = (y/this._ySlices) * v_fov - (v_fov/2.0);
-          let y_slice_p1 = ((y + 1)/this._ySlices) * v_fov - (v_fov/2.0);
-          let z_slice = -(z/this._zSlices) * (camera.far - camera.near) - camera.near;
-          let z_slice_p1 = -((z + 1)/this._zSlices) * (camera.far - camera.near) - camera.near;
 
-          let z_vec = vec3.fromValues(0,0,1.0);
-          let y_vec = vec3.fromValues(0,1.0,0);
-          let x_vec = vec3.fromValues(1.0,0,0);
+      let z_start = Math.floor((-(light_c_pos[2]) - LIGHT_RADIUS - camera.near)/z_stride);
+      if(z_start < 0) {
+        z_start = 0;
+      } 
+      let z_end = Math.floor((-(light_c_pos[2]) + LIGHT_RADIUS - camera.near)/z_stride);
+      if(z_end > this._zSlices) {
+        z_end = this._zSlices;
+      }
 
-          let origin = vec3.fromValues(0,0,0);
-          // X CLUSTER RIGHT BOUND
-          let xp_norm = vec3.create();
-          vec3.rotateY(xp_norm, x_vec, origin, -x_slice_p1 * DEG2RAD);
-          let xp_plane = vec4.fromValues(xp_norm[0],xp_norm[1],xp_norm[2],0);
-          vec4.normalize(xp_plane,xp_plane);
+      let curr_z = (z_start * z_stride) + camera.near;
 
-          // X CLUSTER LEFT BOUND
-          let xn_norm = vec3.fromValues(-1,0,0);
-          vec3.rotateY(xn_norm, xn_norm, origin, -x_slice * DEG2RAD);
-          let xn_plane = vec4.fromValues(xn_norm[0],xn_norm[1],xn_norm[2],0);
-          vec4.normalize(xn_plane,xn_plane);
+    for (let z = z_start; z < z_end; ++z) {
+      let z_slice = -(z * z_stride) - camera.near;
+      let z_slice_p1 = -((z + 1) * z_stride) - camera.near;
+
+      // Z CLUSTER BACK BOUND
+      let zp_norm = vec3.clone(z_vec);
+      vec3.negate(zp_norm,zp_norm);
+      let zp_point = vec3.fromValues(0, 0, z_slice_p1);
+      let zp_plane = vec4.fromValues(0,0,zp_norm[2],-zp_point[2] * zp_norm[2]);
+      vec4.normalize(zp_plane,zp_plane);
+      
+      // Z CLUSTER FRONT BOUND
+      let zn_norm = vec3.clone(z_vec);
+      let zn_point = vec3.fromValues(0, 0, z_slice);
+      let zn_plane = vec4.fromValues(0,0,zn_norm[2],-zn_point[2] * zn_norm[2]);
+      vec4.normalize(zn_plane,zn_plane);
+
+      let y_upperbound = curr_z * Math.tan(v_fov * DEG2RAD / 2.0);
+      let y_temp_stride = y_upperbound * 2.0 / 15.0;
+
+      let y_start = Math.floor(((light_c_pos[1] - LIGHT_RADIUS ) + y_upperbound) / y_temp_stride);
+      if(y_start < 0) {
+        y_start = 0;
+      }
+      let y_end = Math.floor(((light_c_pos[1] + LIGHT_RADIUS ) + y_upperbound) / y_temp_stride);
+      if(y_end > this._ySlices) {
+        y_end = this._ySlices;
+      }
+
+      // y_start = 0;
+      // y_end = this._ySlices;
+
+      for (let y = y_start; y < y_end; ++y) {
+        let y_slice = (y * y_stride) - (v_fov/2.0);
+        let y_slice_p1 = ((y + 1) * y_stride) - (v_fov/2.0);
 
           // Y CLUSTER UPPER BOUND
           let yp_norm = vec3.create();
           vec3.rotateX(yp_norm, y_vec, origin, y_slice_p1 * DEG2RAD);
           let yp_plane = vec4.fromValues(yp_norm[0],yp_norm[1],yp_norm[2],0);
-          vec4.normalize(yp_plane,yp_plane);
+          //vec4.normalize(yp_plane,yp_plane);
 
           // Y CLUSTER LOWER BOUND
           let yn_norm = vec3.fromValues(0,-1,0);
           vec3.rotateX(yn_norm, yn_norm, origin, y_slice * DEG2RAD);
           let yn_plane = vec4.fromValues(yn_norm[0],yn_norm[1],yn_norm[2],0);
-          vec4.normalize(yn_plane,yn_plane);
+          //ec4.normalize(yn_plane,yn_plane);
 
-          // Z CLUSTER BACK BOUND
-          let zp_norm = vec3.clone(z_vec);
-          vec3.negate(zp_norm,zp_norm);
-          let zp_point = vec3.fromValues(0, 0, z_slice_p1);
-          let zp_plane = vec4.fromValues(0,0,zp_norm[2],-zp_point[2] * zp_norm[2]);
-          vec4.normalize(zp_plane,zp_plane);
+          let x_upperbound = curr_z * Math.tan(h_fov * DEG2RAD / 2.0);
+          let x_temp_stride = x_upperbound * 2.0 / 15.0;
+    
+          let x_start = Math.floor(((light_c_pos[0] - LIGHT_RADIUS ) + x_upperbound) / x_temp_stride);
+          if(x_start < 0) {
+            x_start = 0;
+          }
+          let x_end = Math.floor(((light_c_pos[0] + LIGHT_RADIUS ) + x_upperbound) / x_temp_stride);
+          if(x_end > this._xSlices) {
+            x_end = this._xSlices;
+          }
 
-          // Z CLUSTER FRONT BOUND
-          let zn_norm = vec3.clone(z_vec);
-          let zn_point = vec3.fromValues(0, 0, z_slice);
-          let zn_plane = vec4.fromValues(0,0,zn_norm[2],-zn_point[2] * zn_norm[2]);
-          vec4.normalize(zn_plane,zn_plane);
+        // x_start = 0;
+        // x_end = this._xSlices;
+        
+        for (let x = x_start; x < x_end; ++x) {
+          let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+          //HI
+
+          //BASED ON THE X, Y, Z, FIGURE OUT WHAT PLANES WE NEED
+          let x_slice = (x * x_stride) - (h_fov/2.0);
+          let x_slice_p1 = ((x + 1) * x_stride) - (h_fov/2.0);
+
+          // X CLUSTER RIGHT BOUND
+          let xp_norm = vec3.create();
+          vec3.rotateY(xp_norm, x_vec, origin, -x_slice_p1 * DEG2RAD);
+          let xp_plane = vec4.fromValues(xp_norm[0],xp_norm[1],xp_norm[2],0);
+          //vec4.normalize(xp_plane,xp_plane);
+
+          // X CLUSTER LEFT BOUND
+          let xn_norm = vec3.fromValues(-1,0,0);
+          vec3.rotateY(xn_norm, xn_norm, origin, -x_slice * DEG2RAD);
+          let xn_plane = vec4.fromValues(xn_norm[0],xn_norm[1],xn_norm[2],0);
+          //vec4.normalize(xn_plane,xn_plane);
 
           //FOR EACH LIGHT, TRANSFORM INTO VIEW SPACE
-          for(let l_idx = 0; l_idx < NUM_LIGHTS; ++l_idx) {
-            let pos = scene.lights[l_idx].position;
-            let light_w_pos = vec4.fromValues(pos[0],pos[1],pos[2],1);
-            let light_c_pos = vec4.create();
-            vec4.transformMat4(light_c_pos,light_w_pos,viewMatrix);
             
             //X LEFT
             //BOOLS FOR DEBUGGING PURPOSES
@@ -125,6 +170,7 @@ export default class ClusteredRenderer {
             if(dist_zn > LIGHT_RADIUS) {continue;}
 
             
+            let num_lights_in_cluster = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)]
             //if(bool_xp && bool_xn && bool_yp && bool_yn && bool_zp && bool_zn) {
               if(num_lights_in_cluster < MAX_LIGHTS_PER_CLUSTER){
                 let texel = Math.floor((num_lights_in_cluster + 1)/4.0);
@@ -136,8 +182,6 @@ export default class ClusteredRenderer {
             //} 
 
 
-            //FOR EACH OF THE FOUR PLANES, CHECK IF LIGHT IS "IN"
-          }
           //GET THE TOTAL NUMBER OF LIGHTS IN THIS CLUSTER
 
           // Reset the light count to 0 for every cluster
@@ -145,6 +189,8 @@ export default class ClusteredRenderer {
         }
       }
     }
+    //FOR EACH OF THE FOUR PLANES, CHECK IF LIGHT IS "IN"
+  }
 
     this._clusterTexture.update();
   }
