@@ -12,8 +12,11 @@ function getIndex(lightPos, min, max, numSlices) {
   } else if (z > max) {
     return 15;
   } else {
-    return (Math.floor((z - min)/ step));
+    let bound = numSlices - 1;
+    return Math.floor((z - min)/ step);
+    //return (Math.max(Math.min(Math.floor((z - min)/ step), bound), 0 ) );
   }
+  // return Math.floor((z - min)/ step);
 }
 
 // Unused attempt at getting z in NDC
@@ -105,6 +108,10 @@ export default class ClusteredRenderer {
         || maxY == -1 || maxX == -1 || maxZ == -1) {
           continue;
         }
+      // if (minX > this._xSlices - 1 || minY > this._ySlices - 1 || minZ > this._zSlices - 1 
+      //   || maxY < 0 || maxX < 0 || maxZ < 0) {
+      //     continue;
+      //   }
 
       minX = Math.max(minX, 0);
       maxX = Math.min(maxX, this._xSlices - 1);
@@ -113,9 +120,9 @@ export default class ClusteredRenderer {
       minZ = Math.max(minZ, 0);
       maxZ = Math.min(maxZ, this._zSlices - 1);
 
-      for (let p = minZ; p <= maxZ; p++) {
-        for (let q = minY; q <= maxY; q++) {
-          for (let r = minX; r <= maxX; r++) {
+      for (let p = minZ; p <= maxZ; ++p) {
+        for (let q = minY; q <= maxY; ++q) {
+          for (let r = minX; r <= maxX; ++r) {
             let idx = r + q * this._xSlices + p * this._xSlices * this._ySlices;
             let lightCount = this._clusterTexture.buffer[this._clusterTexture.bufferIndex(idx, 0)];
             lightCount++;            

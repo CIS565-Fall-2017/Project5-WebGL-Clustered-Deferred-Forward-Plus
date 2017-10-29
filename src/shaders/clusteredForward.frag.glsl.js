@@ -87,10 +87,13 @@ export default function(params) {
 
     int x = int(min(floor( (viewPos.x + 1.0) * float(${params.xSlices}) / 2.0) , 14.0));
     int y = int(min(floor( (viewPos.y + 1.0) * float(${params.ySlices}) / 2.0) , 14.0));
-    float zPos = abs(zVec[2]);
+
+    float zPos = - zVec[2];
+    zPos = zPos - u_near;
+
     float zStep = (u_far - u_near)/float(${params.zSlices});
 
-    int z = int(min(floor(float(zPos - u_near)/float(zStep)) , 14.0));
+    int z = int( min(floor(zPos/zStep), 14.0));    
     return ivec3(x,y,z);
   }
 
@@ -103,24 +106,23 @@ export default function(params) {
 
     ivec3 index = getClusterIndex(v_position);
 
+    //fragColor = vec3(zPos/u_far);
     int clusterIdx = index.x + index.y * ${params.xSlices} + index.z * ${params.xSlices} * ${params.ySlices};
 
     float clusterTotal = float(${params.xSlices} * ${params.ySlices} * ${params.zSlices});
     float clusterU = float(clusterIdx + 1) / (clusterTotal + 1.0);
+    int texHeight = int(float(${params.maxLights})*0.25);   
 
-    float lightCount = texture2D(u_clusterbuffer, vec2(clusterU, 0.0))[0];
+    float lightCount = ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, 0);
 
-    // fragColor += vec3(float(index.z) / 15.0, float(index.z) / 15.0, float(index.z) / 15.0);    
     float numLights = float(${params.numLights});
     // fragColor = vec3(lightCount/ numLights, lightCount/ numLights , lightCount/ numLights);
 
     for (int i = 0; i < ${params.numLights}; i++) {
         
-      if (i > int(lightCount)) {
+      if (i >= int(lightCount)) {
         break;
       }
-      int texHeight = int(float(${params.maxLights})*0.25);
-
       int l = int (ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, i + 1));
 
       Light light = UnpackLight(l);
