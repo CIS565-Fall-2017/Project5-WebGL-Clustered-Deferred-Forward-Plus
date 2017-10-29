@@ -2,7 +2,7 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS, LIGHT_RADIUS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 100;
+export const MAX_LIGHTS_PER_CLUSTER = 500;
 
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -25,8 +25,10 @@ export default class ClusteredRenderer {
         }
       }
     }
-    let h_fov = camera.fov;
-    let v_fov = h_fov / camera.aspect;
+    // let h_fov = camera.fov;
+    // let v_fov = h_fov / camera.aspect;
+    let v_fov = camera.fov;
+    let h_fov = v_fov * camera.aspect;
     let z_range = camera.far - camera.near;
     let x_stride = h_fov/this._xSlices;
     let y_stride = v_fov/this._ySlices;
@@ -47,10 +49,13 @@ export default class ClusteredRenderer {
       if(z_start < 0) {
         z_start = 0;
       } 
-      let z_end = Math.floor((-(light_c_pos[2]) + LIGHT_RADIUS - camera.near)/z_stride);
+      let z_end = Math.floor((-(light_c_pos[2]) + LIGHT_RADIUS - camera.near)/z_stride) + 1;
       if(z_end > this._zSlices) {
         z_end = this._zSlices;
       }
+
+      // z_start = 0;
+      // z_end = this._zSlices;
 
       let curr_z = (z_start * z_stride) + camera.near;
 
@@ -63,28 +68,29 @@ export default class ClusteredRenderer {
       vec3.negate(zp_norm,zp_norm);
       let zp_point = vec3.fromValues(0, 0, z_slice_p1);
       let zp_plane = vec4.fromValues(0,0,zp_norm[2],-zp_point[2] * zp_norm[2]);
-      vec4.normalize(zp_plane,zp_plane);
+      //vec4.normalize(zp_plane,zp_plane);
       
       // Z CLUSTER FRONT BOUND
       let zn_norm = vec3.clone(z_vec);
       let zn_point = vec3.fromValues(0, 0, z_slice);
       let zn_plane = vec4.fromValues(0,0,zn_norm[2],-zn_point[2] * zn_norm[2]);
-      vec4.normalize(zn_plane,zn_plane);
+      //vec4.normalize(zn_plane,zn_plane);
 
-      let y_upperbound = curr_z * Math.tan(v_fov * DEG2RAD / 2.0);
-      let y_temp_stride = y_upperbound * 2.0 / 15.0;
 
-      let y_start = Math.floor(((light_c_pos[1] - LIGHT_RADIUS ) + y_upperbound) / y_temp_stride);
+      let y_upperbound = Math.abs(curr_z * Math.tan(v_fov * DEG2RAD / 2.0));
+      let y_temp_stride = y_upperbound * 2.0 / this._ySlices;
+
+      let y_start = Math.floor(((light_c_pos[1] - LIGHT_RADIUS ) + y_upperbound) / y_temp_stride) - 9;
       if(y_start < 0) {
         y_start = 0;
       }
-      let y_end = Math.floor(((light_c_pos[1] + LIGHT_RADIUS ) + y_upperbound) / y_temp_stride);
+      let y_end = Math.floor(((light_c_pos[1] + LIGHT_RADIUS ) + y_upperbound) / y_temp_stride) + 1;
       if(y_end > this._ySlices) {
         y_end = this._ySlices;
       }
 
-      // y_start = 0;
-      // y_end = this._ySlices;
+      y_start = 0;
+      //y_end = this._ySlices;
 
       for (let y = y_start; y < y_end; ++y) {
         let y_slice = (y * y_stride) - (v_fov/2.0);
@@ -103,20 +109,20 @@ export default class ClusteredRenderer {
           //ec4.normalize(yn_plane,yn_plane);
 
           let x_upperbound = curr_z * Math.tan(h_fov * DEG2RAD / 2.0);
-          let x_temp_stride = x_upperbound * 2.0 / 15.0;
+          let x_temp_stride = x_upperbound * 2.0 / this._xSlices;
     
-          let x_start = Math.floor(((light_c_pos[0] - LIGHT_RADIUS ) + x_upperbound) / x_temp_stride);
+          let x_start = Math.floor(((light_c_pos[0] - LIGHT_RADIUS ) + x_upperbound) / x_temp_stride) - 1;
           if(x_start < 0) {
             x_start = 0;
           }
-          let x_end = Math.floor(((light_c_pos[0] + LIGHT_RADIUS ) + x_upperbound) / x_temp_stride);
+          let x_end = Math.floor(((light_c_pos[0] + LIGHT_RADIUS ) + x_upperbound) / x_temp_stride) + 4;
           if(x_end > this._xSlices) {
             x_end = this._xSlices;
           }
 
-        // x_start = 0;
-        // x_end = this._xSlices;
-        
+        //x_start = 0;
+        //x_end = this._xSlices;
+
         for (let x = x_start; x < x_end; ++x) {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           //HI
@@ -136,8 +142,6 @@ export default class ClusteredRenderer {
           vec3.rotateY(xn_norm, xn_norm, origin, -x_slice * DEG2RAD);
           let xn_plane = vec4.fromValues(xn_norm[0],xn_norm[1],xn_norm[2],0);
           //vec4.normalize(xn_plane,xn_plane);
-
-          //FOR EACH LIGHT, TRANSFORM INTO VIEW SPACE
             
             //X LEFT
             //BOOLS FOR DEBUGGING PURPOSES
@@ -158,9 +162,10 @@ export default class ClusteredRenderer {
             //Y LOWER
             let dist_yp = vec4.dot(light_c_pos,yp_plane);
             if(dist_yp > LIGHT_RADIUS) {continue;}
+
             //Y UPPER
             let dist_yn = vec4.dot(light_c_pos,yn_plane);
-            if(dist_yn > LIGHT_RADIUS) {continue}
+            if(dist_yn > LIGHT_RADIUS) {continue;}
 
             //Z BACK
             let dist_zp = vec4.dot(light_c_pos,zp_plane);
