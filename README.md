@@ -18,11 +18,19 @@ In this project I implemented:
 * G Buffer compacting normal x,y values into w slots
 * Blinn-Phong shading
 
+Clustering is a rendering prepass where lights in a scene are sorted into spacial clusters created from the camera frustum (in this implementation, this clustering is done on serially on the CPU). This way, a fragment shader for a specific fragment may query for the cluster and test illumination based on only the lights in the cluster.
+
 ## **Performance Analysis**
 
 ### Comparing time for each rendering method with increasing light numbers
 
-All measurements are taken with the same scene with the same geometry and a constant light radius of 2 units across all lights. Larger light radii and varying cluster sizes may also affect runtime. However, first we want to test how magnitude of elements is reflected in each rendering method. Also, the max number of lights per cluster is increased with each number of lights so lights don't get clipped (so this analysis can be understood more practically).
+All measurements are taken with the same scene with the same geometry and a constant light radius of 2 units across all lights. Larger light radii and varying cluster sizes may also affect runtime. However, first we want to test how magnitude of elements is reflected in each rendering method. Also, the max number of lights per cluster is increased with each number of lights so lights don't get clipped (so this analysis can be understood more practically). Clustering is especially useful for scenes with many lights with a defined radius of influence. This way, we can cull lights easily.
+
+Forward shading is the simplest way of shading where each fragment tests against each light for illumination. For small scenes with few lights, this is fine. 
+
+Clustered Forward+ shading follows generally the same algorithm as Forward shading, except we perform the clustering prepass to store light indices into a "cluster buffer" where each pixel column stores a list of lights for each cluster index.
+
+Clustered Deferred shading is like Clustered Forward+ in the sense that it utilizes the clustering prepass, but the fragment shading segment is slightly different. A Deferred shader uses two fragment shading passes: one pass where fragment values are stored in gbuffers (arbitrary textures), and then compiled for shading calculations at the very end using only the gbuffer information for attributes. Gbuffers can contain arbitrary values and thus, a gbuffer can contain a mismatch of information in the 4 value pixels. 
 
 The data was collected visually from the stat.js overlay, thus these measurements are more of an estimation than a tight measurement.
 
