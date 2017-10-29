@@ -13,10 +13,9 @@ function getIndex(lightPos, min, max, numSlices) {
     return 15;
   } else {
     let bound = numSlices - 1;
-    return Math.floor((z - min)/ step);
-    //return (Math.max(Math.min(Math.floor((z - min)/ step), bound), 0 ) );
+    //return Math.floor((z - min)/ step);
+    return (Math.max(Math.min(Math.floor((z - min)/ step), bound), 0 ) );
   }
-  // return Math.floor((z - min)/ step);
 }
 
 // Unused attempt at getting z in NDC
@@ -86,41 +85,43 @@ export default class ClusteredRenderer {
       let posZ = -lightPos[2]; 
       let posY = lightPos[1]; 
       let posX = lightPos[0];
-      
-      // y = z * tan(FOV)
-      // max yPosition at z plane of intersection
-      let maxPosY = posZ * Math.tan(Math.PI/180 * camera.fov * 0.5);
-      let minPosY = - maxPosY;
-
-      let maxPosX = maxPosY* camera.aspect;
-      let minPosX = -maxPosX; 
-
-      let minX = getIndex(posX - r, minPosX, maxPosX, this._xSlices);
-      let maxX = getIndex(posX + r, minPosX, maxPosX, this._xSlices);
-
-      let minY = getIndex(posY - r, minPosY, maxPosY, this._ySlices);
-      let maxY = getIndex(posY + r, minPosY, maxPosY, this._ySlices);
-
       let minZ = getIndex(posZ - r, camera.near, camera.far, this._zSlices);
       let maxZ = getIndex(posZ + r, camera.near, camera.far, this._zSlices);
 
-      if (minX == 15 || minY == 15 || minZ == 15 
-        || maxY == -1 || maxX == -1 || maxZ == -1) {
-          continue;
-        }
-      // if (minX > this._xSlices - 1 || minY > this._ySlices - 1 || minZ > this._zSlices - 1 
-      //   || maxY < 0 || maxX < 0 || maxZ < 0) {
-      //     continue;
-      //   }
-
-      minX = Math.max(minX, 0);
-      maxX = Math.min(maxX, this._xSlices - 1);
-      minY = Math.max(minY, 0);
-      maxY = Math.min(maxY, this._ySlices - 1);
-      minZ = Math.max(minZ, 0);
-      maxZ = Math.min(maxZ, this._zSlices - 1);
+      let zStride = (camera.far - camera.near)/this._zSlices;
 
       for (let p = minZ; p <= maxZ; ++p) {
+        // y = z * tan(FOV)
+        // max yPosition at z plane of intersection
+        let pZ = camera.near + p * zStride;
+        let maxPosY = pZ * Math.tan(Math.PI/180 * camera.fov * 0.5);
+        let minPosY = - maxPosY;
+
+        let maxPosX = maxPosY* camera.aspect;
+        let minPosX = -maxPosX;
+
+        let c = r;
+        let b = posZ - pZ;
+        let height = Math.sqrt(c * c - b * b);
+        let width = height * camera.aspect;
+
+        let minX = getIndex(posX - width, minPosX, maxPosX, this._xSlices);
+        let maxX = getIndex(posX + width, minPosX, maxPosX, this._xSlices);
+
+        let minY = getIndex(posY - height, minPosY, maxPosY, this._ySlices);
+        let maxY = getIndex(posY + height, minPosY, maxPosY, this._ySlices);
+
+        if (minX == 15 || minY == 15 || minZ == 15 || maxX == -1 || maxY == -1 || maxZ == -1) {
+          continue;
+        }
+
+        minX = Math.max(minX, 0);
+        maxX = Math.min(maxX, this._xSlices - 1);
+        minY = Math.max(minY, 0);
+        maxY = Math.min(maxY, this._ySlices - 1);
+        minZ = Math.max(minZ, 0);
+        maxZ = Math.min(maxZ, this._zSlices - 1);
+
         for (let q = minY; q <= maxY; ++q) {
           for (let r = minX; r <= maxX; ++r) {
             let idx = r + q * this._xSlices + p * this._xSlices * this._ySlices;
