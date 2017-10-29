@@ -16,14 +16,24 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSliceNum : xSlices,
+      ySliceNum : ySlices,
+      zSliceNum : zSlices
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 
+                  'u_frustrumRatios', 'u_nearFar'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._projectionMatrix = mat4.create();
     this._viewMatrix = mat4.create();
     this._viewProjectionMatrix = mat4.create();
+
+    //Debugging view : frozen frustrum
+    this._debug = false;
+    this._constViewMatrix = mat4.create();
+    this._capturedViewMatrix = false;
+
   }
 
   render(camera, scene) {
@@ -33,8 +43,18 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 
+    //Debugging
+    if (this._debug && !(this._capturedViewMatrix)) {
+      mat4.copy(this._constViewMatrix, this._viewMatrix);
+      this._capturedViewMatrix = true;
+    }
+
     // Update cluster texture which maps from cluster index to light list
-    this.updateClusters(camera, this._viewMatrix, scene);
+    if (this._debug) {
+      this.updateClusters(camera, this._constViewMatrix, scene); 
+    } else {
+      this.updateClusters(camera, this._viewMatrix, scene);
+    }
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
@@ -64,6 +84,19 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    if (this._debug) {
+      gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._constViewMatrix); 
+    } else {
+      gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    }
+
+    //upload the width and height ratios
+    let heightRatio = Math.tan((camera.fov / 2) * Math.PI/180) * 2;
+    let widthRatio = camera.aspect * heightRatio;
+    gl.uniform2f(this._shaderProgram.u_frustrumRatios, widthRatio, heightRatio);
+
+    //upload near and far clipping planes
+    gl.uniform2f(this._shaderProgram.u_nearFar, camera.near, camera.far);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

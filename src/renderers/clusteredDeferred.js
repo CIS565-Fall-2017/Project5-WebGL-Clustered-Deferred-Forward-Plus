@@ -9,7 +9,7 @@ import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 
-export const NUM_GBUFFERS = 4;
+export const NUM_GBUFFERS = 3;
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -28,8 +28,12 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSliceNum : xSlices,
+      ySliceNum : ySlices,
+      zSliceNum : zSlices
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]', 'u_lightbuffer', 'u_clusterbuffer',
+    'u_frustrumRatios', 'u_nearFar', 'u_viewMatrix'],
       attribs: ['a_uv'],
     });
 
@@ -155,6 +159,18 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // TODO: Bind any other shader inputs
 
+    //upload the width and height ratios
+    let heightRatio = Math.tan((camera.fov / 2) * Math.PI/180) * 2;
+    let widthRatio = camera.aspect * heightRatio;
+    gl.uniform2f(this._progShade.u_frustrumRatios, widthRatio, heightRatio);
+
+    //upload near and far clipping planes
+    gl.uniform2f(this._progShade.u_nearFar, camera.near, camera.far);
+
+    //bind view matrix
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    
+
     // Bind g-buffers
     const firstGBufferBinding = 0; // You may have to change this if you use other texture slots
     for (let i = 0; i < NUM_GBUFFERS; i++) {
@@ -162,6 +178,14 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
     }
+
+    gl.activeTexture(gl[`TEXTURE${NUM_GBUFFERS}`]);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, NUM_GBUFFERS);
+
+    gl.activeTexture(gl[`TEXTURE${NUM_GBUFFERS + 1}`]);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, NUM_GBUFFERS + 1);
 
     renderFullscreenQuad(this._progShade);
   }
