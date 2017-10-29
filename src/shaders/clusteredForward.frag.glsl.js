@@ -97,13 +97,14 @@ export default function(params) {
     int y = int(float(gl_FragCoord.y)/(u_height/ySlices)); 
     float yf = float(y)/ySlices;
     int z = int((-c_pos.z - u_near)/((u_far-u_near)/zSlices));
+    float zf = float(z)/zSlices;
 
     int cluster_index = x + y * int(xSlices) + z * int(xSlices) * int(ySlices);
-    int cluster_texture_h = int((100.0 + 1.0) / 4.0) + 1;
+    int cluster_texture_h = int(ceil((float(${params.maxLights}) + 1.0) / 4.0));
     int numClusters = int(xSlices * ySlices * zSlices);
     int num_lights = int(ExtractFloat(u_clusterbuffer, numClusters, cluster_texture_h, cluster_index, 0));
-    float zf = float(z)/zSlices;
     int numLightsInCluster = 0;
+    float dist = 0.0;
 
     for (int i = 1; i <= ${params.numLights}; ++i) {
       if(i > num_lights) {break;}
@@ -117,6 +118,8 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      dist = lightDistance;
     }
 
     const vec3 ambientLight = vec3(0.025);
@@ -127,9 +130,13 @@ export default function(params) {
     float test_col = float(num_lights)/20.0;
     //test_col = float(num_lights)/1.0;
     //test_col = float(numLightsInCluster)/110.0;
-    //test_col = zf;
+    test_col = zf;
+    //gl_FragColor = gl_FragColor * zf;
     //gl_FragColor = vec4(test_col,test_col,test_col,1.0);
-    //gl_FragColor.b += zf;
+    if(dist <= 5.0) {
+      //gl_FragColor.r += 0.5;
+
+    }
   }
   `;
 }

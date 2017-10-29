@@ -8,6 +8,7 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export const NUM_GBUFFERS = 4;
 
@@ -21,15 +22,17 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
+      uniforms: ['u_viewMatrix','u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
     this._progShade = loadShaderProgram(QuadVertSource, fsSource({
       numLights: NUM_LIGHTS,
       numGBuffers: NUM_GBUFFERS,
+      xSlices: xSlices, ySlices: ySlices, zSlices: zSlices,
+      maxLights : MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]'],
+      uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]','u_viewMatrix','u_lightbuffer', 'u_clusterbuffer', 'u_height', 'u_width', 'u_near', 'u_far'],
       attribs: ['a_uv'],
     });
 
@@ -162,6 +165,22 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       gl.bindTexture(gl.TEXTURE_2D, this._gbuffers[i]);
       gl.uniform1i(this._progShade[`u_gbuffers[${i}]`], i + firstGBufferBinding);
     }
+
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 5);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
+    gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+    gl.uniform1f(this._progShade.u_width, canvas.width);
+    gl.uniform1f(this._progShade.u_height, canvas.height);
+    gl.uniform1f(this._progShade.u_near, camera.near);
+    gl.uniform1f(this._progShade.u_far, camera.far);
+
 
     renderFullscreenQuad(this._progShade);
   }

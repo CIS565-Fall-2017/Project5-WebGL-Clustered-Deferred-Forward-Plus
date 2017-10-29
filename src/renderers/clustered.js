@@ -17,6 +17,14 @@ export default class ClusteredRenderer {
     // TODO: Update the cluster texture with the count and indices of the lights in each cluster
     // This will take some time. The math is nontrivial...
 
+    for (let z = 0; z < this._zSlices; ++z) {
+      for (let y = 0; y < this._ySlices; ++y) {
+        for (let x = 0; x < this._xSlices; ++x) {
+          let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
+          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+        }
+      }
+    }
     let h_fov = camera.fov;
     let v_fov = h_fov / camera.aspect;
     let z_range = camera.far - camera.near;
@@ -37,46 +45,50 @@ export default class ClusteredRenderer {
           let z_slice = -(z/this._zSlices) * (camera.far - camera.near) - camera.near;
           let z_slice_p1 = -((z + 1)/this._zSlices) * (camera.far - camera.near) - camera.near;
 
-          let z_vec = vec3.fromValues(0,0,1);
-          let y_vec = vec3.fromValues(0,1,0);
-          let x_vec = vec3.fromValues(1,0,0);
+          let z_vec = vec3.fromValues(0,0,1.0);
+          let y_vec = vec3.fromValues(0,1.0,0);
+          let x_vec = vec3.fromValues(1.0,0,0);
 
           let origin = vec3.fromValues(0,0,0);
           // X CLUSTER RIGHT BOUND
           let xp_norm = vec3.create();
           vec3.rotateY(xp_norm, x_vec, origin, -x_slice_p1 * DEG2RAD);
           let xp_plane = vec4.fromValues(xp_norm[0],xp_norm[1],xp_norm[2],0);
+          vec4.normalize(xp_plane,xp_plane);
 
           // X CLUSTER LEFT BOUND
-          let xn_norm = vec3.create();
-          vec3.rotateY(xn_norm, x_vec, origin, -x_slice * DEG2RAD);
-          vec3.negate(xn_norm,xn_norm);
+          let xn_norm = vec3.fromValues(-1,0,0);
+          vec3.rotateY(xn_norm, xn_norm, origin, -x_slice * DEG2RAD);
           let xn_plane = vec4.fromValues(xn_norm[0],xn_norm[1],xn_norm[2],0);
+          vec4.normalize(xn_plane,xn_plane);
 
           // Y CLUSTER UPPER BOUND
           let yp_norm = vec3.create();
           vec3.rotateX(yp_norm, y_vec, origin, y_slice_p1 * DEG2RAD);
           let yp_plane = vec4.fromValues(yp_norm[0],yp_norm[1],yp_norm[2],0);
+          vec4.normalize(yp_plane,yp_plane);
 
           // Y CLUSTER LOWER BOUND
-          let yn_norm = vec3.create();
-          vec3.rotateX(yn_norm, y_vec, origin, y_slice * DEG2RAD);
-          vec3.negate(yn_norm,yn_norm);
+          let yn_norm = vec3.fromValues(0,-1,0);
+          vec3.rotateX(yn_norm, yn_norm, origin, y_slice * DEG2RAD);
           let yn_plane = vec4.fromValues(yn_norm[0],yn_norm[1],yn_norm[2],0);
+          vec4.normalize(yn_plane,yn_plane);
 
           // Z CLUSTER BACK BOUND
           let zp_norm = vec3.clone(z_vec);
           vec3.negate(zp_norm,zp_norm);
           let zp_point = vec3.fromValues(0, 0, z_slice_p1);
           let zp_plane = vec4.fromValues(0,0,zp_norm[2],-zp_point[2] * zp_norm[2]);
+          vec4.normalize(zp_plane,zp_plane);
 
           // Z CLUSTER FRONT BOUND
           let zn_norm = vec3.clone(z_vec);
           let zn_point = vec3.fromValues(0, 0, z_slice);
           let zn_plane = vec4.fromValues(0,0,zn_norm[2],-zn_point[2] * zn_norm[2]);
+          vec4.normalize(zn_plane,zn_plane);
 
           //FOR EACH LIGHT, TRANSFORM INTO VIEW SPACE
-          for(let l_idx = 0; l_idx < NUM_LIGHTS; l_idx++) {
+          for(let l_idx = 0; l_idx < NUM_LIGHTS; ++l_idx) {
             let pos = scene.lights[l_idx].position;
             let light_w_pos = vec4.fromValues(pos[0],pos[1],pos[2],1);
             let light_c_pos = vec4.create();
