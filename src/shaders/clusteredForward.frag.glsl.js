@@ -16,6 +16,11 @@ export default function(params) {
   varying vec3 v_normal;
   varying vec2 v_uv;
 
+  // Newly added
+  uniform mat4 u_viewMatrix;
+  uniform vec2 u_screenDimension;
+  uniform vec2 u_cameraClipPlanes;
+
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
@@ -69,7 +74,7 @@ export default function(params) {
       return 0.25 * pow(2.0 - h, 3.0) - pow(1.0 - h, 3.0);
     } else if (h < 2.0) {
       return 0.25 * pow(2.0 - h, 3.0);
-    } else {
+    } else {    
       return 0.0;
     }
   }
@@ -80,9 +85,46 @@ export default function(params) {
     vec3 normal = applyNormalMap(v_normal, normap);
 
     vec3 fragColor = vec3(0.0);
+    
+    // Fisrt the start position of the fragmnets
+    int clusterPosX = int( gl_FragCoord.x / (u_screenDimension.x / float(${params.xSlices})) );
+    int clusterPosY = int( gl_FragCoord.y / (u_screenDimension.y / float(${params.ySlices})) );
+    int clusterPosZ = int( ((-(u_viewMatrix * vec4(v_position, 1.0)).z) - u_cameraClipPlanes.x) / ((u_cameraClipPlanes.y - u_cameraClipPlanes.x) / float(${params.zSlices})) );
+    
+    // Cluster Index
+    int clusterIndex = clusterPosX + clusterPosY * ${params.xSlices} + clusterPosZ * ${params.xSlices} * ${params.ySlices};
+    int clusterSize = ${params.xSlices} * ${params.ySlices} * ${params.zSlices};
+    int numOfClustersAlongY = int(float(${params.maxLightsPerCluster}+1) * 0.25) + 1;
+
+    // In order to find out the number of lights in the cluster we need to find out the U which will be used with u_clusterbuffer
+    float clusterTextureU = float(clusterIndex+1) / float(clusterSize+1);
+    int clusterLightCount = int(texture2D(u_clusterbuffer, vec2(clusterTextureU,0)).x);
 
     for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+      if(i >= clusterLightCount) {
+        break;
+      }
+
+      // The index of light that are stored inside the texture are differenet
+      int lightIndex;
+
+      int textureIndex = int(float(i+1) * 0.25);
+      float clusterTextureV = float(textureIndex+1) / float(numOfClustersAlongY + 1);
+      vec4 texel = texture2D(u_clusterbuffer, vec2(clusterTextureU, clusterTextureV));
+
+      int clusterTexelComponent = (i+1) - (textureIndex * 4);
+      if (clusterTexelComponent == 0) {
+        lightIndex = int(texel[0]);
+      } else if (clusterTexelComponent == 1) {
+        lightIndex = int(texel[1]);
+      } else if (clusterTexelComponent == 2) {
+        lightIndex = int(texel[2]);
+      } else if (clusterTexelComponent == 3) {
+        lightIndex = int(texel[3]);
+      }
+
+      // Shading part of the base code
+      Light light = UnpackLight(lightIndex);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
