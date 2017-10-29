@@ -2,7 +2,7 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS, LIGHT_RADIUS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = 500;
+export const MAX_LIGHTS_PER_CLUSTER = 5000;
 
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -90,7 +90,7 @@ export default class ClusteredRenderer {
       }
 
       y_start = 0;
-      //y_end = this._ySlices;
+      y_end = this._ySlices;
 
             //Z BACK
             let dist_zp = vec4.dot(light_c_pos,zp_plane);

@@ -120,10 +120,10 @@ export default function(params) {
       float specular = 0.0;
       vec3 specColor = vec3(1.0,1.0,1.0);
 
-      float shininess = 16.0;
-      vec3 halfDir = normalize((light.position - v_position) - v_position);
-      float specAngle = max(dot(halfDir, normal), 0.0);
-      specular = pow(specAngle, shininess);
+      // float shininess = 16.0;
+      // vec3 halfDir = normalize((light.position - v_position) - v_position);
+      // float specAngle = max(dot(halfDir, normal), 0.0);
+      // specular = pow(specAngle, shininess);
 
       fragColor += (albedo * lambertTerm * light.color  + specular * specColor) * vec3(lightIntensity);
 

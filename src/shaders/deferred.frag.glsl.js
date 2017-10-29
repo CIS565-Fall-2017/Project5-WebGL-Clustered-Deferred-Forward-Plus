@@ -72,16 +72,16 @@ export default function(params) {
     // TODO: extract data from g buffers and do lighting
     vec4 gb0 = texture2D(u_gbuffers[0], v_uv);
     vec4 gb1 = texture2D(u_gbuffers[1], v_uv);
-    //vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
+    vec4 gb2 = texture2D(u_gbuffers[2], v_uv);
     // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
 
 
-    //vec3 normal = gb2.xyz;
+    vec3 normal = gb2.xyz;
     vec3 albedo = gb0.rgb;
 
     vec3 v_position = gb1.xyz;
-    vec4 worldNorm = u_invViewMatrix * vec4(gb0.w,gb1.w,sqrt(1.0-gb0.w*gb0.w-gb1.w*gb1.w),0.0);
-    vec3 normal = normalize( worldNorm.xyz);
+   // vec4 worldNorm = u_invViewMatrix * vec4(gb0.w,gb1.w,sqrt(1.0-gb0.w*gb0.w-gb1.w*gb1.w),0.0);
+    //vec3 normal = normalize( worldNorm.xyz);
 
 
     vec3 fragColor = vec3(0.0);
@@ -137,9 +137,9 @@ export default function(params) {
     float test_col = float(num_lights)/20.0;
     //test_col = float(num_lights)/1.0;
     //test_col = float(numLightsInCluster)/110.0;
-    test_col = float(num_lights)/10.0;
+    test_col = float(num_lights)/50.0;
     //gl_FragColor = gl_FragColor * zf;
-    //gl_FragColor = vec4(test_col,test_col,test_col,1.0);
+    //gl_FragColor = vec4(xf,yf,zf,1.0);
     if(dist <= 5.0) {
       //gl_FragColor.r += 0.5;
     }
