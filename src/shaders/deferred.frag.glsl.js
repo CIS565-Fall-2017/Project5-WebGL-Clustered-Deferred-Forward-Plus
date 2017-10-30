@@ -6,8 +6,19 @@ export default function(params) {
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   uniform sampler2D u_lightbuffer;
 
+  // Read this buffer to determine the lights influencing a cluster
+  uniform sampler2D u_clusterbuffer;
+
+  uniform mat4 u_viewMatrix;
+
   varying vec2 v_uv;
   
+  // Camera parameters
+  uniform float u_camera_fov; // already in radians
+  uniform float u_camera_aspect;
+  uniform float u_camera_near;
+  uniform float u_camera_far;
+
   struct Light {
     vec3 position;
     float radius;
@@ -82,21 +93,72 @@ export default function(params) {
 
     vec3 normal = normalize(DecodeNormal(gb0.rg));
     vec3 albedo = vec3(gb0.ba, gb1.r);
-    vec3 position = gb1.gba;
-    //gl_FragColor = vec4(normal, 1.0); return;
+    vec3 position = (u_viewMatrix * vec4(gb1.gba, 1.0)).xyz;
+    
+    //gl_FragColor = vec4(gb1.gba, 1.0); return;
+
+    // Compute the same stuff we computed on the CPU for each light
+    const float lightRadius = float(${params.lightRadius});
+    const float numClusters = 15.0;
+
+    // Frustum width and height at this light's z-value
+    float halfFrustumHeight  = abs(tan(u_camera_fov) * -position.z);
+    float halfFrustumWidth = halfFrustumHeight * u_camera_aspect;
+    float denom = 1.0 / (2.0 * halfFrustumHeight);
+    float denomX = 1.0 / (2.0 * halfFrustumWidth);
+
+    // Min and max clusters influenced in the x-direction
+    float clusterX = floor(((position.x + halfFrustumWidth) * denomX) * numClusters);
+
+    // Min and max clusters influenced in the y-direction
+    float clusterY = floor(((position.y + halfFrustumHeight) * denom) * numClusters);
+
+    // Min and max clusters influenced in the z-direction
+    float clusterZ = floor(((-position.z - u_camera_near) / (u_camera_far - u_camera_near)) * numClusters);
+
+    // Now read from the cluster texture to find out what lights are in the same cluster as this fragment
+    vec2 uv_cluster = vec2(0.0, 0.0);
+
+    float clusterIndex = clusterX + clusterY * (numClusters) + clusterZ * (numClusters) * (numClusters);
+    uv_cluster.x = clusterIndex / (15.0 * 15.0 * 15.0);
+
+    int numLightsInThisCluster = int(texture2D(u_clusterbuffer, uv_cluster).r);
+    
+    const float MAX_LIGHTS_PER_CLUSTER_RATIO = 1.0 / ceil(100.0 / 4.0);
+    const int MAX_LIGHTS_PER_CLUSTER = int(ceil(100.0 / 4.0)); // max number of rows in the clusterbuffer texture
+
     vec3 fragColor = vec3(0.0);
+    
+    for(int i = 0; i <= ${params.numLights}; i += 4) {
+      if(i > numLightsInThisCluster) {
+        break;
+      }
+      uv_cluster.y = floor(float(i) / 4.0) * MAX_LIGHTS_PER_CLUSTER_RATIO;
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, position.xyz);
-      vec3 L = (light.position - position.xyz) / lightDistance;
+      vec4 lightIds = texture2D(u_clusterbuffer, uv_cluster);
+      
+      // Shade using each light in this cluster
+      for(int l = 0; l < 4; ++l) {
+        if(l + i == 0) {
+          continue;
+        }
+        if(l + i > numLightsInThisCluster) {
+          break;
+        }
 
-      // Blinn Phong
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal.xyz), 0.0);
-      float specularTerm = pow(max(dot(L, 0.5 * (normal.xyz + L)), 0.0), 128.0);
-
-      fragColor += albedo.xyz * lambertTerm * light.color * vec3(lightIntensity) + albedo.xyz * light.color * vec3(0.4, 0.4, 0.4) * specularTerm;
+        Light light = UnpackLight(int(lightIds[l]));
+        vec3 lightPos = (u_viewMatrix * vec4(light.position, 1.0)).xyz;
+        float lightDistance = distance(lightPos, position);
+        vec3 L = (lightPos - position) / lightDistance;
+  
+        // Blinn Phong
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal.xyz), 0.0);
+        float shininess = 128.0;
+        float specularTerm = pow(max(dot(normal, normalize(0.5 * (-position + normalize(L)))), 0.0), shininess);
+  
+        fragColor += albedo.xyz * light.color * (vec3(lightIntensity) * lambertTerm + vec3(0.4, 0.4, 0.4) * specularTerm);
+      }
     }
 
     const vec3 ambientLight = vec3(0.025);

@@ -88,12 +88,9 @@ export default function(params) {
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
-    // Determine the cluster that this fragment is in - 
-    vec3 fragCluster;
-
     // Compute the same stuff we computed on the CPU for each light
     const float lightRadius = float(${params.lightRadius});
-    const float numClusters = 15.0; // actually 15 but for math reasons, do numClusters - 1
+    const float numClusters = 15.0;
 
     // Frustum width and height at this light's z-value
     float halfFrustumHeight  = abs(tan(u_camera_fov) * -v_positionVC.z);
@@ -118,11 +115,11 @@ export default function(params) {
 
     int numLightsInThisCluster = int(texture2D(u_clusterbuffer, uv_cluster).r);
     
-    const float MAX_LIGHTS_PER_CLUSTER_RATIO = 1.0 / 26.0; // 1 / ceil(100 / 4)
-    const int MAX_LIGHTS_PER_CLUSTER = 26; // max number of rows in the clusterbuffer texture
+    const float MAX_LIGHTS_PER_CLUSTER_RATIO = 1.0 / ceil(100.0 / 4.0);
+    const int MAX_LIGHTS_PER_CLUSTER = int(ceil(100.0 / 4.0)); // max number of rows in the clusterbuffer texture
 
     vec3 fragColor = vec3(0.0);
-    //gl_FragColor = vec4(normalize(normal), 1.0); return;
+    
     for(int i = 0; i <= ${params.numLights}; i += 4) {
       if(i > numLightsInThisCluster) {
         break;
