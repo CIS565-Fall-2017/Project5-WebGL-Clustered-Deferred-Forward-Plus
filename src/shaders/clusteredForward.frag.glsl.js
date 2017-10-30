@@ -132,7 +132,7 @@ export default function(params) {
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);      
     }
 
     const vec3 ambientLight = vec3(0.025);
