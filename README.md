@@ -3,26 +3,26 @@ WebGL Clustered Deferred and Forward+ Shading
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-* (TODO) YOUR NAME HERE
-* Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Joseph Klinger
+* Tested on: Windows 10, i5-7300HQ (4 CPUs) @ ~2.50GHz, GTX 1050 6030MB (Personal Machine)
 
 ### Live Online
 
-[![](img/thumb.png)](http://TODO.github.io/Project5B-WebGL-Deferred-Shading)
+[Demo.]http://klingerj.github.io/Project5B-WebGL-Deferred-Shading)
 
 ### Demo Video/GIF
 
-[![](img/video.png)](TODO)
+[![](img/clustered_Forward.png)]
 
-### (TODO: Your README)
+### README
 
-*DO NOT* leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+This week, I worked on implementing a clustered Forward+ and clustered deferred renderer. A quick rundown on how those rendering methods work:
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+Forward: simply, render each material with each light, using a nested pair of for loops. Not the most efficient way to do things.
 
+Clustered Forward+: Only render each material with each light that is close enough to influence the object.
+
+Clustered Deferred: Render geometry attributes to G-buffers, apply shading during a second pass, in screen space using the G-buffers. Also uses clusters to only compute lighting for nearby lights.
 
 ### Credits
 
