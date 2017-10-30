@@ -24,6 +24,23 @@ Clustered Forward+: Only render each material with each light that is close enou
 
 Clustered Deferred: Render geometry attributes to G-buffers, apply shading during a second pass, in screen space using the G-buffers. Also uses clusters to only compute lighting for nearby lights.
 
+# Features
+
+Clustered rendering involves dividing the view frustum up into "clusters". During each frame, each light computes which clusters it influences, and so when we go time we go to compute shading for each fragment, 
+we know that that fragment's shading computations will only take into account lights that are contributing to its color. Any additional computations are unnecessary, making forward rendering a most inefficient
+means of rendering.
+
+# Performance Analysis
+
+Here is a graph displaying some stats regarding the performance of each method:
+
+![](graph.png)
+
+For deferred rendering, by packing values into vec4s, I was able to reduce the G-buffers usage from 4 buffers to 2 which is a 50% memory comsumption reduction, which would certainly be a necessity at companies working
+on either games or animation (minimizing memory consumption in a render farm is important, for example).
+
+Among other features, I implemented the easy Blinn-Phong shader for the deferred renderer.
+
 ### Credits
 
 * [Three.js](https://github.com/mrdoob/three.js) by [@mrdoob](https://github.com/mrdoob) and contributors
