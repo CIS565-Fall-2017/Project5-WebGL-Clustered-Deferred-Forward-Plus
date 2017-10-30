@@ -18,21 +18,30 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
 }
 
+// https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+
+vec2 OctahedronEncodingWrap( vec2 v )
+{
+    return ( vec2(1.0) - abs( v.yx ) ) * vec2(sign(v.x), sign(v.y));
+}
+ 
+vec2 EncodeNormal( vec3 n )
+{
+    n /= ( abs( n.x ) + abs( n.y ) + abs( n.z ) );
+    n.xy = n.z >= 0.0 ? n.xy : OctahedronEncodingWrap( n.xy );
+    n.xy = n.xy * 0.5 + 0.5;
+    return n.xy;
+}
+
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
     
     /* Populate G-buffers */
 
-    // Normals
-    gl_FragData[0] = vec4(norm, 1.0);
+    // Normals, Color red/green channels
+    gl_FragData[0] = vec4(EncodeNormal(norm), col.rg);
 
-    // Depth
-    gl_FragData[1] = vec4(v_depth, v_depth, v_depth, 1.0);
-
-    // Diffuse Color
-    gl_FragData[2] = vec4(col, 1.0);
-
-    // Positions
-    gl_FragData[3] = vec4(v_position, 1.0);
+    // Color blue channel, position
+    gl_FragData[1] = vec4(col.b, v_position);
 }

@@ -93,7 +93,7 @@ export default function(params) {
 
     // Compute the same stuff we computed on the CPU for each light
     const float lightRadius = float(${params.lightRadius});
-    const float numClusters = 14.0; // actually 15 but for math reasons, do numClusters - 1
+    const float numClusters = 15.0; // actually 15 but for math reasons, do numClusters - 1
 
     // Frustum width and height at this light's z-value
     float halfFrustumHeight  = abs(tan(u_camera_fov) * -v_positionVC.z);
@@ -113,7 +113,7 @@ export default function(params) {
     // Now read from the cluster texture to find out what lights are in the same cluster as this fragment
     vec2 uv_cluster = vec2(0.0, 0.0);
 
-    float clusterIndex = clusterX + clusterY * (numClusters + 1.0) + clusterZ * (numClusters + 1.0) * (numClusters + 1.0);
+    float clusterIndex = clusterX + clusterY * (numClusters) + clusterZ * (numClusters) * (numClusters);
     uv_cluster.x = clusterIndex / (15.0 * 15.0 * 15.0);
 
     int numLightsInThisCluster = int(texture2D(u_clusterbuffer, uv_cluster).r);
@@ -122,7 +122,7 @@ export default function(params) {
     const int MAX_LIGHTS_PER_CLUSTER = 26; // max number of rows in the clusterbuffer texture
 
     vec3 fragColor = vec3(0.0);
-
+    //gl_FragColor = vec4(normalize(normal), 1.0); return;
     for(int i = 0; i <= ${params.numLights}; i += 4) {
       if(i > numLightsInThisCluster) {
         break;

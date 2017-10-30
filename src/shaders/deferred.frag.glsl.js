@@ -58,13 +58,32 @@ export default function(params) {
     }
   }
 
+  // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+
+  vec2 OctahedronEncodingWrap( vec2 v )
+  {
+    return ( vec2(1.0) - abs( v.yx ) ) * vec2(sign(v.x), sign(v.y));
+  }
+
+  vec3 DecodeNormal( vec2 encodedNormal ) {
+    encodedNormal = encodedNormal * 2.0 - 1.0;
+    
+       vec3 n;
+       n.z = 1.0 - abs( encodedNormal.x ) - abs( encodedNormal.y );
+       n.xy = n.z >= 0.0 ? encodedNormal.xy : OctahedronEncodingWrap( encodedNormal.xy );
+       n = normalize( n );
+       return n;
+  }
+
   void main() {
     // Extract data from G-buffers and do lighting
-    vec4 normal = texture2D(u_gbuffers[0], v_uv); // Normals
-    vec4 depth = texture2D(u_gbuffers[1], v_uv); // Depth
-    vec4 albedo = texture2D(u_gbuffers[2], v_uv); // Diffuse color
-    vec4 position = texture2D(u_gbuffers[3], v_uv); // Positions
-    
+    vec4 gb0 = texture2D(u_gbuffers[0], v_uv); // Normals
+    vec4 gb1 = texture2D(u_gbuffers[1], v_uv); // Depth
+
+    vec3 normal = normalize(DecodeNormal(gb0.rg));
+    vec3 albedo = vec3(gb0.ba, gb1.r);
+    vec3 position = gb1.gba;
+    //gl_FragColor = vec4(normal, 1.0); return;
     vec3 fragColor = vec3(0.0);
 
     for (int i = 0; i < ${params.numLights}; ++i) {
@@ -72,10 +91,12 @@ export default function(params) {
       float lightDistance = distance(light.position, position.xyz);
       vec3 L = (light.position - position.xyz) / lightDistance;
 
+      // Blinn Phong
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal.xyz), 0.0);
+      float specularTerm = pow(max(dot(L, 0.5 * (normal.xyz + L)), 0.0), 128.0);
 
-      fragColor += albedo.xyz * lambertTerm * light.color * vec3(lightIntensity);
+      fragColor += albedo.xyz * lambertTerm * light.color * vec3(lightIntensity) + vec3(0.4, 0.4, 0.4) * specularTerm;
     }
 
     const vec3 ambientLight = vec3(0.025);
