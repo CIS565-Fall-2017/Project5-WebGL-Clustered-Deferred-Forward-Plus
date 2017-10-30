@@ -36,10 +36,13 @@ Here is a graph displaying some stats regarding the performance of each method:
 
 ![](img/graph.png.PNG)
 
+Based on the results, we will probably want to avoid forward rendering wherever possible. Clustered Forward+ provides immense improvements but deferred rendering
+is even more efficient than that. This is likely due to the fact that we are only computing shading for fragments that are guaranteed to be visible.
+
 For deferred rendering, by packing values into vec4s, I was able to reduce the G-buffers usage from 4 buffers to 2 which is a 50% memory comsumption reduction, which would certainly be a necessity at companies working
 on either games or animation (minimizing memory consumption in a render farm is important, for example).
 
-Among other features, I implemented the easy Blinn-Phong shader for the deferred renderer.
+Among other features, I implemented a Blinn-Phong shader for the deferred renderer.
 
 ### Credits
 
