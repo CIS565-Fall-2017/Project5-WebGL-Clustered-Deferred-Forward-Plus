@@ -12,7 +12,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Demo Video/GIF
 
-[![](img/clustered_Forward.png)]
+![](img/clustered_Forward.png)
 
 ### README
 
