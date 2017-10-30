@@ -10,7 +10,7 @@ import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
 import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
 
-export const NUM_GBUFFERS = 3;
+export const NUM_GBUFFERS = 4;
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -22,8 +22,7 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._progCopy = loadShaderProgram(toTextureVert, toTextureFrag, {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_viewMatrix', 
-      'u_lightbuffer', 'u_clusterbuffer', 'u_near', 'u_far'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -36,7 +35,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       maxLights: MAX_LIGHTS_PER_CLUSTER,      
     }), {
       uniforms: ['u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_gbuffers[3]',
-      'u_viewMatrix', 'u_near', 'u_far'],
+      'u_lightbuffer', 'u_clusterbuffer', 
+      'u_viewMatrix', 'u_near', 'u_far', 'u_viewProjectionMatrix'],
       attribs: ['a_uv'],
     });
 
@@ -160,6 +160,19 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     // Use this shader program
     gl.useProgram(this._progShade.glShaderProgram);
 
+    // Upload the camera matrix
+    gl.uniformMatrix4fv(this._progShade.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    
+    // Set the light texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
+    gl.uniform1i(this._progShade.u_lightbuffer, 2);
+
+    // Set the cluster texture as a uniform input to the shader
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTexture.glTexture);
+    gl.uniform1i(this._progShade.u_clusterbuffer, 3);
+
     // TODO: Bind any other shader inputs
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
     gl.uniform1f(this._progShade.u_near, camera.near);
@@ -174,5 +187,6 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     }
 
     renderFullscreenQuad(this._progShade);
+    
   }
 };

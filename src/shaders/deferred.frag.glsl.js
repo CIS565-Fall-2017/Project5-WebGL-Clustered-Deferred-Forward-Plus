@@ -7,6 +7,7 @@ export default function(params) {
 
   uniform sampler2D u_lightbuffer;
   uniform sampler2D u_clusterbuffer;
+
   uniform mat4 u_viewMatrix;
   uniform mat4 u_viewProjectionMatrix;
   uniform float u_near;
@@ -98,7 +99,6 @@ export default function(params) {
 
     ivec3 index = getClusterIndex(v_position);
 
-    // fragColor = vec3(zPos/u_far);
     int clusterIdx = index.x + index.y * ${params.xSlices} + index.z * ${params.xSlices} * ${params.ySlices};
 
     float clusterTotal = float(${params.xSlices} * ${params.ySlices} * ${params.zSlices});
@@ -108,46 +108,47 @@ export default function(params) {
     float lightCount = ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, 0);
 
     float numLights = float(${params.numLights});
-    // fragColor = vec3(lightCount/ numLights, lightCount/ numLights , lightCount/ numLights);
+
+    // fragColor = vec3(float(index.x) / 15.0, float(index.y)/ 15.0, 0.0);
+
+    // fragColor = vec3(float(index.z)/u_far);
+    
 
     for (int i = 0; i < ${params.numLights}; i++) {
-        
-      if (i >= int(lightCount)) {
-        break;
-      }
-      int l = int (ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, i + 1));
-
-      Light light = UnpackLight(l);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
-
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-
-      float specular = 0.0;
-      float shininess = 0.0;
-      float gamma = 1.2;
-      vec3 specColor = vec3(1.0);
-
-      if (lambertTerm > 0.0) {
-        vec3 viewDir = normalize(-v_position);
-        vec3 halfDir = normalize(L + viewDir);
-        float specAngle = max(dot(halfDir, normal), 0.0);
-        specular = pow(specAngle, shininess);
-      }
       
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity)
-       + specular * specColor;
-      
+    if (i >= int(lightCount)) {
+      break;
     }
+    int l = int (ExtractFloat(u_clusterbuffer, int(clusterTotal), texHeight, clusterIdx, i + 1));
 
-    const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
+    Light light = UnpackLight(l);
+    float lightDistance = distance(light.position, v_position);
+    vec3 L = (light.position - v_position) / lightDistance;
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    float lambertTerm = max(dot(L, normal), 0.0);
+
+    float specular = 0.0;
+    float shininess = 500.0;
+    float gamma = 1.2;
+    vec3 specColor = vec3(1.0);
+
+    if (lambertTerm > 0.0) {
+      vec3 viewDir = normalize(-v_position);
+      vec3 halfDir = normalize(L + viewDir);
+      float specAngle = max(dot(halfDir, normal), 0.0);
+      specular = pow(specAngle, shininess);
+    }
+    
+    fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity)
+     + specular * specColor;
+    
   }
 
+  const vec3 ambientLight = vec3(0.025);
+  fragColor += albedo * ambientLight;
 
-
+  gl_FragColor = vec4(fragColor, 1.0);
+  }
   `;
 }

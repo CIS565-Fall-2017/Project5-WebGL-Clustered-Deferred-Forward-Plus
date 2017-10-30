@@ -106,7 +106,6 @@ export default function(params) {
 
     ivec3 index = getClusterIndex(v_position);
 
-    // fragColor = vec3(zPos/u_far);
     int clusterIdx = index.x + index.y * ${params.xSlices} + index.z * ${params.xSlices} * ${params.ySlices};
 
     float clusterTotal = float(${params.xSlices} * ${params.ySlices} * ${params.zSlices});
