@@ -34,7 +34,7 @@ means of rendering.
 
 Here is a graph displaying some stats regarding the performance of each method:
 
-![](img/graph.png)
+![](img/graph.PNG)
 
 For deferred rendering, by packing values into vec4s, I was able to reduce the G-buffers usage from 4 buffers to 2 which is a 50% memory comsumption reduction, which would certainly be a necessity at companies working
 on either games or animation (minimizing memory consumption in a render farm is important, for example).
