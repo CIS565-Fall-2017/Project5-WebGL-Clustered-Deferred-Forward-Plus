@@ -1,6 +1,6 @@
 export default function(params) {
   return `
-  // TODO: This is pretty much just a clone of forward.frag.glsl.js
+  // This is pretty much just a clone of forward.frag.glsl.js
 
   #version 100
   precision highp float;
@@ -11,14 +11,19 @@ export default function(params) {
 
   // Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
+
+  uniform mat4 u_viewMatrix;
   
   // Camera parameters
   uniform float u_camera_fov; // already in radians
   uniform float u_camera_aspect;
+  uniform float u_camera_near;
+  uniform float u_camera_far;
 
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+  varying vec3 v_positionVC; // position in view space
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -77,41 +82,79 @@ export default function(params) {
       return 0.0;
     }
   }
-  
-  // Compute the proper index the the cluster buffer texture
-  int bufferIndex(int index, int component) {
-    return 4 * index + 4 * component * int(ceil(float(${params.numLights}) / 4.0));
-  }
-  
+
   void main() {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
 
-    vec3 fragColor = vec3(0.0);
-
     // Determine the cluster that this fragment is in - 
-    //vec3 fragCluster;
+    vec3 fragCluster;
 
     // Compute the same stuff we computed on the CPU for each light
-    const int lightRadius = ${params.lightRadius};
-    //int numLightsInThisCluster = int(texture2D(u_clusterBuffer, vec2(u, v)));
+    const float lightRadius = float(${params.lightRadius});
+    const float numClusters = 14.0; // actually 15 but for math reasons, do numClusters - 1
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
-      float lightDistance = distance(light.position, v_position);
-      vec3 L = (light.position - v_position) / lightDistance;
+    // Frustum width and height at this light's z-value
+    float halfFrustumHeight  = abs(tan(u_camera_fov) * -v_positionVC.z);
+    float halfFrustumWidth = halfFrustumHeight * u_camera_aspect;
+    float denom = 1.0 / (2.0 * halfFrustumHeight);
+    float denomX = 1.0 / (2.0 * halfFrustumWidth);
 
-      float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
+    // Min and max clusters influenced in the x-direction
+    float clusterX = floor(((v_positionVC.x + halfFrustumWidth) * denomX) * numClusters);
 
-      fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // Min and max clusters influenced in the y-direction
+    float clusterY = floor(((v_positionVC.y + halfFrustumHeight) * denom) * numClusters);
+
+    // Min and max clusters influenced in the z-direction
+    float clusterZ = floor(((-v_positionVC.z - u_camera_near) / (u_camera_far - u_camera_near)) * numClusters);
+
+    // Now read from the cluster texture to find out what lights are in the same cluster as this fragment
+    vec2 uv_cluster = vec2(0.0, 0.0);
+
+    float clusterIndex = clusterX + clusterY * (numClusters + 1.0) + clusterZ * (numClusters + 1.0) * (numClusters + 1.0);
+    uv_cluster.x = clusterIndex / (15.0 * 15.0 * 15.0);
+
+    int numLightsInThisCluster = int(texture2D(u_clusterbuffer, uv_cluster).r);
+    
+    const float MAX_LIGHTS_PER_CLUSTER_RATIO = 1.0 / 26.0; // 1 / ceil(100 / 4)
+    const int MAX_LIGHTS_PER_CLUSTER = 26; // max number of rows in the clusterbuffer texture
+
+    vec3 fragColor = vec3(0.0);
+
+    for(int i = 0; i <= ${params.numLights}; i += 4) {
+      if(i > numLightsInThisCluster) {
+        break;
+      }
+      uv_cluster.y = floor(float(i) / 4.0) * MAX_LIGHTS_PER_CLUSTER_RATIO;
+
+      vec4 lightIds = texture2D(u_clusterbuffer, uv_cluster);
+      
+      // Shade using each light in this cluster
+      for(int l = 0; l < 4; ++l) {
+        if(l + i == 0) {
+          continue;
+        }
+        if(l + i > numLightsInThisCluster) {
+          break;
+        }
+
+        Light light = UnpackLight(int(lightIds[l]));
+        vec3 lightPos = (u_viewMatrix * vec4(light.position, 1.0)).xyz;
+        float lightDistance = distance(lightPos, v_positionVC);
+        vec3 L = (lightPos - v_positionVC) / lightDistance;
+  
+        float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+        float lambertTerm = max(dot(L, normal), 0.0);
+  
+        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+      }
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
-    //fragColor = vec3(float(lightRadius));
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

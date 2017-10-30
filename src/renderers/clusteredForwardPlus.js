@@ -18,7 +18,7 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       numLights: NUM_LIGHTS,
       lightRadius: LIGHT_RADIUS,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_camera_fov', 'u_camera_aspect'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_camera_fov', 'u_camera_aspect', 'u_camera_near', 'u_camera_far'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -66,6 +66,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
 
+    // Upload the view matrix
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this._lightTexture.glTexture);
@@ -77,8 +80,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // Set the camera parameters as a uniform input to the shader
-    gl.uniform1f(this._shaderProgram.u_camera_fov, camera.fov * Math.PI * 0.00555555555);
+    gl.uniform1f(this._shaderProgram.u_camera_fov, camera.fov * 0.00872664625); // pi / 360
     gl.uniform1f(this._shaderProgram.u_camera_aspect, camera.aspect);
+    gl.uniform1f(this._shaderProgram.u_camera_near, camera.near);
+    gl.uniform1f(this._shaderProgram.u_camera_far, camera.far);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);
