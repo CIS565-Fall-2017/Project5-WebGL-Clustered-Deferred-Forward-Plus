@@ -74,6 +74,8 @@ function setSize(width, height) {
   canvas.width = width;
   canvas.height = height;
   camera.aspect = width / height;
+  camera.far = 50;
+  camera.near = 0.01;
   camera.updateProjectionMatrix();
 }
 

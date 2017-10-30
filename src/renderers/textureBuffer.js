@@ -2,7 +2,7 @@ import { gl } from '../init';
 
 export default class TextureBuffer {
   /**
-   * This class represents a buffer in a shader. Unforunately we can't bind arbitrary buffers so we need to pack the data as a texture
+   * This class represents a buffer in a shader. Unfortunately we can't bind arbitrary buffers so we need to pack the data as a texture
    * @param {Number} elementCount The number of items in the buffer
    * @param {Number} elementSize The number of values in each item of the buffer
    */
