@@ -13,16 +13,18 @@ WebGL Clustered Deferred and Forward+ Shading
 
 In this project, I have used WebGL to implement Clustered Forward+ and Clustered Deferred renderer.<br />
 
-#### Clustered Forward + Rendering & Clustered deferred Rendering
+#### Clustered Forward + Rendering & Clustered deferred Rendering [Live Demo] 
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/Wck9Nlaz0s4/0.jpg)](https://www.youtube.com/watch?v=Wck9Nlaz0s4)
 
+please, click this image. <br /><br />
 
-#### Lensflare Effect
+
+#### Lensflare Effect  [Live Demo] 
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/mQs093y-Xtc/0.jpg)](https://www.youtube.com/watch?v=mQs093y-Xtc)
 
-
+please, click this image. <br /><br />
 
 ### Complete requirements
 
