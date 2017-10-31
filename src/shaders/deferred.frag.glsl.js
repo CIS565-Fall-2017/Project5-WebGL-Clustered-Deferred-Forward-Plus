@@ -195,6 +195,7 @@ export default function(params) {
     fragColor += albedo.xyz * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
+    //gl_FragColor = vec4(depth);
 
   }
   
