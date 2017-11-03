@@ -4,16 +4,21 @@ import { gl } from './init';
 // TODO: Edit if you want to change the light initial positions 
 export const LIGHT_MIN = [-14, 0, -6];
 export const LIGHT_MAX = [14, 20, 6];
-export const LIGHT_RADIUS = 5.0;
+export const LIGHT_RADIUS = 3.0;
 export const LIGHT_DT = -0.03;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 100;
+export const NUM_LIGHTS = 2500;
+
+function isPowerOf2(value) {
+  return (value & (value - 1)) == 0;
+}
 
 class Scene {
   constructor() {
     this.lights = [];
     this.models = [];
+    this.textures = [];
 
     for (let i = 0; i < NUM_LIGHTS; ++i) {
       this.lights.push({
@@ -23,14 +28,62 @@ class Scene {
           Math.random() * (LIGHT_MAX[2] - LIGHT_MIN[2]) + LIGHT_MIN[2],
         ]),
         color: new Float32Array([
-          0.5 + 0.5 * Math.random(),
-          0.5 + 0.5 * Math.random(),
-          0.5 + Math.random(),
+         0.5 + 0.5 * Math.random(),
+         0.5 + 0.5 * Math.random(),
+         0.5 + Math.random(),
         ]),
         radius: LIGHT_RADIUS,
       });
     }
   }
+
+  loadTexture(url) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Because images have to be download over the internet
+  // they might take a moment until they are ready.
+  // Until then put a single pixel in the texture so we can
+  // use it immediately. When the image has finished downloading
+  // we'll update the texture with the contents of the image.
+  const level = 0;
+  const internalFormat = gl.RGBA;
+  const width = 1;
+  const height = 1;
+  const border = 0;
+  const srcFormat = gl.RGBA;
+  const srcType = gl.UNSIGNED_BYTE;
+  const pixel = new Uint8Array([0, 0, 0, 0]);  // opaque blue
+  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                width, height, border, srcFormat, srcType,
+                pixel);
+
+  const image = new Image();
+  image.onload = function() {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  srcFormat, srcType, image);
+
+    // WebGL1 has different requirements for power of 2 images
+    // vs non power of 2 images so check if the image is a
+    // power of 2 in both dimensions.
+    if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+       // Yes, it's a power of 2. Generate mips.
+       gl.generateMipmap(gl.TEXTURE_2D);
+    } else {
+       // No, it's not a power of 2. Turn of mips and set
+       // wrapping to clamp to edge
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+  };
+  image.src = url;
+
+  this.textures.push(texture);
+
+  //return texture;
+}
 
   loadGLTF(url) {
     var glTFLoader = new MinimalGLTFLoader.glTFLoader(gl);
@@ -164,7 +217,24 @@ class Scene {
     }
   }
 
+  drawEffect(shaderProgram)
+  {
+    const dirtTexture = this.textures[1];
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, dirtTexture);
+    gl.uniform1i(shaderProgram.u_dirtTexture, 0);
+
+    const starburstTexture = this.textures[0];
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, starburstTexture);
+    gl.uniform1i(shaderProgram.u_starburstTexture, 1);
+   
+  }
+
   draw(shaderProgram) {
+
     for (let i = 0; i < this.models.length; ++i) {
       const model = this.models[i];
       if (model.colmap) {
