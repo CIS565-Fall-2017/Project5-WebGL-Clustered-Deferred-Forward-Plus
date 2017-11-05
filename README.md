@@ -26,12 +26,6 @@ This project implements Clustered Deferred and Forward+ Shading using WebGL.
 - Blinn-Phong shading
 - Optimizations of g-buffers
 
-This project has implementations for three rendering methods to compare performance.
-- Forward shading: Loop over all the lights in the scene for each geometry.
-- Clustered shading: Divide the camera frustrum into 16 x 16 x 16 clusters. For shading, each cluster is assigned lights that affect the cluster. This provides for better worse case performance with large depth discontinuities.
-- Forward+ sha: Only loop over lights within a cluster for each geometry.
-- Deferred:
-
 This project has implementations for three rendering methods for performance comparison reasons.
 - Forward shading: Loop over all the lights in the scene for each geometry.
 - Clustered shading: Divide the camera frustrum into 16 x 16 x 16 clusters. For shading, each cluster is assigned lights that affect the cluster. This provides for better worse case performance with large depth discontinuities.
