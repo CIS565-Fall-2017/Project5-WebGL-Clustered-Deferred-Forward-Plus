@@ -22,6 +22,8 @@ export default function(params) {
 
   varying vec2 v_uv;
 
+  #define TOON true
+
   #define BLINN false
   const float shininess = 500.0;
   const vec3 specularColor = vec3(.2, .2, .2);
@@ -173,9 +175,33 @@ export default function(params) {
         if(BLINN && lambertTerm > 0.0) {
             specular = pow(specularAngle, shininess);
         }
+    
+        // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular * specularColor;
+    
+        float intenseness = dot(L, normal);
+        if(TOON) {
+            vec3 toon = vec3(0.0);
+            if(intenseness > .75) {
+                toon = vec3(1.0, 1.0, 1.0);
+            }
+            else if(intenseness > 0.5) {
+                toon = vec3(0.7, 0.7, 0.7);
+            }
+            else if(intenseness > 0.25) {
+                toon = vec3(0.35, 0.35, 0.35);
+            }
+            else {
+                toon = vec3(0.1, 0.1, 0.1);
+            }
 
-        // Blinn
-        fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular * specularColor;
+            fragColor += albedo * toon  * light.color * vec3(lightIntensity) + specular * specularColor;
+            
+            // float rampCoord = dot(normalize(lightDir), normal) * 0.5 + 0.5;
+            // fragColor *= rampCoord;
+        }
+        else {
+            fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity) + specular * specularColor;
+        }
 
         // fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }

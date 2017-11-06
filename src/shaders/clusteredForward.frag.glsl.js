@@ -24,6 +24,8 @@ export default function(params) {
   varying vec3 v_normal;
   varying vec2 v_uv;
   
+  #define TOON false
+
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) 
   {
       normap = normap * 2.0 - 1.0;
@@ -138,6 +140,23 @@ export default function(params) {
             float lambertTerm = max(dot(L, normal), 0.0);
     
             fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+            vec3 lightDir = normalize(light.position - v_position);            
+            float intenseness = dot(lightDir, normal);
+            if(TOON) {
+                if(intenseness > 0.95) {
+                    fragColor *= vec3(1.0, 1.0, 1.0);
+                }
+                else if(intenseness > 0.5) {
+                    fragColor *= vec3(0.7, 0.7, 0.7);
+                }
+                else if(intenseness > 0.25) {
+                    fragColor *= vec3(0.35, 0.35, 0.35);
+                }
+                else {
+                    fragColor *= vec3(0.1, 0.1, 0.1);
+                }
+            }
           }
           else {
             break;
