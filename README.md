@@ -9,7 +9,7 @@ WebGL Clustered Deferred and Forward+ Shading
 
 ### Live Online
 
-[Link](https://chestnutwww.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
+[Click here for live demo](https://chestnutwww.github.io/Project5-WebGL-Clustered-Deferred-Forward-Plus/)
 
 # Features
 
