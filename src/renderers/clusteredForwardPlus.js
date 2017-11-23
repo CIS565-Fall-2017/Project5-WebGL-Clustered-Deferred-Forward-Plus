@@ -6,6 +6,7 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import { MAX_LIGHTS_PER_CLUSTER } from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
@@ -16,8 +17,23 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSlices : xSlices,
+      ySlices : ySlices,
+      zSlices : zSlices,
+      maxLightsPerCluster : MAX_LIGHTS_PER_CLUSTER
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: [
+        'u_viewProjectionMatrix', 
+        'u_viewMatrix',
+        'u_colmap', 
+        'u_normap', 
+        'u_lightbuffer', 
+        'u_clusterbuffer',
+        'u_width',
+        'u_height',
+        'u_nearZ',
+        'u_farZ'
+      ],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -76,6 +92,13 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     gl.uniform1i(this._shaderProgram.u_clusterbuffer, 3);
 
     // TODO: Bind any other shader inputs
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    gl.uniform1f(this._shaderProgram.u_width, canvas.width);
+    gl.uniform1f(this._shaderProgram.u_height, canvas.height);
+    
+    gl.uniform1f(this._shaderProgram.u_nearZ, camera.near);
+    gl.uniform1f(this._shaderProgram.u_farZ, camera.far);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

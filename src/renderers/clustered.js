@@ -4,6 +4,46 @@ import TextureBuffer from './textureBuffer';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
+const DEBUG_SHADER = false;
+
+function clamp(num, min, max)
+{
+  let flooredNum = Math.floor(num);
+
+  if(flooredNum < min) {
+    return min;
+  }
+  else if(flooredNum > max) {
+    return max;
+  }
+  else {
+    return flooredNum;
+  }
+}
+
+function printClusterBounds(minX, maxX, minY, maxY, minZ, maxZ)
+{
+  console.log("xMin: " + minX);
+  console.log("xMax: " + maxX);
+  // if(minX > maxX) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("yMin: " + minY);
+  console.log("yMax: " + maxY);
+  // if(minY > maxY) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("zMin: " + minZ);
+  console.log("zMax: " + maxZ);
+  // if(minZ > maxZ) {
+  //   console.log("FUHX");
+  // }
+
+  console.log("--------------");
+}
+
 export default class ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices) {
     // Create a texture to store cluster data. Each cluster stores the number of lights followed by the light indices
@@ -11,6 +51,24 @@ export default class ClusteredRenderer {
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+  }
+
+  // Check to see if the cluster is within the camera 
+  lightInCluster(minX, maxX, minY, maxY, minZ, maxZ) 
+  {
+    if(minX < 0 && maxX < 0 || minX > this.xSlices && maxX > this.xSlices) {
+      return false;
+    }
+
+    if(minY < 0 && maxY < 0 || minY > this.ySlices && maxY > this.ySlices) {
+      return false;
+    }
+
+    if(minZ < 0 && maxZ < 0 || minZ > this.zSlices && maxZ > this.zSlices) {
+      return false;
+    }
+    
+    return true;
   }
 
   updateClusters(camera, viewMatrix, scene) {
@@ -23,6 +81,126 @@ export default class ClusteredRenderer {
           let i = x + y * this._xSlices + z * this._xSlices * this._ySlices;
           // Reset the light count to 0 for every cluster
           this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+        }
+      }
+    }
+
+    // Convert fov from degrees to radians
+    var fov = camera.fov * (Math.PI / 180.0);
+    var screenHeight = 2.0 * Math.tan(fov / 2); 
+    var screenWidth = camera.aspect * screenHeight;
+
+    // Z logistics
+    var near = camera.near;
+    var far = camera.far;
+    var depth = (far - near);
+    var zStride = depth / this._zSlices;
+
+    for(let i = 0; i < NUM_LIGHTS; i++) {
+      let light     = scene.lights[i];
+      let lightPos  = vec4.fromValues(light.position[0], light.position[1], light.position[2], 1.0);
+      let lightRad  = light.radius;
+
+      // Take the lightPos from world to camera space
+      vec4.transformMat4(lightPos, lightPos, viewMatrix);
+      lightPos[2] *= -1;
+
+      // Get height and width based on the light's position
+      let height = screenHeight * lightPos[2];
+      let width = screenWidth * lightPos[2]; 
+
+      // Strides
+      let yStride = height / this._ySlices; 
+      let xStride = width / this._xSlices;
+
+      // Min and Max bounds for the cluster
+      let minX, maxX;
+      let minY, maxY;
+      let minZ, maxZ;
+
+      if(DEBUG_SHADER) {
+        minX = 0;
+        maxX = 14;
+
+        minY = 0;
+        maxY = 14;
+
+        minZ = 0;
+        maxZ = 14;
+      }
+      else {
+        let lightMin = vec3.fromValues( lightPos[0] - lightRad,
+                                        lightPos[1] - lightRad,
+                                        lightPos[2] - lightRad);
+        let lightMax = vec3.fromValues( lightPos[0] + lightRad,
+                                        lightPos[1] + lightRad,
+                                        lightPos[2] + lightRad);
+
+        minX = Math.floor((lightMin[0] + (width / 2)) / xStride);  
+        maxX = Math.floor((lightMax[0] + (width / 2)) / xStride);  
+
+        minY = Math.floor((lightMin[1] + (height / 2)) / yStride);
+        maxY = Math.floor((lightMax[1] + (height / 2)) / yStride);
+
+        minZ = Math.floor(lightMin[2] / zStride);
+        maxZ = Math.floor(lightMax[2] / zStride);
+
+        // Offset the min/max values by the slices since the clusters will be indexed [0, slices - 1]
+        minX = clamp(minX, 0, this._xSlices - 1);
+        maxX = clamp(maxX, 0, this._xSlices - 1);
+
+        minY = clamp(minY, 0, this._ySlices - 1);
+        maxY = clamp(maxY, 0, this._ySlices - 1);
+
+        minZ = clamp(minZ, 0, this._zSlices - 1);
+        maxZ = clamp(maxZ, 0, this._zSlices - 1);
+
+        // Check if the light is outside the cluster frustum
+        if(!this.lightInCluster(minX, maxX, minY, maxY, minZ, maxZ)) {
+          continue;
+        }
+      }
+      
+      // Update the buffer 
+      for(let z = minZ; z <= maxZ; z++) {
+        for(let y = minY; y <= maxY; y++) {
+          for(let x = minX; x <= maxX; x++) {
+            // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+            // component0 |count|lid0|lid1|lid2 || count|lid0|lid1|lid2 || count|lid0|lid1|lid2
+            // component1 |lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6 || lid3 |lid4|lid5|lid6
+            // component2 |lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10|| lid7 |lid8|lid9|lid10
+            // (v)
+
+            // Cluster Index (u)
+            // ------------------cluster0-----------------cluster1---------------cluster2---------------(u)-
+            let clusterIndex = x + (y * this._xSlices) + (z * this._xSlices * this._ySlices);
+
+            // Index of where the count lies in each cluster
+            let lightCountIndex = this._clusterTexture.bufferIndex(clusterIndex, 0);
+            // Get the number of lights
+            let lightCount = this._clusterTexture.buffer[lightCountIndex];
+            // Increment the number of lights
+            lightCount++;
+
+            // Safety check to make sure we don't exceed the amount of lights allowed
+            if(lightCount <= MAX_LIGHTS_PER_CLUSTER) {
+              // Update the light count 
+              this._clusterTexture.buffer[lightCountIndex] = lightCount;
+
+              // Find the component (v)
+              // component0
+              let component = Math.floor((lightCount) / 4);
+
+              // Get the light id in the cluster (lid0, lid1, etc.)
+              // |count|lid0|lid1|lid2
+              let lightClusterID = (lightCount) % 4;
+
+              // Update the pixel to include the current light
+              let texelIndex = this._clusterTexture.bufferIndex(clusterIndex, component);
+              let componentIndex = (lightCount) - (component * 4);
+              this._clusterTexture.buffer[texelIndex + componentIndex] = i;
+            }
+          }
         }
       }
     }
