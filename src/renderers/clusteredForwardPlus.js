@@ -47,14 +47,16 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
+      let index = this._lightTexture.bufferIndex(i, 0);
+      this._lightTexture.buffer[index + 0] = scene.lights[i].position[0];
+      this._lightTexture.buffer[index + 1] = scene.lights[i].position[1];
+      this._lightTexture.buffer[index + 2] = scene.lights[i].position[2];
+      this._lightTexture.buffer[index + 3] = scene.lights[i].radius;
 
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
+      index = this._lightTexture.bufferIndex(i, 1);
+      this._lightTexture.buffer[index + 0] = scene.lights[i].color[0];
+      this._lightTexture.buffer[index + 1] = scene.lights[i].color[1];
+      this._lightTexture.buffer[index + 2] = scene.lights[i].color[2];
     }
     // Update the light texture
     this._lightTexture.update();

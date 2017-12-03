@@ -60,11 +60,7 @@ export default function(params) {
     vec4 v1 = texture2D(u_lightbuffer, vec2(u, 0.3));
     vec4 v2 = texture2D(u_lightbuffer, vec2(u, 0.6));
     light.position = v1.xyz;
-
-    // LOOK: This extracts the 4th float (radius) of the (index)th light in the buffer
-    // Note that this is just an example implementation to extract one float.
-    // There are more efficient ways if you need adjacent values
-    light.radius = ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
+    light.radius = v1.a;
 
     light.color = v2.rgb;
     return light;
@@ -108,9 +104,9 @@ export default function(params) {
     int yC = int((viewPos.y + halfFrustumHeight) / (2.0 * halfFrustumHeight) * float(ySlices));
     int xC = int((viewPos.x + halfFrustumWidth) / (2.0 * halfFrustumWidth) * float(xSlices));
 
-    int clusterIndex = xC + yC * xSlices + zC * xSlices * ySlices;
-    float u = float(clusterIndex+1)/float(totalClusters+1); //make sure we're safely within the NEXT row with the +1/+1
-    int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
+    int row = xC + yC * xSlices + zC * xSlices * ySlices;
+    float u = float(row+1)/float(totalClusters+1); //make sure we're safely within the NEXT row with the +1/+1
+    int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r); //pull first "red" value, no need for extractfloat yet
 
     //gl_FragColor = vec4(xC / 15.0, 0.0 / 15.0, 0.0/15.0, 1.0);
     //return;
@@ -118,7 +114,7 @@ export default function(params) {
     for (int i = 1; i < ${params.numLights}; i++) 
     {
       if(i > clusterNumLights) break;
-      int lightIndex = int( ExtractFloat(u_clusterbuffer, totalClusters, textureHeight, clusterIndex, i) );
+      int lightIndex = int( ExtractFloat(u_clusterbuffer, totalClusters, textureHeight, row, i) );
       Light light = UnpackLight(lightIndex);
 
       //plain lambert shading
