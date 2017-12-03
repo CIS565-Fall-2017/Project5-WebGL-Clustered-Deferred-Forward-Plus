@@ -13,6 +13,9 @@ const params = {
   _renderer: null,
 };
 
+camera.position.set(-10, 5, 0);
+cameraControls.target.set(0, 2, 0);
+gl.enable(gl.DEPTH_TEST);
 setRenderer(params.renderer);
 
 function setRenderer(renderer) {
@@ -21,7 +24,7 @@ function setRenderer(renderer) {
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, camera);
       break;
     case CLUSTERED_DEFFERED:
       params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
@@ -33,10 +36,6 @@ gui.add(params, 'renderer', [FORWARD, CLUSTERED_FORWARD_PLUS, CLUSTERED_DEFFERED
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
-
-camera.position.set(-10, 8, 0);
-cameraControls.target.set(0, 2, 0);
-gl.enable(gl.DEPTH_TEST);
 
 function render() {
   scene.update();

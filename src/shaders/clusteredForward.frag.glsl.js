@@ -8,6 +8,7 @@ export default function(params) {
   uniform sampler2D u_colmap;
   uniform sampler2D u_normap;
   uniform sampler2D u_lightbuffer;
+  uniform mat4 u_viewMatrix;
 
   // TODO: Read this buffer to determine the lights influencing a cluster
   uniform sampler2D u_clusterbuffer;
@@ -15,6 +16,12 @@ export default function(params) {
   varying vec3 v_position;
   varying vec3 v_normal;
   varying vec2 v_uv;
+
+  const int xSlices = ${params.xSlices};
+  const int ySlices = ${params.ySlices};
+  const int zSlices = ${params.zSlices};
+  const int totalClusters = ${params.xSlices*params.ySlices*params.zSlices};
+  const int textureHeight = ${params.textureHeight};
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -63,6 +70,14 @@ export default function(params) {
     return light;
   }
 
+/*
+  float logScale(float z, float range, float near) {
+    float a = min(max(0.0,z-near),range);
+    a = 0.9 * (a/range) + 0.1;
+    return log(a)/2.3025850 + 1.0;
+  }
+*/
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -78,22 +93,41 @@ export default function(params) {
     vec3 albedo = texture2D(u_colmap, v_uv).rgb;
     vec3 normap = texture2D(u_normap, v_uv).xyz;
     vec3 normal = applyNormalMap(v_normal, normap);
-
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    //view space coords
+    vec4 viewPos = u_viewMatrix * vec4(v_position,1.0);
+
+    //determine total width length at -z
+    float halfFrustumHeight = -viewPos.z * ${params.cameraFOVScalar};
+    float halfFrustumWidth = halfFrustumHeight * ${params.cameraAspect};
+
+    //get cluster based on these
+    int zC = int(min(14.0, -50.0 * viewPos.z / ${params.cameraFar + '.0'} * float(zSlices)));
+    //float zC = floor(zSlices * logScale(-15.0 * viewPos.z, ${params.cameraFar - params.cameraNear}, ${params.cameraNear}));
+    int yC = int((viewPos.y + halfFrustumHeight) / (2.0 * halfFrustumHeight) * float(ySlices));
+    int xC = int((viewPos.x + halfFrustumWidth) / (2.0 * halfFrustumWidth) * float(xSlices));
+
+    int clusterIndex = xC + yC * xSlices + zC * xSlices * ySlices;
+    float u = float(clusterIndex+1)/float(totalClusters+1); //make sure we're safely within the NEXT row with the +1/+1
+    int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r);
+
+    //gl_FragColor = vec4(xC / 15.0, 0.0 / 15.0, 0.0/15.0, 1.0);
+    //return;
+
+    for (int i = 1; i < ${params.numLights}; i++) 
+    {
+      if(i > clusterNumLights) break;
+      int lightIndex = int( ExtractFloat(u_clusterbuffer, totalClusters, textureHeight, clusterIndex, i) );
+      Light light = UnpackLight(lightIndex);
+
+      //plain lambert shading
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
-
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambertTerm = max(dot(L, normal), 0.0);
-
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
-
-    const vec3 ambientLight = vec3(0.025);
-    fragColor += albedo * ambientLight;
 
     gl_FragColor = vec4(fragColor, 1.0);
   }
