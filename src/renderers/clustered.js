@@ -67,14 +67,14 @@ export default class ClusteredRenderer {
       //let farZ = this.scaleLogarithmically(15 * (pos[2] + LIGHT_RADIUS), range, camera.near);
       let closeZ = 50 * (pos[2] - LIGHT_RADIUS) / camera.far;
       let farZ = 50 * (pos[2] + LIGHT_RADIUS) / camera.far;
-      if (closeZ > 0.999 || farZ < 0) continue; //check boundaries
+      if (farZ < 0) continue; //check boundaries
 
       //now we can convert the to indices
       closeZ = Math.max(0,Math.floor(closeZ*this._zSlices));
       farZ = Math.min(this._zSlices-1, Math.floor(farZ*this._zSlices));
 
 //Y-CLUSTERS
-      let halfFrustumHeight = pos[2] * fovScalar;
+      let halfFrustumHeight = Math.abs(pos[2]) * fovScalar;
 
       //as fraction of frustum
       let topY = (pos[1] + LIGHT_RADIUS + halfFrustumHeight) / (2 * halfFrustumHeight);

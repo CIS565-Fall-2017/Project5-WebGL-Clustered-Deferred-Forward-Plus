@@ -100,11 +100,16 @@ export default function(params) {
       float lightDistance = distance(light.position, position);
       vec3 L = (light.position - position) / lightDistance;
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-      float lambertTerm = max(dot(L, normal), 0.0);
-      fragColor += color * lambertTerm * light.color * vec3(lightIntensity);
+      float lambTerm = max(dot(L.xyz, normal), 0.0);
+
+      vec4 viewL = u_viewMatrix * vec4(L,0.0);
+      vec3 halfDir = normalize(viewL.xyz - normalize(viewPos.xyz));
+      float dotN = max(dot(normal, halfDir.xyz), 0.0);
+      float specTerm = pow(dotN, 16.0);
+      fragColor += (lambTerm * color + specTerm) * light.color * vec3(lightIntensity);
     }
 
-    gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragColor = vec4(0.05,0.05,0.05,1.0) + vec4(fragColor, 1.0);
   }
   `;
 }
