@@ -4,7 +4,7 @@ import TextureBuffer from './textureBuffer';
 
 export const MAX_LIGHTS_PER_CLUSTER = Math.max(50, NUM_LIGHTS/3); //for conservation sake; theoretically possible to overcome
 export const USE_DYNAMIC = true;
-export const USE_LOGARITHMIC = true;
+export const USE_LOGARITHMIC = false;
 export const LOG_OFFSET = USE_LOGARITHMIC ? 25.0 : 0.0;
 export const RANGE_SCALE = 0.02;
 

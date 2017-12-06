@@ -149,8 +149,8 @@ export default function(params) {
       float specTerm = pow(dotN, 32.0);
       fragColor += (lambTerm * color.xyz + specTerm) * light.color * vec3(lightIntensity);
     }
-
-    gl_FragColor =  vec4(fragColor, 1.0);
+    vec3 ambient = 0.1 * color.xyz;
+    gl_FragColor =  vec4(max(ambient,fragColor), 1.0);
   }
   `;
 }

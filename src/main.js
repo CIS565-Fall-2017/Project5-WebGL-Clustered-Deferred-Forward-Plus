@@ -16,8 +16,8 @@ const params = {
 camera.position.set(-10,6.7,3);
 cameraControls.target.set(-4, 5,-10);*/
 
-camera.position.set(-10,5,0);
-cameraControls.target.set(0,2,0);
+camera.position.set(-1,1,0);
+cameraControls.target.set(2,2,0);
 
 gl.enable(gl.DEPTH_TEST);
 setRenderer(params.renderer);
