@@ -4,11 +4,11 @@ import { gl } from './init';
 // TODO: Edit if you want to change the light initial positions 
 export const LIGHT_MIN = [-15, 0, -7];
 export const LIGHT_MAX = [15, 18, 7];
-export const LIGHT_RADIUS = 2.5;
+export const LIGHT_RADIUS = 3.5;
 export const LIGHT_DT = -0.04;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 500;
+export const NUM_LIGHTS = 700;
 
 class Scene {
   constructor() {
