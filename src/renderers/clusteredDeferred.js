@@ -8,13 +8,13 @@ import QuadVertSource from '../shaders/quad.vert.glsl';
 import fsSource from '../shaders/deferred.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER, USE_DYNAMIC, USE_LOGARITHMIC, LOG_OFFSET, RANGE_SCALE} from './clustered';
 
-export const NUM_GBUFFERS = 3;
+export const NUM_GBUFFERS = 2;
 
 export default class ClusteredDeferredRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices, camera) {
-    super(xSlices, ySlices, zSlices);
+    super(xSlices, ySlices, zSlices, camera);
     
     this.setupDrawBuffers(canvas.width, canvas.height);
     
@@ -34,11 +34,16 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
       zSlices: zSlices,
       cameraNear: camera.near,
       cameraFar: camera.far,
-      cameraFOVScalar: Math.tan(camera.fov * (Math.PI/360.0)),
+      cameraFOVScalar: this.fovScalar,
       cameraAspect: camera.aspect,
-      textureHeight: Math.floor((MAX_LIGHTS_PER_CLUSTER + 1) / 4)
+      textureHeight: Math.floor((MAX_LIGHTS_PER_CLUSTER + 1) / 4 + 1),
+      invRange: this.invRange,
+      rangeScale: RANGE_SCALE,
+      useDynamic: USE_DYNAMIC,
+      useLogarithmic: USE_LOGARITHMIC,
+      logOffset: LOG_OFFSET
     }), {
-      uniforms: ['u_lightbuffer','u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_viewMatrix', 'u_clusterbuffer'],
+      uniforms: ['u_lightbuffer','u_gbuffers[0]', 'u_gbuffers[1]', 'u_gbuffers[2]', 'u_viewMatrix', 'u_clusterbuffer', 'u_cameraPos'],
       attribs: ['a_uv'],
     });
 
@@ -98,6 +103,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     this._width = width;
     this._height = height;
 
+    this._isRendering = width > 200;
+
     gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
     for (let i = 0; i < NUM_GBUFFERS; i++) {
@@ -123,6 +130,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
 
     // Bind the framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, this._fbo);
+
+    if (!this._isRendering) return;
 
     // Clear the frame
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -165,6 +174,8 @@ export default class ClusteredDeferredRenderer extends ClusteredRenderer {
     gl.useProgram(this._progShade.glShaderProgram);
 
     gl.uniformMatrix4fv(this._progShade.u_viewMatrix, false, this._viewMatrix);
+
+    gl.uniform4f (this._progShade.u_cameraPos, camera.position.x, camera.position.y, camera.position.z, camera.far / this._farLight);
 
     // TODO: Bind any other shader inputs
     //light bind from forward shader

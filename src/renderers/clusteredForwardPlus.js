@@ -6,11 +6,11 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
-import {MAX_LIGHTS_PER_CLUSTER} from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER, USE_DYNAMIC, USE_LOGARITHMIC, LOG_OFFSET, RANGE_SCALE} from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
   constructor(xSlices, ySlices, zSlices, camera) {
-    super(xSlices, ySlices, zSlices);
+    super(xSlices, ySlices, zSlices, camera);
 
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
@@ -22,11 +22,16 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
       zSlices: zSlices,
       cameraNear: camera.near,
       cameraFar: camera.far,
-      cameraFOVScalar: Math.tan(camera.fov * (Math.PI/360.0)),
+      invRange: this.invRange,
+      rangeScale: RANGE_SCALE,
+      cameraFOVScalar: this.fovScalar,
       cameraAspect: camera.aspect,
-      textureHeight: Math.floor((MAX_LIGHTS_PER_CLUSTER + 1) / 4)
+      textureHeight: Math.floor((MAX_LIGHTS_PER_CLUSTER + 1) / 4 + 1),
+      useDynamic: USE_DYNAMIC,
+      useLogarithmic: USE_LOGARITHMIC,
+      logOffset: LOG_OFFSET
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_cameraPos', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -76,6 +81,9 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    //camera position and dynamic z range
+    gl.uniform4f (this._shaderProgram.u_cameraPos, camera.position.x, camera.position.y, camera.position.z, camera.far / this._farLight);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

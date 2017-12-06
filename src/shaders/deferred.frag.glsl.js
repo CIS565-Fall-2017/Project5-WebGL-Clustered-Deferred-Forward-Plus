@@ -6,7 +6,7 @@ export default function(params) {
   uniform sampler2D u_lightbuffer; 
   uniform sampler2D u_gbuffers[${params.numGBuffers}];
   uniform sampler2D u_clusterbuffer;
-
+  uniform vec4 u_cameraPos;
   uniform mat4 u_viewMatrix;
   
   varying vec2 v_uv;
@@ -16,6 +16,7 @@ export default function(params) {
   const int zSlices = ${params.zSlices};
   const int totalClusters = ${params.xSlices*params.ySlices*params.zSlices};
   const int textureHeight = ${params.textureHeight};
+  const float invRange = float(${1/params.rangeScale});
 
   struct Light {
     vec3 position;
@@ -61,22 +62,64 @@ export default function(params) {
       return 0.0;
     }
   }
+
+  float logScale(float z) {
+    return log(z-${params.cameraNear+1}) * ${params.invRange};
+  }
+
+  vec2 sign_not_zero(vec2 v) {
+        return vec2(
+            v.x >= 0.0 ? 1.0 : -1.0,
+            v.y >= 0.0 ? 1.0 : -1.0
+        );
+  }
+
+  vec3 unpack_normal_octahedron(vec2 packed_nrm) {
+    #if 1
+        // Version using newer GLSL capatibilities
+        vec3 v = vec3(packed_nrm.xy, 1.0 - abs(packed_nrm.x) - abs(packed_nrm.y));
+        #if 1
+            // Version with branches, seems to take less cycles than the
+            // branch-less version
+            if (v.z < 0.0) v.xy = (1.0 - abs(v.yx)) * sign_not_zero(v.xy);
+        #else
+            // Branch-Less version
+            v.xy = mix(v.xy, (1.0 - abs(v.yx)) * sign_not_zero(v.xy), step(v.z, 0));
+        #endif
+
+        return normalize(v);
+    #else
+        // Version as proposed in the paper. 
+        vec3 v = vec3(packed_nrm, 1.0 - dot(vec2(1), abs(packed_nrm)));
+        if (v.z < 0.0)
+            v.xy = (vec2(1) - abs(v.yx)) * sign_not_zero(v.xy);
+        return normalize(v);
+    #endif
+  }
   
   void main() {
-    // TODO: extract data from g buffers and do lighting
-    vec3 position = vec3(texture2D(u_gbuffers[0], v_uv));
-    vec3 normal = vec3(texture2D(u_gbuffers[1], v_uv));
-    vec3 color = vec3(texture2D(u_gbuffers[2], v_uv));
+    vec4 position = texture2D(u_gbuffers[0], v_uv);
+    vec4 color = texture2D(u_gbuffers[1], v_uv);
+    vec3 normal = unpack_normal_octahedron(vec2(position.a,color.a));
 
-    // vec4 gb3 = texture2D(u_gbuffers[3], v_uv);
-    vec4 viewPos = u_viewMatrix * vec4(position,1.0);
+    vec3 fragColor = vec3(0,0,0);
+    vec4 camPos = u_cameraPos;
+
+    //view space coords
+    vec4 viewPos = u_viewMatrix * vec4(position.xyz,1.0);
 
     //determine total width length at -z
     float halfFrustumHeight = -viewPos.z * ${params.cameraFOVScalar};
     float halfFrustumWidth = halfFrustumHeight * ${params.cameraAspect};
 
     //get cluster based on these
-    int zC = int(min(14.0, -50.0 * viewPos.z / ${params.cameraFar + '.0'} * float(zSlices)));
+    int zC;
+    if (${params.useLogarithmic}) 
+      zC = int( max(0.0, min(float(zSlices-1), 
+        logScale(${params.useDynamic ? 'camPos.a' : 'invRange'} * -viewPos.z) * float(${params.zSlices + params.logOffset}) - float(${params.logOffset})
+      )));
+    else zC = int(min(float(zSlices-1), ${params.useDynamic ? 'camPos.a' : 'invRange'} * -viewPos.z * ${params.invRange} * float(zSlices)));
+
     //float zC = floor(zSlices * logScale(-15.0 * viewPos.z, ${params.cameraFar - params.cameraNear}, ${params.cameraNear}));
     int yC = int((viewPos.y + halfFrustumHeight) / (2.0 * halfFrustumHeight) * float(ySlices));
     int xC = int((viewPos.x + halfFrustumWidth) / (2.0 * halfFrustumWidth) * float(xSlices));
@@ -85,31 +128,29 @@ export default function(params) {
     float u = float(row+1)/float(totalClusters+1); //make sure we're safely within the NEXT row with the +1/+1
     int clusterNumLights = int(texture2D(u_clusterbuffer, vec2(u,0)).r); //pull first "red" value, no need for extractfloat yet
 
-    //gl_FragColor = vec4(float(clusterNumLights)/15.0, 0.0 / 15.0, 0.0/15.0, 1.0);
+    //gl_FragColor = vec4(float(zC) / float(zSlices), 0,0, 1.0);
     //return;
-
-    vec3 fragColor = vec3(0,0,0);
 
     for (int i = 1; i < ${params.numLights}; i++) 
     {
       if(i > clusterNumLights) break;
       int lightIndex = int( ExtractFloat(u_clusterbuffer, totalClusters, textureHeight, row, i) );
+      vec3 viewDir = normalize(position.xyz - camPos.xyz);
       Light light = UnpackLight(lightIndex);
 
       //plain lambert shading
-      float lightDistance = distance(light.position, position);
-      vec3 L = (light.position - position) / lightDistance;
+      float lightDistance = distance(light.position, position.xyz);
+      vec3 L = (light.position - position.xyz) / lightDistance;
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
       float lambTerm = max(dot(L.xyz, normal), 0.0);
 
-      vec4 viewL = u_viewMatrix * vec4(L,0.0);
-      vec3 halfDir = normalize(viewL.xyz - normalize(viewPos.xyz));
+      vec3 halfDir = normalize(L - viewDir);
       float dotN = max(dot(normal, halfDir.xyz), 0.0);
-      float specTerm = pow(dotN, 16.0);
-      fragColor += (lambTerm * color + specTerm) * light.color * vec3(lightIntensity);
+      float specTerm = pow(dotN, 32.0);
+      fragColor += (lambTerm * color.xyz + specTerm) * light.color * vec3(lightIntensity);
     }
 
-    gl_FragColor = vec4(0.05,0.05,0.05,1.0) + vec4(fragColor, 1.0);
+    gl_FragColor =  vec4(fragColor, 1.0);
   }
   `;
 }

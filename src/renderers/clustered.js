@@ -2,33 +2,40 @@ import { mat4, vec4, vec3 } from 'gl-matrix';
 import { NUM_LIGHTS, LIGHT_RADIUS } from '../scene';
 import TextureBuffer from './textureBuffer';
 
-export const MAX_LIGHTS_PER_CLUSTER = NUM_LIGHTS/2; //for conservation sake; theoretically possible to overcome
+export const MAX_LIGHTS_PER_CLUSTER = Math.max(50, NUM_LIGHTS/3); //for conservation sake; theoretically possible to overcome
+export const USE_DYNAMIC = true;
+export const USE_LOGARITHMIC = true;
+export const LOG_OFFSET = USE_LOGARITHMIC ? 25.0 : 0.0;
+export const RANGE_SCALE = 0.02;
 
 export default class ClusteredRenderer {
-  constructor(xSlices, ySlices, zSlices) {
+  constructor(xSlices, ySlices, zSlices, camera) {
     // Create a texture to store cluster data. Each row is a cluster, each column stores 4 light indices (1st column stores numlights and 3 indices)
     this._clusterTexture = new TextureBuffer(xSlices * ySlices * zSlices, (MAX_LIGHTS_PER_CLUSTER + 1 / 4) + 1);
     this._xSlices = xSlices;
     this._ySlices = ySlices;
     this._zSlices = zSlices;
+    this._farLight = 2000;
+    this._nextFarLight = 20;
 
-    /* TEST FOR LOGARITHMIC Z- PARTITION
-    for (let i = 0; i < 500; i+= 2.0) {
-        let z = this.scaleLogarithmically(i*10, 499.8, 0.1)
-        console.log ("Dist: " + i + "    zCluster: " + Math.floor(z * 14.99));
-    }*/
-
+    this._isRendering = true;
+    this.invRange = USE_LOGARITHMIC ?  (1 / Math.log(camera.far - camera.near + 1)) : 1 / (camera.far - camera.near);
+    this.fovScalar = Math.tan(camera.fov * (Math.PI/360.0));
+    this.min = camera.near;
   }
 
-  /*
-  scaleLogarithmically(z, range, min) {
-    let a = Math.min(Math.max(0,z-min),range);
-    a = 0.9 * (a/range) + 0.1;
-    return Math.log10(a) + 1;
+  
+  scaleLogarithmically(z) {
+    if (z < 0) return -1;
+    return Math.log(z-this.min+1) * this.invRange;
   }
-  */
+  
 
   updateClusters(camera, viewMatrix, scene) {
+
+    this._farLight = this._nextFarLight;
+    this._nextFarLight = 0.0;
+    let invDist = USE_DYNAMIC ? (camera.far / this._farLight) : 1/RANGE_SCALE;
 
     //clear light counts
     for (let z = 0; z < this._zSlices; ++z) {
@@ -40,10 +47,6 @@ export default class ClusteredRenderer {
         }
       }
     }
-
-    //this will be the same no matter where the light is 
-    var range = camera.far - camera.near;
-    var fovScalar = Math.tan(camera.fov * (Math.PI/360.0));
 
     //for each light
     //determine which boxes it falls into
@@ -63,22 +66,30 @@ export default class ClusteredRenderer {
 
 //Z-CLUSTERS
       //get the log-scaled z values of the sphere intercepts (I multiplied by 10 for this confined scene)
-      //let closeZ = this.scaleLogarithmically(15 * (pos[2] - LIGHT_RADIUS), range, camera.near);
-      //let farZ = this.scaleLogarithmically(15 * (pos[2] + LIGHT_RADIUS), range, camera.near);
-      let closeZ = 50 * (pos[2] - LIGHT_RADIUS) / camera.far;
-      let farZ = 50 * (pos[2] + LIGHT_RADIUS) / camera.far;
+      let closeZ = 0.0;
+      let farZ = 0.0;
+      if (USE_LOGARITHMIC) {
+        closeZ = this.scaleLogarithmically(invDist * (pos[2] - LIGHT_RADIUS));
+        farZ = this.scaleLogarithmically(invDist * (pos[2] + LIGHT_RADIUS)); 
+
+      } else {
+        closeZ = invDist * (pos[2] - LIGHT_RADIUS) * this.invRange;
+        farZ = invDist * (pos[2] + LIGHT_RADIUS) * this.invRange;
+      }
       if (farZ < 0) continue; //check boundaries
 
       //now we can convert the to indices
-      closeZ = Math.max(0,Math.floor(closeZ*this._zSlices));
-      farZ = Math.min(this._zSlices-1, Math.floor(farZ*this._zSlices));
+      closeZ =  Math.max(0,Math.min(this._zSlices-1, Math.floor(closeZ*(this._zSlices+LOG_OFFSET) - LOG_OFFSET)));
+      farZ =    Math.max(0,Math.min(this._zSlices-1, Math.floor(farZ  *(this._zSlices+LOG_OFFSET) - LOG_OFFSET)));
+      //console.log(closeZ+" "+farZ);
 
 //Y-CLUSTERS
-      let halfFrustumHeight = Math.abs(pos[2]) * fovScalar;
+      let halfFrustumHeight = Math.abs(pos[2]) * this.fovScalar;
 
       //as fraction of frustum
-      let topY = (pos[1] + LIGHT_RADIUS + halfFrustumHeight) / (2 * halfFrustumHeight);
-      let bottomY = (pos[1] - LIGHT_RADIUS + halfFrustumHeight) / (2 * halfFrustumHeight);
+      let invH = 1 / (2 * halfFrustumHeight);
+      let topY = (pos[1] + LIGHT_RADIUS + halfFrustumHeight) * invH;
+      let bottomY = (pos[1] - LIGHT_RADIUS + halfFrustumHeight) * invH;
       if (bottomY > 0.999 || topY < 0) continue; //check boundaries
 
       //to indices
@@ -89,8 +100,9 @@ export default class ClusteredRenderer {
       let halfFrustumWidth = camera.aspect * halfFrustumHeight;
 
       //as fraction of frustum
-      let leftX = (pos[0] - LIGHT_RADIUS + halfFrustumWidth) / (2 * halfFrustumWidth);
-      let rightX = (pos[0] + LIGHT_RADIUS + halfFrustumWidth) / (2 * halfFrustumWidth);
+      let invW = 1 / (2 * halfFrustumWidth);
+      let leftX = (pos[0] - LIGHT_RADIUS + halfFrustumWidth) * invW;
+      let rightX = (pos[0] + LIGHT_RADIUS + halfFrustumWidth) * invW;
       if (leftX > 0.999 || rightX < 0) continue; //check boundaries
 
       //to indices
@@ -125,7 +137,7 @@ export default class ClusteredRenderer {
               this._clusterTexture.buffer[numLightsIndex] = ++currentLightCount;
 
               //determine the proper 2D coordinate of the light to place --- at the fourth light, we move on to pixel (index,2)
-              let column = Math.floor((currentLightCount)/4);
+              let column = Math.floor((currentLightCount) * 0.25);
 
               //determine remainder... fourth light has remainder 0, 9 has remainder 1
               let vec4Subscript = (currentLightCount) - column*4;
@@ -137,6 +149,8 @@ export default class ClusteredRenderer {
         }
       }
     }
+
+    if (pos[2] > this._nextFarLight) this._nextFarLight = pos[2];
   }
 
   this._clusterTexture.update();

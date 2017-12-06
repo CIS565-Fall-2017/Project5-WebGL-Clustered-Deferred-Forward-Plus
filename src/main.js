@@ -12,22 +12,30 @@ const params = {
   renderer: CLUSTERED_DEFFERED,
   _renderer: null,
 };
+/* WINDOW SILL
+camera.position.set(-10,6.7,3);
+cameraControls.target.set(-4, 5,-10);*/
 
-camera.position.set(-10, 5, 0);
-cameraControls.target.set(0, 2, 0);
+camera.position.set(-10,5,0);
+cameraControls.target.set(0,2,0);
+
 gl.enable(gl.DEPTH_TEST);
 setRenderer(params.renderer);
 
 function setRenderer(renderer) {
+  var xDim = 15;
+  var yDim = 15;
+  var zDim= 15;
+
   switch(renderer) {
     case FORWARD:
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15, camera);
+      params._renderer = new ClusteredForwardPlusRenderer(xDim, yDim, zDim, camera);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15, camera);
+      params._renderer = new ClusteredDeferredRenderer(xDim, yDim, zDim, camera);
       break;
   }
 }
