@@ -1,6 +1,6 @@
 WebGL Clustered Deferred and Forward+ Shading
 ======================
-
+**An in-browser demonstration of the advantages of two modern rendering paradigms: clustering and deferred shading.**
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
 * Daniel Daley-Mongtomery
@@ -118,9 +118,11 @@ for each pixel {
 
 ![bucket compare](img/logdist.png)
   
-  The dynamic range was, quite unsurprisingly, more successful and versatile than any hard-coded approximate value. The logarithmic division was less promising. One possible reason could be that the bigger far-clusters created fragments with a large light count that, if executed along with a fragment of lower light count (as is very possible in this close indoor scene), resulted in asymetric execution time (divergence) and worse GPU utilization. Combined with the extra math needed for every light and fragment, it rendered my implementation generally ineffective. Below are the render times at 4000 3.0-radius lights:
+  The dynamic range was, quite unsurprisingly, more successful and versatile than any hard-coded approximate value. The logarithmic division was less promising. One possible reason could be that the now even bigger far-clusters created fragments with a large light count that, if executed along with a fragment of lower light count (as is very possible in this close indoor scene), resulted in asymetric execution time (divergence) and worse GPU utilization. Combined with the extra math needed for every light and fragment, my attempts were unfortunately as likely to slow each renderer as accelerate it. Below are the render times at 4000 3.0-radius lights from at the starting camera position:
   
 ![zopt compare](img/zopt.png)
+
+One future idea for reducing the burden of log() math would be to generate a values from 0-1.0 at runtime for every z cluster, and to simply multiply them by my dynamically calculated far range every frame to determine cluster boundaries. 
 
 ##### G Buffer Size
 
