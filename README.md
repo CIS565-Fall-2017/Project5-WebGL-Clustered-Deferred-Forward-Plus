@@ -20,11 +20,11 @@ A basic forward shading system works as follows:
 ```
 for every fragment {
   for every light {
-    shade(light, fragment);
+    shade(fragment, light);
   }
 }
 ```
-  This results in a serious increase in work for every light added, even if that light affects one pixel of the final image. The goal of this project is to devise a means of reducing lights' impact on realtime rendering by clustering the lights into areas of influence and by preventing per-light shading work on fragments that don't make it to the frame buffer. To this effect I've implemented the following features:
+  This results in a serious cost for every light added, even if that light only affects one pixel of the final image. The goal of this project is to devise a means of reducing lights' impact on realtime rendering by clustering the lights into areas of influence and by preventing per-light shading work on fragments that don't make it to the frame buffer. To this effect I've implemented the following features:
 * Viewspace Light Clustering on the CPU
 * Clustered Forward+ Rendering
 * Deferred Rendering
@@ -42,7 +42,7 @@ Row 0  | Cluster 0 numLights  | Cluster 1 numLights |
        | second light index   | second light index  |     ...
        | third light index    | third light index   |
        |----------------------|---------------------|----
-Row 0  | fourth light index   | fourth light index  |
+Row 1  | fourth light index   | fourth light index  |
        | fifth light index    | fifth light index   |
        |        ...           |        ...          |
 ```
@@ -59,11 +59,11 @@ for each fragment {
   relevantLights = getLights(cluster);
   
   for each light in relevantLights {
-    shade(light, fragment);
+    shade(fragment, light);
   }
 }
 ```
-  While the relationship between geometry and lighting is still nested, we've decreased the marginal cost of a light. If we consider a 15x15x15 cluster setup and a light radius straddling **27** clusters, there could be as low as a **27 / (15\*15\*15) = 0.8%** chance that an added light will increase the cost of rendering any given fragment. To further illustrate, the rendering below displays the number of lights influencing each cluster in the green channel, and the z cluster index in red:
+  While the relationship between geometry and lighting is still nested, we've decreased the marginal cost of a light. If we consider a 15x15x15 cluster setup and a light radius straddling **27** clusters, there could be as low as a **27 / (15\*15\*15) = 0.8%** chance that an added light will increase the cost of rendering any given fragment. To further illustrate, the rendering below displays the number of lights influencing each cluster in the green channel, and the z cluster index in red. In the shot below, red fragments are performing zero lighting calculations. In a basic forward renderer, each would perform 75!
 
 ![Number of Lights gif](img/numlights.gif)
 
@@ -71,7 +71,7 @@ for each fragment {
 
   Deferred rendering makes use of two passes to decouple the nested relationship between geometry and lights. In the first pass, every fragment is checked and, if it passes a depth test, sends all necessary shading information to a geometry buffer (g-buffer) texture. In a scene with 3,000 lights, a forward renderer would perform many, many lighting calculations even for fragments that don't reach the frame buffer; a deferred renderer will eliminate these fragments before any lighting is done.
   
-  We can now be guaranteed that every fragment that reaches the second pass will become a pixel. To get the necessary data for a shading, the second pass can read the g-buffer, determine the cluster, then compute lighting as usual.
+  After this it can be guaranteed that every fragment that reaches the second pass will become a pixel. To get the necessary data for a shading, the second pass can read the g-buffer, determine the cluster, then compute lighting as usual.
   
 ```
 for each fragment {
@@ -79,20 +79,58 @@ for each fragment {
 }
 
 for each pixel {
-  gbuffer.read(position,normal, albedo);
+  gbuffer.read(position, normal, albedo);
   
   cluster = determineCluster(fragment.viewPosition);
   relevantLights = getLights(cluster);
   
   for each light in relevantLights {
-    shade(light, fragment);
+    shade(fragment, light);
   }
 }
 ```
 
-This efficient dismissal of non-important fragments comes at a cost: deferred rendering has difficulty rendering transparent materials. For scenes with few such materials, it's sometimes useful to render everything deffered, *then* render transparent materials forward. For this project's test scene, there were no such materials. You can see a breakdown of my g-uffer composition below:
+  This efficient dismissal of non-important fragments comes at a cost: deferred rendering has difficulty rendering transparent materials. For scenes with few such materials, it's sometimes useful to render everything deffered, *then* render transparent materials forward. For this project's test scene, there were no such materials. You can see a breakdown of my g-buffer composition below:
 
 ![gbuffer gif](img/gbuffer.gif)
+
+### Performance
+
+##### Baseline
+
+  The intended benefit from clustering and deferring is to allow for more lights, so the most important test is whether the benefits are worth all the math we've introduced per frame. Below is a performance comparison for each rendering technique as lights are added. The clustered renderers are using a blinn-phong shader while the forward is using lambert, so the comparison is even more overwhelming than it appears below:
+
+![numlights compare](img/lightcount.png)
+
+  In the time it takes for a basic forward shader to render a ~150 light scene, Forward+ can handle ~1500 lights, and Clustered Deferred can handle 4000! While it's admittedly unlikely that a scene will require that many dynamic lights, the results are very promising with even the most naive z-division and g-buffer setups. Before we push it any further, you might think that in anything with more than a dozen lights, clustered systems are superior. One caveat:
+
+![radius compare](img/radius.png)
+
+  The more lights overlap, the less benefit we get from clustering. As the volume of the light approaches the domain volume of the camera frustum, the clustering math just becomes an added, wasted cost. But assuming we've got a scene suited to a clustered renderer, let's see where we can improve.
+
+##### Z Division
+
+  A camera's view frustum typically has a generous far clip, in our example 1000 meters. If we were to simply divide this equally based on distance, every light in our Sponza example scene would fall into z cluster 0! While we could hard-code a scaling factor to encompass the expected range of lights the camera sees, we could simply cluster according to the nearest and farthest lights of the previous frame to get a more even distribution, so long as the shaders recieve this range every frame.
+  
+  Speaking of a more even distribution, I imagined I could theoretically make the z division more even by accounting for the widening x and y tile size as distance increased. Like [Avalanche](http://www.humus.name/Articles/PracticalClusteredShading.pdf), I wanted to divide z space exponentially so closer, commonly-struck pixels can be more specifically clustered while farther, less-commonly struck pixels would be more coarsely divided.
+  
+![distrib compare](img/compare.png)
+
+![bucket compare](img/logdist.png)
+  
+  The dynamic range was, quite unsurprisingly, more successful and versatile than any hard-coded approximate value. The logarithmic division was less promising. One possible reason could be that the bigger far-clusters created fragments with a large light count that, if executed along with a fragment of lower light count (as is very possible in this close indoor scene), resulted in asymetric execution time (divergence) and worse GPU utilization. Combined with the extra math needed for every light and fragment, it rendered my implementation generally ineffective. Below are the render times at 4000 3.0-radius lights:
+  
+![zopt compare](img/zopt.png)
+
+##### G Buffer Size
+
+  The last improvement made to the renderer is the compression of the g-buffer. The more quality you want from a deferred system, the more information must be sent from the first pass to the second. This results in a lot of memory cost, but can be mitigated by using every single bit. My choice for this compression was to store world-space normals according to the [octahedral projection method](http://jcgt.org/published/0003/02/01/paper.pdf) found [here](https://www.panda3d.org/forums/viewtopic.php?f=8&t=18454). The two-component encoding was placed in the alpha channel of my world position and albedo vectors, and decoded with negligible error.
+  
+![gbuff compare](img/gbuffer.png)
+
+  The improvement at 4000 lights was't life-changing, but represented a big improvement when CPU clustering is reported to be taking 31ms per frame anyway.
+  
+
 
 ### Credits
 
