@@ -17,13 +17,26 @@ vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
 }
 
+vec2 sign_not_zero(vec2 v) {
+    return vec2(
+        v.x >= 0.0 ? 1.0 : -1.0,
+        v.y >= 0.0 ? 1.0 : -1.0
+    );
+}
+
+// Packs a 3-component normal to 2 channels using octahedron normals
+vec2 pack_normal_octahedron(vec3 v) {
+    v.xy /= dot(abs(v), vec3(1));
+    if (v.z <= 0.0) v.xy = (1.0 - abs(v.yx)) * sign_not_zero(v.xy);
+    return v.xy;
+}
+
 void main() {
     vec3 norm = applyNormalMap(v_normal, vec3(texture2D(u_normap, v_uv)));
     vec3 col = vec3(texture2D(u_colmap, v_uv));
 
-    // TODO: populate your g buffer
-    // gl_FragData[0] = ??
-    // gl_FragData[1] = ??
-    // gl_FragData[2] = ??
-    // gl_FragData[3] = ??
+    vec2 n = pack_normal_octahedron(norm);
+
+    gl_FragData[0] = vec4(v_position.x,v_position.y,v_position.z,n.x);
+    gl_FragData[1] = vec4(col, n.y);
 }

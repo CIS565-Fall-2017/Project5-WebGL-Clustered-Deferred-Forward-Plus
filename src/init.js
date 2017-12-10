@@ -1,5 +1,5 @@
 // TODO: Change this to enable / disable debug mode
-export const DEBUG = true && process.env.NODE_ENV === 'development';
+export const DEBUG = false && process.env.NODE_ENV === 'development';
 
 import DAT from 'dat-gui';
 import WebGLDebug from 'webgl-debug';
@@ -87,14 +87,30 @@ if (DEBUG) {
 
 // Creates a render loop that is wrapped with camera update and stats logging
 export function makeRenderLoop(render) {
-  return function tick() {
+  var oldTotalFrames = 0;
+  var oldTime = 0;
+  var totalFrames = 0;
+  var cumulative = 0;
+  return function tick(time) {
+    if (time - oldTime < 2000) totalFrames++;
+    else { //every 50 frames update the running average (except first 100)
+      totalFrames++;
+      let framesSince = totalFrames-oldTotalFrames;
+      oldTotalFrames = totalFrames;
+      let timeSince = time - oldTime;
+      oldTime = time;
+      if (totalFrames > 101) {
+        cumulative += timeSince/framesSince;
+        console.log(Math.floor(timeSince/framesSince) + " ms/frame for last " + Math.round(timeSince) / 1000 + " seconds. \n (" + framesSince*cumulative/(totalFrames-100) + " ms Average)");
+      }
+    }
     cameraControls.update();
     stats.begin();
     render();
-    stats.end();
     if (!ABORTED) {
       requestAnimationFrame(tick)
     }
+    stats.end();
   }
 }
 

@@ -9,22 +9,33 @@ const CLUSTERED_FORWARD_PLUS = 'Clustered Forward+';
 const CLUSTERED_DEFFERED = 'Clustered Deferred';
 
 const params = {
-  renderer: CLUSTERED_FORWARD_PLUS,
+  renderer: CLUSTERED_DEFFERED,
   _renderer: null,
 };
+/* WINDOW SILL
+camera.position.set(-10,6.7,3);
+cameraControls.target.set(-4, 5,-10);*/
 
+camera.position.set(-1,1,0);
+cameraControls.target.set(2,2,0);
+
+gl.enable(gl.DEPTH_TEST);
 setRenderer(params.renderer);
 
 function setRenderer(renderer) {
+  var xDim = 15;
+  var yDim = 15;
+  var zDim= 15;
+
   switch(renderer) {
     case FORWARD:
       params._renderer = new ForwardRenderer();
       break;
     case CLUSTERED_FORWARD_PLUS:
-      params._renderer = new ClusteredForwardPlusRenderer(15, 15, 15);
+      params._renderer = new ClusteredForwardPlusRenderer(xDim, yDim, zDim, camera);
       break;
     case CLUSTERED_DEFFERED:
-      params._renderer = new ClusteredDeferredRenderer(15, 15, 15);
+      params._renderer = new ClusteredDeferredRenderer(xDim, yDim, zDim, camera);
       break;
   }
 }
@@ -33,10 +44,6 @@ gui.add(params, 'renderer', [FORWARD, CLUSTERED_FORWARD_PLUS, CLUSTERED_DEFFERED
 
 const scene = new Scene();
 scene.loadGLTF('models/sponza/sponza.gltf');
-
-camera.position.set(-10, 8, 0);
-cameraControls.target.set(0, 2, 0);
-gl.enable(gl.DEPTH_TEST);
 
 function render() {
   scene.update();

@@ -6,18 +6,32 @@ import vsSource from '../shaders/clusteredForward.vert.glsl';
 import fsSource from '../shaders/clusteredForward.frag.glsl.js';
 import TextureBuffer from './textureBuffer';
 import ClusteredRenderer from './clustered';
+import {MAX_LIGHTS_PER_CLUSTER, USE_DYNAMIC, USE_LOGARITHMIC, LOG_OFFSET, RANGE_SCALE} from './clustered';
 
 export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
-  constructor(xSlices, ySlices, zSlices) {
-    super(xSlices, ySlices, zSlices);
+  constructor(xSlices, ySlices, zSlices, camera) {
+    super(xSlices, ySlices, zSlices, camera);
 
     // Create a texture to store light data
     this._lightTexture = new TextureBuffer(NUM_LIGHTS, 8);
     
     this._shaderProgram = loadShaderProgram(vsSource, fsSource({
       numLights: NUM_LIGHTS,
+      xSlices: xSlices,
+      ySlices: ySlices,
+      zSlices: zSlices,
+      cameraNear: camera.near,
+      cameraFar: camera.far,
+      invRange: this.invRange,
+      rangeScale: RANGE_SCALE,
+      cameraFOVScalar: this.fovScalar,
+      cameraAspect: camera.aspect,
+      textureHeight: Math.floor((MAX_LIGHTS_PER_CLUSTER + 1) / 4 + 1),
+      useDynamic: USE_DYNAMIC,
+      useLogarithmic: USE_LOGARITHMIC,
+      logOffset: LOG_OFFSET
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer'],
+      uniforms: ['u_viewProjectionMatrix', 'u_viewMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_cameraPos', 'u_clusterbuffer'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -38,14 +52,16 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
     
     // Update the buffer used to populate the texture packed with light data
     for (let i = 0; i < NUM_LIGHTS; ++i) {
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 0] = scene.lights[i].position[0];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 1] = scene.lights[i].position[1];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 2] = scene.lights[i].position[2];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 0) + 3] = scene.lights[i].radius;
+      let index = this._lightTexture.bufferIndex(i, 0);
+      this._lightTexture.buffer[index + 0] = scene.lights[i].position[0];
+      this._lightTexture.buffer[index + 1] = scene.lights[i].position[1];
+      this._lightTexture.buffer[index + 2] = scene.lights[i].position[2];
+      this._lightTexture.buffer[index + 3] = scene.lights[i].radius;
 
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 0] = scene.lights[i].color[0];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 1] = scene.lights[i].color[1];
-      this._lightTexture.buffer[this._lightTexture.bufferIndex(i, 1) + 2] = scene.lights[i].color[2];
+      index = this._lightTexture.bufferIndex(i, 1);
+      this._lightTexture.buffer[index + 0] = scene.lights[i].color[0];
+      this._lightTexture.buffer[index + 1] = scene.lights[i].color[1];
+      this._lightTexture.buffer[index + 2] = scene.lights[i].color[2];
     }
     // Update the light texture
     this._lightTexture.update();
@@ -64,6 +80,10 @@ export default class ClusteredForwardPlusRenderer extends ClusteredRenderer {
 
     // Upload the camera matrix
     gl.uniformMatrix4fv(this._shaderProgram.u_viewProjectionMatrix, false, this._viewProjectionMatrix);
+    gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+
+    //camera position and dynamic z range
+    gl.uniform4f (this._shaderProgram.u_cameraPos, camera.position.x, camera.position.y, camera.position.z, camera.far / this._farLight);
 
     // Set the light texture as a uniform input to the shader
     gl.activeTexture(gl.TEXTURE2);

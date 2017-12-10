@@ -2,13 +2,13 @@ const MinimalGLTFLoader = require('../lib/minimal-gltf-loader');
 import { gl } from './init';
 
 // TODO: Edit if you want to change the light initial positions 
-export const LIGHT_MIN = [-14, 0, -6];
-export const LIGHT_MAX = [14, 20, 6];
-export const LIGHT_RADIUS = 5.0;
-export const LIGHT_DT = -0.03;
+export const LIGHT_MIN = [-15, 0, -7];
+export const LIGHT_MAX = [15, 18, 7];
+export const LIGHT_RADIUS = 3.0;
+export const LIGHT_DT = -0.04;
 
 // TODO: This controls the number of lights
-export const NUM_LIGHTS = 100;
+export const NUM_LIGHTS = 1000;
 
 class Scene {
   constructor() {
@@ -28,6 +28,7 @@ class Scene {
           0.5 + Math.random(),
         ]),
         radius: LIGHT_RADIUS,
+        direction: Math.floor(Math.random() * 2) * 2 - 1
       });
     }
   }
@@ -157,10 +158,13 @@ class Scene {
 
   update() {
     for (let i = 0; i < NUM_LIGHTS; i++) {
-      // OPTIONAL TODO: Edit if you want to change how lights move
-      this.lights[i].position[1] += LIGHT_DT;
-      // wrap lights from bottom to top
-      this.lights[i].position[1] = (this.lights[i].position[1] + LIGHT_MAX[1] - LIGHT_MIN[1]) % LIGHT_MAX[1] + LIGHT_MIN[1];
+      let l = this.lights[i];
+      l.position[1] += LIGHT_DT * l.direction;
+      //if (l.position[1] < 0) l.position = 2;
+      if (l.position[1] < 0 || l.position[1] > LIGHT_MAX[1]) {
+        l.direction = -l.direction;
+        i--;
+      }
     }
   }
 
