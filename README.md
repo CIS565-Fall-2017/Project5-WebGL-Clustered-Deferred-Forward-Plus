@@ -23,6 +23,8 @@ These solutions allow you to have an enormous number of dynamic lights in the sc
 
 ## Features
 
+_A much more in depth explanation of the shading models and clustering can be found [here](http://amansachan.com/webpages/projects.html)._
+
 ### Forward Shading Model
 
 ![](readmeImages/NumLightsComparison.png)
