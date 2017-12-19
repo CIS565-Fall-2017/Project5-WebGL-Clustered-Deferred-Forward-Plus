@@ -23,7 +23,7 @@ These solutions allow you to have an enormous number of dynamic lights in the sc
 
 ## Features
 
-_A much more in depth explanation of the shading models and clustering can be found [here](http://amansachan.com/webpages/projects.html)._
+_A much more in depth explanation of the shading models and clustering can be found [here](http://amansachan.com/webpages/projects.html#Modal_ClusteredDeferredShading)._
 
 ### Forward Shading Model
 
@@ -73,7 +73,7 @@ The clusters used in this project were uniformly spaces in z, and were slicing t
 
 #### Using Two G-buffers (use total 8 channels) - Pack values together into vec4s
 
-Reducing the number of g-buffers helps make deferred shading faster which can be done by compactly storing data in them. Colors often dont need the alph component, normals can be reconstructed simply from 2 of their components, data can be stored in 24bit floats instead of 32 bits, are just some of the ways to achieve this compression.
+Reducing the number of g-buffers helps make deferred shading faster which can be done by compactly storing data in them. Colors often dont need the alpha component, normals can be reconstructed simply from 2 of their components, data can be stored in 24bit floats instead of 32 bits, are just some of the ways to achieve this compression.
 
 This project implemented the following layout for the 2 g-buffers used:
 
