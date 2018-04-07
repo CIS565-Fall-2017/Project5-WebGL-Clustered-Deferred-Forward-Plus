@@ -4,7 +4,8 @@ WebGL Clustered Deferred and Forward+ Shading
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
 * Daniel McCann
-* Tested on: Windows 10, i7-5700HQ CPU @ 2.70GHz, GeForce GTX 970M, 16 GB RAM
+* Tested on: Windows 10, i7-5700HQ CPU @ 2.70GHz, ~~GeForce GTX 970M~~, 16 GB RAM
+CORRECTION: measurements are taken on integrated graphics! Intel(R) HD Graphics 5600 Direct3D11
 
 ### Live Online
 
@@ -43,7 +44,7 @@ Since this is a blinn shader with no specular texture, only 8 channels are neede
 
 ### Performance
 
-Here is the range of times, in ms for each method with a different number of lights:
+Here is the range of times, in ms for each method with a different number of lights, taken on integrated graphics:
 
 | Lights | 100 | 200 | 500 |
 | --- | --- | --- | --- |
