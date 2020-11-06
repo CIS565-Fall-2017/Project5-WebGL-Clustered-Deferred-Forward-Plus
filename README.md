@@ -7,7 +7,7 @@ WebGL Clustered Deferred and Forward+ Shading
 * Tested on: Windows 10, Intel(R) Xeon(R) CPU E5-1630 v4 @ 3.7GHz (8 CPUs) 32GB RAM, 
 			GTX 1070 8081MB (Lab Machine)
 
-## [Try it Live!](http://amansachan.com/WebGL-Clustered-Deferred-Forward-Plus/)
+## [Try it Live!](https://amansachan1.github.io/WebGL-Clustered-Deferred-Forward-Plus/)
 
 ## Demo Video
 
